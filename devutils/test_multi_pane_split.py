@@ -38,53 +38,78 @@ int Intersection(GridPaneBounds a, GridPaneBounds b) {
 
 int main() {
   int cases = 0;
-  for (auto orientation : {SplitTabLayout::kSideBySide,
-                           SplitTabLayout::kStacked}) {
-    for (size_t count : {2u, 3u, 4u}) {
-      for (int extent : {0, 1, 2, 3, 7, 33, 200, 901}) {
-        for (int cross : {0, 1, 2, 3, 17, 400, 703}) {
-          for (int first_size : {0, extent / 3, extent / 2, extent}) {
-            GridPaneBounds first{11, 23, first_size, cross};
-            GridPaneBounds second{11 + first_size + 10, 23,
-                                  extent - first_size, cross};
-            if (orientation == SplitTabLayout::kStacked) {
-              first = {11, 23, cross, first_size};
-              second = {11, 23 + first_size + 10, cross, extent - first_size};
-            }
-            const auto panes = CalculateGridPaneBounds(first, second, count,
-                                                       orientation);
-            int area = 0;
-            for (size_t i = 0; i < count; ++i) {
-              auto p = panes[i];
-              assert(p.width >= 0 && p.height >= 0);
-              area += Area(p);
-              const auto parent = i < (count + 1) / 2 ? first : second;
-              assert(p.x >= parent.x && p.y >= parent.y);
-              assert(p.x + p.width <= parent.x + parent.width);
-              assert(p.y + p.height <= parent.y + parent.height);
-              for (size_t j = 0; j < i; ++j) {
-                assert(Intersection(p, panes[j]) == 0);
+  for (auto arrangement : {SplitTabArrangement::kGrid,
+                            SplitTabArrangement::kLinear,
+                            SplitTabArrangement::kLeadingSingle,
+                            SplitTabArrangement::kTrailingSingle}) {
+    for (auto orientation : {SplitTabLayout::kSideBySide,
+                             SplitTabLayout::kStacked}) {
+      for (size_t count : {2u, 3u, 4u}) {
+        for (int extent : {0, 1, 2, 3, 7, 33, 200, 901}) {
+          for (int cross : {0, 1, 2, 3, 17, 400, 703}) {
+            for (int first_size : {0, extent / 3, extent / 2, extent}) {
+              GridPaneBounds first{11, 23, first_size, cross};
+              GridPaneBounds second{11 + first_size + 10, 23,
+                                    extent - first_size, cross};
+              if (orientation == SplitTabLayout::kStacked) {
+                first = {11, 23, cross, first_size};
+                second = {11, 23 + first_size + 10, cross, extent - first_size};
               }
+              const auto panes = CalculateSplitPaneBounds(first, second, count,
+                                                          orientation, arrangement);
+              int area = 0;
+              for (size_t i = 0; i < count; ++i) {
+                auto p = panes[i];
+                assert(p.width >= 0 && p.height >= 0);
+                area += Area(p);
+                const auto parent = i < FirstSplitPaneCount(count, arrangement)
+                                        ? first : second;
+                assert(p.x >= parent.x && p.y >= parent.y);
+                assert(p.x + p.width <= parent.x + parent.width);
+                assert(p.y + p.height <= parent.y + parent.height);
+                for (size_t j = 0; j < i; ++j) {
+                  assert(Intersection(p, panes[j]) == 0);
+                }
+              }
+              assert(area == Area(first) + Area(second));
+              for (size_t i = count; i < panes.size(); ++i) {
+                assert(Area(panes[i]) == 0);
+              }
+              if (arrangement == SplitTabArrangement::kLinear) {
+                for (size_t i = 0; i < count; ++i) {
+                  if (orientation == SplitTabLayout::kSideBySide) {
+                    assert(panes[i].y == 23 && panes[i].height == cross);
+                  } else {
+                    assert(panes[i].x == 11 && panes[i].width == cross);
+                  }
+                }
+              }
+              if (arrangement == SplitTabArrangement::kGrid) {
+                const auto legacy = CalculateGridPaneBounds(first, second, count,
+                                                            orientation);
+                for (size_t i = 0; i < count; ++i) {
+                  assert(panes[i].x == legacy[i].x && panes[i].y == legacy[i].y);
+                  assert(panes[i].width == legacy[i].width);
+                  assert(panes[i].height == legacy[i].height);
+                }
+              }
+              if (count == 2) {
+                assert(Intersection(panes[0], first) == Area(first));
+                assert(Intersection(panes[1], second) == Area(second));
+              }
+              ++cases;
             }
-            assert(area == Area(first) + Area(second));
-            for (size_t i = count; i < panes.size(); ++i) {
-              assert(Area(panes[i]) == 0);
-            }
-            if (count == 2) {
-              assert(Intersection(panes[0], first) == Area(first));
-              assert(Intersection(panes[1], second) == Area(second));
-            }
-            ++cases;
           }
         }
       }
     }
   }
   for (size_t invalid_count : {0u, 1u, 5u, 100u}) {
-    const auto panes = CalculateGridPaneBounds({0, 0, 100, 100},
+    const auto panes = CalculateSplitPaneBounds({0, 0, 100, 100},
                                                {110, 0, 100, 100},
                                                invalid_count,
-                                               SplitTabLayout::kSideBySide);
+                                               SplitTabLayout::kSideBySide,
+                                               SplitTabArrangement::kLinear);
     for (auto p : panes) { assert(Area(p) == 0); }
   }
   std::cout << "PASS: " << cases
@@ -100,9 +125,14 @@ def extract_helper():
     inserted = ''.join(line.value for hunk in file for line in hunk if line.is_added)
     start = inserted.index('struct GridPaneBounds')
     end = inserted.index('\n  return panes;\n}', start) + len('\n  return panes;\n}')
+    followup = PatchSet((REPO / 'patches/helium/ui/split-layout-options.patch').read_text())
+    header = next(file for file in followup if file.path == HEADER)
+    additions = ''.join(line.value for hunk in header for line in hunk if line.is_added)
+    extra_start = additions.index('enum class SplitTabArrangement')
+    extra_end = additions.index('\n  return panes;\n}', extra_start) + len('\n  return panes;\n}')
     return ('#include <array>\n#include <cstddef>\nnamespace split_tabs {\n'
-            'enum class SplitTabLayout { kSideBySide, kStacked };\n' + inserted[start:end] +
-            '\n}\n')
+            'enum class SplitTabLayout { kSideBySide, kStacked };\n' + inserted[start:end] + '\n' +
+            additions[extra_start:extra_end] + '\n}\n')
 
 
 def main():
