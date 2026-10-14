@@ -4,7 +4,8 @@ This is a collection of scripts written for developing on ungoogled-chromium. Se
 
 ## Experimental four-pane split view
 
-`helium/ui/multi-pane-split-view.patch` is applied last in `patches/series`.
+`helium/ui/multi-pane-split-view.patch` extends the base split implementation;
+the actions and layout-options patches are applied after it in `patches/series`.
 It extends the existing split collection to three or four tabs. Select three or
 four ordinary tabs with Command-click (macOS) or Control-click, right-click a
 selected tab, and use the existing split command. Choose either orientation
@@ -12,10 +13,10 @@ when that submenu is available. Four tabs form a 2×2 grid; three tabs form two
 small panes beside one larger pane. Changing orientation changes the order in
 which the grid is partitioned.
 
-This is an **uncompiled prototype**, not a tested browser release. The patch
-was checked against the Chromium version in `chromium_version.txt`, with the
-existing Helium patches applied to the affected files. It does not implement
-arbitrary recursive splits or an unlimited pane count.
+This remains an experimental feature with a four-pane limit. Geometry checks
+cover all layout presets; full browser integration testing remains required
+before shipping. Local macOS builds reuse the prepared cache documented in
+`AGENTS.md`.
 
 The main divider remains resizable. The subdivisions inside each half are
 equal and fixed. Exit split preserves the active tab. Closing or detaching one
@@ -25,6 +26,33 @@ Last-session restore accepts up to four panes; recently closed windows and
 Groups restore their tabs without reconstructing a grid. Grid corner styling
 and animation clipping use the fallback behavior rather than the pair-specific
 window corner/animation rules.
+
+Right-click a tab and open **Split Layout** to create or rearrange a split:
+
+- **Three Columns / Three Rows**: a 1×3 or 3×1 strip.
+- **Four Columns / Four Rows**: a 1×4 or 4×1 strip.
+- **2 × 2 Grid**: the original four-pane grid.
+- Mixed layouts: one pane beside two or three stacked panes, or one pane above
+  two or three side-by-side panes, with mirrored variants for each.
+
+The action retains existing pages and fills spare panes with new-tab pages.
+It acts on the right-clicked tab, even when other tabs are selected. Changing
+an existing layout keeps the split and its pages. Choices with fewer panes than
+the current split are disabled. The main divider remains resizable; panes
+within either side share that side equally. Choosing a layout resets the main
+divider to its default ratio. Layout choices persist in last-session restore;
+older session files default to the original grid arrangement.
+
+These choices are implemented by `helium/ui/split-layout-options.patch`.
+It adds browser coverage for in-place rearrangement and a session round-trip
+regression for every arrangement. Full browser/session test execution still
+requires an unpruned Chromium test tree.
+
+`helium/ui/four-pane-split-actions.patch` also fixes grid accessibility labels:
+it avoids passing indices 2 and 3 to the pair-only label formatter, which
+aborted the browser when creating a grid. The layout-options patch uses
+indexed pane labels that work across all shapes.
+Browser regressions cover creation, expansion, and both label orientations.
 
 ### Checks available in this repository
 
@@ -36,7 +64,7 @@ python3 devutils/test_multi_pane_split.py
 The second command compiles the actual grid partition helper extracted from the
 patch with C++20 and address/undefined-behavior sanitizers. It checks coverage,
 non-overlap, containment, unused panes, pair compatibility, invalid pane counts,
-and odd/zero/tiny dimensions across 1,344 cases. It does not compile the browser
+and odd/zero/tiny dimensions across 5,376 cases. It does not compile the browser
 or prove that tab activation and session integration work.
 
 To test the complete production header in an already patched source tree:
@@ -55,11 +83,18 @@ the packaging version. After installing that workflow's dependencies, use
 `source dev.sh`, `he setup`, `he build`, and `he run`. Use the development
 profile provided by `he run` when testing.
 
-The patch adds these tests to Chromium's existing `TabStripModelTest` suite:
+The grid patch adds these tests to Chromium's existing `TabStripModelTest` suite:
 
 - `FourPaneSplitSelectionAndFocus`
 - `MoveWithinFourPaneSplit`
 - `RestoreFourPaneSplit`
+
+The follow-up actions patch adds these `TabMenuModelBrowserTest` regressions:
+
+- `FourPaneSplitAccessibleLabels`
+- `CreateAndExpandFourPaneSplit`
+- `ChangePaneArrangementInPlace`
+- `SplitLayoutSubmenu`
 
 Run those tests and the existing split model tests in a Chromium build. Before
 shipping, also check two/three/four panes in both orientations; click and

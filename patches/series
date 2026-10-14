@@ -370,3 +370,5 @@ helium/ui/exclusive-access-bubble.patch
 helium/ui/hide-page-actions-flag.patch
 helium/ui/multi-pane-split-view.patch
 helium/ui/tab-preview-workspaces.patch
+helium/ui/four-pane-split-actions.patch
+helium/ui/split-layout-options.patch
