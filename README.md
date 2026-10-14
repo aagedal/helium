@@ -1,6 +1,8 @@
 ### THIS IS A PRIVATE FORK CHANGES WILL NOT BE PUSHED TO THE MAIN REPO
 #### Changes include:
 - Four way tab split
+- Automatic refresh per tab
+- Mobile view per tab without dev tools visible
 
 <div align="center">
     <img src="resources/branding/app_icon/raw.png"
