@@ -578,7 +578,7 @@
 +#endif  // CHROME_BROWSER_UI_TABS_PANE_SETTINGS_GEOMETRY_H_
 --- a/chrome/browser/ui/tabs/pane_settings_menu_model.cc
 +++ b/chrome/browser/ui/tabs/pane_settings_menu_model.cc
-@@ -0,0 +1,210 @@
+@@ -0,0 +1,211 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -597,6 +597,7 @@
 +#include "chrome/browser/ui/tabs/pane_settings.h"
 +#include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_pref_names.h"
 +#include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_utils.h"
++#include "chrome/browser/ui/tabs/split_tab_metrics.h"
 +#include "chrome/browser/ui/tabs/tab_enums.h"
 +#include "chrome/browser/ui/tabs/tab_strip_model.h"
 +#include "chrome/browser/ui/tabs/tab_strip_model_delegate.h"
@@ -784,8 +785,8 @@
 +  }
 +  ScopedDictPrefUpdate update(browser->GetProfile()->GetPrefs(),
 +                              kWorkspacePref);
-+  auto& workspace = update->EnsureDict(saved->saved_guid().AsLowercaseString());
-+  workspace.EnsureDict("tabs").Set(
++  auto* workspace = update->EnsureDict(saved->saved_guid().AsLowercaseString());
++  workspace->EnsureDict("tabs")->Set(
 +      saved_tab->saved_tab_guid().AsLowercaseString(), std::move(settings));
 +}
 +}  // namespace tabs
@@ -1002,7 +1003,7 @@
    registry->RegisterBooleanPref(kTabGroupsDeletionSkipDialogOnUngroup, false);
 --- a/chrome/browser/ui/tabs/saved_tab_groups/tab_group_sync_delegate_desktop.cc
 +++ b/chrome/browser/ui/tabs/saved_tab_groups/tab_group_sync_delegate_desktop.cc
-@@ -12,17 +12,21 @@
+@@ -12,17 +12,22 @@
  #include "chrome/browser/profiles/profile.h"
  #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
  #include "chrome/browser/ui/browser_window/public/browser_window_interface_iterator.h"
@@ -1010,6 +1011,7 @@
  #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_model_listener.h"
  #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_utils.h"
  #include "chrome/browser/ui/tabs/saved_tab_groups/tab_group_action_context_desktop.h"
++#include "chrome/browser/ui/tabs/split_tab_metrics.h"
  #include "chrome/browser/ui/tabs/tab_enums.h"
  #include "chrome/browser/ui/tabs/tab_group_model.h"
  #include "chrome/browser/ui/tabs/tab_strip_model.h"
@@ -1024,7 +1026,7 @@
  #include "components/tab_groups/tab_group_id.h"
  #include "components/tabs/public/tab_interface.h"
  #include "content/public/browser/navigation_handle.h"
-@@ -411,6 +415,49 @@
+@@ -411,6 +416,49 @@
        service_->GetGroup(saved_group.saved_guid());
  
    listener_->ConnectToLocalTabGroup(*saved_group2, tab_guid_mapping);
