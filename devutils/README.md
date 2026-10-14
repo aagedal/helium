@@ -2,7 +2,7 @@
 
 This is a collection of scripts written for developing on ungoogled-chromium. See the descriptions at the top of each script for more information.
 
-## Experimental four-pane split view
+## Experimental multi-pane split view
 
 `helium/ui/multi-pane-split-view.patch` extends the base split implementation;
 the actions and layout-options patches are applied after it in `patches/series`.
@@ -13,16 +13,17 @@ when that submenu is available. Four tabs form a 2×2 grid; three tabs form two
 small panes beside one larger pane. Changing orientation changes the order in
 which the grid is partitioned.
 
-This remains an experimental feature with a four-pane limit. Geometry checks
+This remains an experimental feature with a six-pane limit. Geometry checks
 cover all layout presets; full browser integration testing remains required
 before shipping. Local macOS builds reuse the prepared cache documented in
 `AGENTS.md`.
 
-The main divider remains resizable. The subdivisions inside each half are
-equal and fixed. Exit split preserves the active tab. Closing or detaching one
+Every divider is resizable, including subdivisions inside each half. Drag a
+boundary or focus its handle and use the arrow keys. Pane sizes stay with the
+split when switching tabs and are restored with the last session. Exit split preserves the active tab. Closing or detaching one
 pane exits the entire split, following the existing model behavior. Pair-only
 reverse, close-half, and replace/swap commands are disabled for grids.
-Last-session restore accepts up to four panes; recently closed windows and
+Last-session restore accepts up to six panes; recently closed windows and
 Groups restore their tabs without reconstructing a grid. Grid corner styling
 and animation clipping use the fallback behavior rather than the pair-specific
 window corner/animation rules.
@@ -38,9 +39,8 @@ Right-click a tab and open **Split Layout** to create or rearrange a split:
 The action retains existing pages and fills spare panes with new-tab pages.
 It acts on the right-clicked tab, even when other tabs are selected. Changing
 an existing layout keeps the split and its pages. Choices with fewer panes than
-the current split are disabled. The main divider remains resizable; panes
-within either side share that side equally. Choosing a layout resets the main
-divider to its default ratio. Layout choices persist in last-session restore;
+the current split are disabled. Every boundary has a native resize handle. Choosing a layout resets the main
+divider to its default ratio and the subdivisions to equal sizes. Layout choices persist in last-session restore;
 older session files default to the original grid arrangement.
 
 These choices are implemented by `helium/ui/split-layout-options.patch`.
@@ -64,7 +64,9 @@ python3 devutils/test_multi_pane_split.py
 The second command compiles the actual grid partition helper extracted from the
 patch with C++20 and address/undefined-behavior sanitizers. It checks coverage,
 non-overlap, containment, unused panes, pair compatibility, invalid pane counts,
-and odd/zero/tiny dimensions across 5,376 cases. It does not compile the browser
+and odd/zero/tiny dimensions across 11,200 cases. An additional 400 resize cases
+check both orientations, all presets, minimum sizes, gutter placement, and
+adjacent-pane resizing that leaves the other panes unchanged. It does not compile the browser
 or prove that tab activation and session integration work.
 
 To test the complete production header in an already patched source tree:
@@ -207,3 +209,90 @@ Chromium commands; this also fixed existing `NavigationSimulator::CreateFromPend
 and `chrome::NewTab` test API mismatches. A Chromium regression-test build stopped
 at missing pruned test data (`chrome/test/data/extensions/extension_api_unittest/
 api_features.json`); the new browser and timer regressions remain unexecuted.
+
+## Helium Neo branding
+
+The private fork builds as `Helium Neo.app`. Its macOS bundle identifier and
+normal profile directory name are `no.aagedal.helium-neo`; its Keychain entry is
+`Helium Neo Storage Key` (account `Helium Neo`). Existing Helium profiles and keys
+are not migrated. The local launcher retains the existing `build/dev-profile`.
+
+`utils/name_substitution.py` applies the display name and macOS identities after
+platform patches. For the existing prepared cache, run it from this worktree:
+
+```sh
+python3 utils/name_substitution.py --sub -t "$HOME/Developer/helium/build/macos/build/src"
+```
+
+Then use the persistent `build-local.sh` described in `AGENTS.md`. Do not run
+`prepare_sources` against the cache. The persistent launcher must target
+`out/Default/Helium Neo.app/Contents/MacOS/Helium Neo` after rebuilding.
+
+## Resizable multi-pane dividers
+
+`helium/ui/resizable-multi-pane-splits.patch` adds the missing native resize
+handles for the inner boundaries of three/four-pane layouts, reserves gutters
+between those panes, and gives multi-pane rows usable minimum sizes. It keeps
+pane weights in split visual data and appends them to session commands; old
+sessions retain equal subdivisions. Selecting another preset resets the weights.
+The ordinary two-pane divider keeps its existing behavior.
+
+The patch also extends `SplitPaneArrangementSaved` to round-trip custom weights
+and adds `SplitPaneSizesSurviveTabActivation` and
+`CustomSplitPaneSizesRestored`. Those Chromium tests require an
+unpruned test build; the standalone geometry harness runs in this repository.
+
+Local validation: the component browser compiled successfully; all geometry,
+resize, viewport and refresh harness checks passed. Native keyboard resizing
+was checked in three columns, three rows and both halves of a grid. A clean
+browser restart preserved a diagnostic pane at 556 × 457, including its custom
+main ratio and inner weights. Pointer-drag automation was inconclusive, so a
+hands-on drag check remains recommended before making a standalone release.
+
+## Helium Neo orbital icon
+
+The private fork uses a violet orbital mark instead of Helium's blue asterisk.
+`resources/branding/product_logo.svg` is the full-color master. The transparent
+foreground and modern macOS appearance settings live in
+`resources/branding/macos/AppIcon.icon`. Both the classic `app.icns` and modern
+`Assets.car` are checked in; the common resource list overrides the platform
+repository's icons after platform resources are copied.
+
+On macOS, regenerate the PNGs, wordmarks, Chromium vector paths, ICNS, and asset
+catalog using Pillow, librsvg and Xcode:
+
+```sh
+~/Developer/helium/build/venv/bin/python3 devutils/generate_neo_icons.py
+```
+
+Then run `utils/generate_resources.py` and `utils/replace_resources.py` against
+the prepared source before the incremental build. Do not recreate the cache.
+
+## Five- and six-pane layouts
+
+`helium/ui/extended-pane-layouts.patch` raises the split capacity to six and adds
+these **Split Layout** choices:
+
+- **3 × 2 Grid**: three columns in each of two rows (six pages).
+- **Two Stacked Left + Three Columns**: two stacked pages in the leftmost
+  column and three full-height pages beside it (five pages).
+
+Every boundary uses the existing native resize behavior. The mixed layout starts
+with one quarter of the width for the stacked column; its right side is divided
+into three columns. Changing presets retains existing pages and fills new panes
+with new tabs. A preset with fewer panes remains disabled for a larger split.
+
+Sizes and arrangements persist in the session. The extra two pane weights are
+an optional tail in the session data, so older four-pane sessions still restore
+with equal defaults for unused panes. Regression coverage includes exact layout
+geometry, every divider in every arrangement, six-pane focus/activation, and
+browser restore tests for both new presets. Full Chromium browser test execution
+requires an unpruned test build.
+
+Local verification of the expanded presets: the component browser built, both
+menu choices created their expected five/six panes, native keyboard resizing
+worked in both mixed axes and on the final sixth-pane boundary, and a clean
+restart reproduced all saved split visual data exactly. The older four-pane
+session restored its original 556 × 457 diagnostic pane; the new five-pane
+session retained its 291 × 457 diagnostic pane. No normal browser profile was
+used for these checks.
