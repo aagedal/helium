@@ -1,0 +1,311 @@
+--- a/chrome/browser/ui/tabs/pane_settings.cc
++++ b/chrome/browser/ui/tabs/pane_settings.cc
+@@ -84,7 +84,7 @@
+ }
+ 
+ void PaneSettings::SetRefreshSeconds(int seconds) {
+-  if (!IsValidAutoRefreshInterval(seconds)) {
++  if (!IsValidAutoRefreshInterval(seconds) || seconds == refresh_seconds_) {
+     return;
+   }
+   refresh_timer_.Stop();
+@@ -101,7 +101,8 @@
+   const auto* entry = web_contents()->GetController().GetLastCommittedEntry();
+   if (web_contents()->IsLoading() || web_contents()->IsCrashed() || !entry ||
+       !entry->GetURL().SchemeIsHTTPOrHTTPS() || entry->GetHasPostData() ||
+-      web_contents()->GetController().NeedsReload()) {
++      web_contents()->GetController().NeedsReload() ||
++      web_contents()->GetController().GetPendingEntry()) {
+     return;
+   }
+   web_contents()->GetController().Reload(content::ReloadType::NORMAL, true);
+@@ -136,10 +137,10 @@
+     return;
+   }
+   preview_scale_ = scale;
+-  ApplyMobileEmulation();
+-}
+-
+-void PaneSettings::ApplyMobileEmulation() {
++  ApplyMobileEmulation(/*metrics_only=*/true);
++}
++
++void PaneSettings::ApplyMobileEmulation(bool metrics_only) {
+   if (!mobile_enabled_ ||
+       !web_contents()->GetPrimaryMainFrame()->IsRenderFrameLive()) {
+     return;
+@@ -154,6 +155,7 @@
+       return;
+     }
+     agent_host_ = std::move(host);
++    metrics_only = false;
+   }
+   base::DictValue metrics;
+   metrics.Set("width", kMobilePreviewWidth);
+@@ -166,6 +168,9 @@
+   // Native view bounds are supplied by ContentsContainerView.
+   metrics.Set("dontSetVisibleSize", true);
+   SendCommand("Emulation.setDeviceMetricsOverride", std::move(metrics));
++  if (metrics_only) {
++    return;
++  }
+   base::DictValue touch;
+   touch.Set("enabled", true);
+   touch.Set("maxTouchPoints", 5);
+--- a/chrome/browser/ui/tabs/pane_settings.h
++++ b/chrome/browser/ui/tabs/pane_settings.h
+@@ -55,7 +55,7 @@
+  private:
+   friend class content::WebContentsUserData<PaneSettings>;
+   explicit PaneSettings(content::WebContents* contents);
+-  void ApplyMobileEmulation();
++  void ApplyMobileEmulation(bool metrics_only = false);
+   void SendCommand(const char* method, base::DictValue params);
+   void Refresh();
+   void Save();
+--- a/chrome/browser/ui/tabs/pane_settings_unittest.cc
++++ b/chrome/browser/ui/tabs/pane_settings_unittest.cc
+@@ -48,10 +48,35 @@
+   EXPECT_EQ(counter.count, 0);
+   task_environment()->FastForwardBy(base::Seconds(1));
+   EXPECT_EQ(counter.count, 1);
+-  content::NavigationSimulator::CreateFromPending(web_contents())->Commit();
++  content::NavigationSimulator::CreateFromPending(web_contents()->GetController())->Commit();
+   settings->SetRefreshSeconds(0);
+   task_environment()->FastForwardBy(base::Minutes(6));
+   EXPECT_EQ(counter.count, 1);
++}
++
++TEST_F(PaneSettingsTest, SameIntervalPreservesDeadline) {
++  ReloadCounter counter(web_contents());
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetRefreshSeconds(15);
++  task_environment()->FastForwardBy(base::Seconds(10));
++  settings->SetRefreshSeconds(15);
++  task_environment()->FastForwardBy(base::Seconds(5));
++  EXPECT_EQ(counter.count, 1);
++}
++
++TEST_F(PaneSettingsTest, PendingNavigationIsNotReplacedByRefresh) {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetRefreshSeconds(15);
++  auto navigation = content::NavigationSimulator::CreateBrowserInitiated(
++      GURL("https://example.test/next"), web_contents());
++  navigation->Start();
++  ReloadCounter counter(web_contents());
++  ASSERT_TRUE(web_contents()->GetController().GetPendingEntry());
++  task_environment()->FastForwardBy(base::Seconds(30));
++  EXPECT_EQ(counter.count, 0);
++  navigation->Commit();
++  EXPECT_EQ(GURL("https://example.test/next"),
++            web_contents()->GetLastCommittedURL());
+ }
+ 
+ TEST_F(PaneSettingsTest, ChangingIntervalReplacesTimer) {
+--- a/chrome/browser/ui/tabs/split_tab_menu_model.h
++++ b/chrome/browser/ui/tabs/split_tab_menu_model.h
+@@ -9,11 +9,17 @@
+ #include <optional>
+ #include <string>
+ 
++#include "base/memory/weak_ptr.h"
+ #include "chrome/browser/ui/tabs/existing_base_sub_menu_model.h"
++#include "components/split_tabs/split_tab_id.h"
+ #include "ui/base/interaction/element_identifier.h"
+ #include "ui/menus/simple_menu_model.h"
+ 
+ class TabStripModel;
++
++namespace tabs {
++class TabInterface;
++}
+ 
+ namespace content {
+ class WebContents;
+@@ -78,6 +84,8 @@
+   void ExecuteCommand(int command_id, int event_flags) override;
+ 
+  private:
++  tabs::TabInterface* GetTargetTab() const;
++  bool HasValidSplit() const;
+   // Returns the split id for the split tabs that this menu is acting on.
+   split_tabs::SplitTabId GetSplitTabId() const;
+   const gfx::VectorIcon& GetReversePositionIcon(
+@@ -91,9 +99,11 @@
+   // purposes.
+   MenuSource menu_source_;
+ 
+-  // This represents the tab that this menu model should be operating on. If
+-  // nothing is provided, use the currently active tab.
+-  std::optional<int> split_tab_index_;
++  // Tab-specific menus retain identities across index changes. Toolbar menus
++  // are created before tabs exist and reused, so resolve the active tab lazily.
++  bool use_active_tab_ = false;
++  base::WeakPtr<tabs::TabInterface> tab_;
++  std::optional<split_tabs::SplitTabId> split_id_;
+ };
+ 
+ #endif  // CHROME_BROWSER_UI_TABS_SPLIT_TAB_MENU_MODEL_H_
+--- a/chrome/browser/ui/tabs/split_tab_menu_model.cc
++++ b/chrome/browser/ui/tabs/split_tab_menu_model.cc
+@@ -100,7 +100,11 @@
+     : ui::SimpleMenuModel(this),
+       tab_strip_model_(tab_strip_model),
+       menu_source_(menu_source),
+-      split_tab_index_(split_tab_index) {
++      use_active_tab_(!split_tab_index.has_value()) {
++  if (split_tab_index) {
++    tab_ = tab_strip_model->GetTabAtIndex(*split_tab_index)->GetWeakPtr();
++    split_id_ = tab_->GetSplit();
++  }
+   AddItemWithStringIdAndIcon(
+       GetCommandIdInt(CommandId::kExitSplit), IDS_SPLIT_TAB_SEPARATE_VIEWS,
+       ui::ImageModel::FromVectorIcon(
+@@ -158,7 +162,22 @@
+ 
+ SplitTabMenuModel::~SplitTabMenuModel() = default;
+ 
++tabs::TabInterface* SplitTabMenuModel::GetTargetTab() const {
++  return use_active_tab_ ? tab_strip_model_->GetActiveTab() : tab_.get();
++}
++
++bool SplitTabMenuModel::HasValidSplit() const {
++  auto* tab = GetTargetTab();
++  return tab && tab_strip_model_->GetIndexOfTab(tab) != TabStripModel::kNoTab &&
++         tab->GetSplit() &&
++         (use_active_tab_ || tab->GetSplit() == split_id_) &&
++         tab_strip_model_->ContainsSplit(*tab->GetSplit());
++}
++
+ bool SplitTabMenuModel::IsCommandIdEnabled(int command_id) const {
++  if (!HasValidSplit()) {
++    return false;
++  }
+   const auto id = GetCommandIdEnum(command_id);
+   if (tab_strip_model_->GetSplitData(GetSplitTabId())->ListTabs().size() > 2) {
+     return id != CommandId::kReversePosition && id != CommandId::kCloseStartTab &&
+@@ -174,6 +193,9 @@
+ }
+ 
+ std::u16string SplitTabMenuModel::GetLabelForCommandId(int command_id) const {
++  if (!HasValidSplit()) {
++    return std::u16string();
++  }
+   const CommandId id = GetCommandIdEnum(command_id);
+ 
+   if (id == CommandId::kReversePosition) {
+@@ -200,6 +222,9 @@
+ }
+ 
+ ui::ImageModel SplitTabMenuModel::GetIconForCommandId(int command_id) const {
++  if (!HasValidSplit()) {
++    return ui::ImageModel();
++  }
+   const split_tabs::SplitTabActiveLocation active_split_tab_location =
+       split_tabs::GetLastActiveTabLocation(tab_strip_model_, GetSplitTabId());
+ 
+@@ -251,8 +276,7 @@
+       tab_strip_model_->ReverseTabsInSplit(split_id);
+       break;
+     case CommandId::kCloseSpecifiedTab:
+-      CloseWebContents(
+-          tab_strip_model_->GetWebContentsAt(split_tab_index_.value()));
++      CloseWebContents(tab_->GetContents());
+       break;
+     case CommandId::kCloseStartTab: {
+       int startIndex = reverse_close_indices ? 1 : 0;
+@@ -307,12 +331,7 @@
+ }
+ 
+ split_tabs::SplitTabId SplitTabMenuModel::GetSplitTabId() const {
+-  tabs::TabInterface* const tab =
+-      split_tab_index_.has_value()
+-          ? tab_strip_model_->GetTabAtIndex(split_tab_index_.value())
+-          : tab_strip_model_->GetActiveTab();
+-  CHECK(tab->IsSplit());
+-  return tab->GetSplit().value();
++  return GetTargetTab()->GetSplit().value();
+ }
+ 
+ const gfx::VectorIcon& SplitTabMenuModel::GetReversePositionIcon(
+--- a/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
++++ b/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
+@@ -31,6 +31,7 @@
+ #include "chrome/browser/ui/tabs/split_view_layout_menu_model.h"
+ #include "chrome/browser/ui/tabs/tab_menu_model_delegate.h"
+ #include "chrome/browser/ui/tabs/tab_strip_model.h"
++#include "chrome/browser/ui/tabs/tab_strip_model_delegate.h"
+ #include "chrome/browser/ui/tabs/test_tab_strip_model_delegate.h"
+ #include "chrome/browser/ui/ui_features.h"
+ #include "chrome/browser/ui/views/tabs/tab/tab_accessibility.h"
+@@ -801,7 +802,7 @@
+ IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, FourPaneSplitAccessibleLabels) {
+   auto* model = browser()->tab_strip_model();
+   for (int i = 0; i < 3; ++i) {
+-    chrome::NewTab(browser());
++    chrome::NewTab(browser(), NewTabTypes::kNoUserAction);
+   }
+   for (auto layout : {split_tabs::SplitTabLayout::kSideBySide,
+                       split_tabs::SplitTabLayout::kStacked}) {
+@@ -896,3 +897,61 @@
+             data->visual_data()->split_layout());
+   EXPECT_FALSE(layouts->IsEnabledAt(*layouts->GetIndexOfCommandId(2050)));
+ }
++
++IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, SplitMenuSurvivesRemovedSplit) {
++  auto* model = browser()->tab_strip_model();
++  model->CreateOrUpdatePaneSplit(0, 4, split_tabs::SplitTabVisualData());
++  SplitTabMenuModel menu(model, SplitTabMenuModel::MenuSource::kTabContextMenu,
++                        0);
++  model->RemoveSplit(*model->GetTabAtIndex(0)->GetSplit());
++  const int exit_command =
++      ExistingBaseSubMenuModel::kMinSplitTabMenuModelCommandId +
++      static_cast<int>(SplitTabMenuModel::CommandId::kExitSplit);
++  EXPECT_FALSE(menu.IsCommandIdEnabled(exit_command));
++  menu.ExecuteCommand(exit_command, 0);
++  const int orientation_command =
++      ExistingBaseSubMenuModel::kMinSplitTabMenuModelCommandId +
++      static_cast<int>(SplitTabMenuModel::CommandId::kToggleOrientation);
++  EXPECT_TRUE(menu.GetLabelForCommandId(orientation_command).empty());
++  EXPECT_TRUE(menu.GetIconForCommandId(orientation_command).IsEmpty());
++}
++
++IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, SplitMenuKeepsTabIdentity) {
++  auto* model = browser()->tab_strip_model();
++  model->CreateOrUpdatePaneSplit(0, 3, split_tabs::SplitTabVisualData());
++  auto* target = model->GetWebContentsAt(1);
++  SplitTabMenuModel menu(model, SplitTabMenuModel::MenuSource::kMiniToolbar, 1);
++  model->delegate()->AddTabAt(GURL(), 0, false, std::nullopt, false);
++  ASSERT_EQ(2, model->GetIndexOfWebContents(target));
++  const int close_command =
++      ExistingBaseSubMenuModel::kMinSplitTabMenuModelCommandId +
++      static_cast<int>(SplitTabMenuModel::CommandId::kCloseSpecifiedTab);
++  ASSERT_TRUE(menu.IsCommandIdEnabled(close_command));
++  menu.ExecuteCommand(close_command, 0);
++  EXPECT_EQ(TabStripModel::kNoTab, model->GetIndexOfWebContents(target));
++  EXPECT_FALSE(menu.IsCommandIdEnabled(close_command));
++}
++
++IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, SplitToolbarMenuTracksActiveSplit) {
++  auto* model = browser()->tab_strip_model();
++  SplitTabMenuModel menu(model, SplitTabMenuModel::MenuSource::kToolbarButton);
++  const int exit_command =
++      ExistingBaseSubMenuModel::kMinSplitTabMenuModelCommandId +
++      static_cast<int>(SplitTabMenuModel::CommandId::kExitSplit);
++  EXPECT_FALSE(menu.IsCommandIdEnabled(exit_command));
++  model->CreateOrUpdatePaneSplit(0, 4, split_tabs::SplitTabVisualData());
++  EXPECT_TRUE(menu.IsCommandIdEnabled(exit_command));
++  menu.ExecuteCommand(exit_command, 0);
++  EXPECT_FALSE(menu.IsCommandIdEnabled(exit_command));
++}
++
++IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, SplitToolbarMenuWithEmptyModel) {
++  TestTabStripModelDelegate delegate;
++  TabStripModel model(&delegate, browser()->GetProfile());
++  SplitTabMenuModel menu(&model, SplitTabMenuModel::MenuSource::kToolbarButton);
++  const int exit_command =
++      ExistingBaseSubMenuModel::kMinSplitTabMenuModelCommandId +
++      static_cast<int>(SplitTabMenuModel::CommandId::kExitSplit);
++  EXPECT_FALSE(menu.IsCommandIdEnabled(exit_command));
++  menu.ExecuteCommand(exit_command, 0);
++}

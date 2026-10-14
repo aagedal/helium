@@ -160,7 +160,9 @@ covering timer deadlines, interval replacement, Off, independent tabs, tab
 destruction, loading/POST/discard skips, and valid/invalid restoration.
 Run those tests in the build environment described above.
 
-This remains an **uncompiled browser prototype**. Before shipping, verify a
+The Apple Silicon development build compiles these features, but full Chromium
+browser and timer test execution still requires an unpruned test tree. Before
+shipping, verify a
 responsive page with `innerWidth`, `innerHeight`, `devicePixelRatio`, viewport
 metadata and touch media queries; every interval in ordinary tabs and split
 panes; foreground/background refresh; POST and beforeunload handling;
@@ -168,3 +170,40 @@ disable/re-enable; switching between mobile and desktop panes; resizing;
 navigation and renderer crashes; tab hibernation; closing/reopening the saved
 workspace; tab reordering and group renaming; restart; inspector attachment;
 and unavailable saved groups/incognito. Use a development profile.
+
+## Stability review (October 2026)
+
+`helium/ui/pane-stability.patch` is applied after the layout-options patch. It
+keeps tab-specific split menus attached to the original tab and split identities
+when indices change, and disables actions, labels, and icons after that split
+disappears. Toolbar/divider menus still resolve the active tab lazily because
+they are created before tabs exist and reused across splits. Browser regressions
+cover index changes, split removal, menu reuse, and an empty tab-strip model.
+
+Selecting an unchanged auto-refresh interval preserves its deadline and avoids
+redundant session writes and view invalidation. Refresh also skips pending
+navigations. Mobile preview resizing updates device metrics without resending
+unchanged touch settings; attachment and page changes still configure both.
+Two additional `PaneSettingsTest` regressions cover timer deadlines and pending
+navigation.
+
+The upstream archive-layer merge and build-dependency pruning changes have
+regression coverage in `utils/tests/test_prepared_sources.py`. Run the utility
+checks with pytest installed:
+
+```sh
+PYTHONPATH=utils python3 -m pytest -o addopts='' utils/tests
+python3 -m pytest -o addopts='' devutils/tests
+```
+
+Review validation: all 12 utility/developer tests passed, patch lint passed,
+the five feature patches and upstream Web Store patch reversed and reapplied
+without fuzz against the cached source, and both sanitizer helper checks passed
+against the production headers. The persistent macOS component build passed,
+including the merged upstream Web Store resources, and a fresh-profile headless
+startup/rendering smoke test passed. Both the pane-settings unit-test source and
+tab-menu browser-test source compiled independently using their generated
+Chromium commands; this also fixed existing `NavigationSimulator::CreateFromPending`
+and `chrome::NewTab` test API mismatches. A Chromium regression-test build stopped
+at missing pruned test data (`chrome/test/data/extensions/extension_api_unittest/
+api_features.json`); the new browser and timer regressions remain unexecuted.

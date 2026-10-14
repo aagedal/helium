@@ -372,3 +372,4 @@ helium/ui/multi-pane-split-view.patch
 helium/ui/tab-preview-workspaces.patch
 helium/ui/four-pane-split-actions.patch
 helium/ui/split-layout-options.patch
+helium/ui/pane-stability.patch
