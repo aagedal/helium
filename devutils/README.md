@@ -68,3 +68,68 @@ pairs and ordinary tabs; resizing; devtools and modal dialogs in each pane;
 exit/close/detach; pinned/grouped tabs; vertical/horizontal tab strips;
 fullscreen; right-to-left layout; and restart/recently-closed restore.
 All contributions and any future PR must stay within the private fork.
+
+## Mobile preview workspaces and per-tab auto-refresh
+
+`helium/ui/tab-preview-workspaces.patch` extends the four-pane prototype.
+Right-click an individual tab and open **Tab view**:
+
+- **Mobile preview (402 × 874)** toggles a fixed portrait viewport with 3×
+  device density and mobile viewport/touch emulation. The page is centered and
+  scaled down to fit its pane, keeping its CSS viewport unchanged when the
+  window or divider is resized. It uses Chromium's emulation API without
+  opening a DevTools window, device toolbar, or console.
+- **Create desktop/mobile workspace** creates two copies of the page in a
+  named **Desktop + mobile** saved tab group, pins that group, and splits the
+  copies side by side with more space for desktop. The original tab is retained.
+  Rename the group using the normal group menu. This action requires a regular
+  profile with saved groups enabled.
+- **Auto-refresh** offers **Off** and every 15 seconds through 180 seconds
+  (15, 30, 45, …, 180). It applies only to the right-clicked tab, even if several
+  tabs are selected or belong to one split. Off is the default.
+
+The preset matches the 402 × 874 CSS-pixel dimensions corresponding to the
+[standard iPhone 17's 1206 × 2622 display](https://support.apple.com/en-us/125089)
+at 3× density. This is a Chromium responsive preview: it does not emulate
+Safari/WebKit, an iPhone user agent, browser bars, or a screen cutout.
+Server-side user-agent detection still sees the normal browser.
+
+Tab settings are included in session snapshots and recently closed tab data
+and copied when a tab is discarded. Refresh skips loading, crashed, discarded,
+non-HTTP(S), and POST pages. Closing a tab destroys its timer. Mobile preview
+does not take over an already attached inspector; attachment/protocol failures
+clear the toggle. Normal developer tools remain available when explicitly
+opened.
+
+Saved groups store tab settings locally using stable saved-tab IDs. Reopening
+a preview workspace reconstructs its desktop/mobile pair when both saved tabs
+still exist, including after reordering or renaming. These extra settings and
+the pair layout are local to the profile and are not synced to other devices.
+Reopened workspaces use the default side-by-side orientation and 65/35 divider;
+last-session restore retains the normal split layout/ratio. Creation during
+saved-group service initialization still needs browser validation.
+
+### Validation
+
+```sh
+python3 devutils/lint.py
+python3 devutils/test_multi_pane_split.py
+python3 devutils/test_tab_preview.py
+```
+
+The preview check compiles the production fit/interval helper with C++20 and
+address/undefined-behavior sanitizers, exercising 132 viewport cases and
+601 interval values. It does not compile the browser or exercise a timer.
+The patch adds `PaneSettingsTest.*` to Chromium's existing unit-test target,
+covering timer deadlines, interval replacement, Off, independent tabs, tab
+destruction, loading/POST/discard skips, and valid/invalid restoration.
+Run those tests in the build environment described above.
+
+This remains an **uncompiled browser prototype**. Before shipping, verify a
+responsive page with `innerWidth`, `innerHeight`, `devicePixelRatio`, viewport
+metadata and touch media queries; every interval in ordinary tabs and split
+panes; foreground/background refresh; POST and beforeunload handling;
+disable/re-enable; switching between mobile and desktop panes; resizing;
+navigation and renderer crashes; tab hibernation; closing/reopening the saved
+workspace; tab reordering and group renaming; restart; inspector attachment;
+and unavailable saved groups/incognito. Use a development profile.
