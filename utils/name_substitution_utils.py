@@ -15,7 +15,9 @@ REPLACEMENT_REGEXES_STR = [
 
     # main replacement(s)
     (r'(\b)chrome://', r'\1helium://'),
-    (r'(?:Google )?Chrom(e|ium)(?!\w)', r'Helium'),
+    (r'(?:Google )?Chrom(e|ium)(?!\w)', r'Helium Neo'),
+
+    (r'\bHelium\b(?! Neo| Authors)', r'Helium Neo'),
 
     # post-replacement cleanup
     (r'((?:Google )?Chrom(e|ium))_unreplace', r'\1'),
@@ -141,7 +143,8 @@ def replace_grit_tree(text):
             if old_fp != new_fp:
                 fp_map[old_fp] = new_fp
 
-    return xml.tostring(xml_tree, encoding='unicode', xml_declaration=True), fp_map
+    return xml.tostring(xml_tree, encoding='unicode',
+                         xml_declaration=text.lstrip().startswith('<?xml')), fp_map
 
 
 def dedup_translations_in_place(translation, seen):
@@ -174,7 +177,8 @@ def replace_xtb_tree(text, fp_map):
         dedup_translations_in_place(translation, ids_seen)
 
     if changed:
-        return xml.tostring(xml_tree, encoding='unicode', xml_declaration=True)
+        return xml.tostring(xml_tree, encoding='unicode',
+                         xml_declaration=text.lstrip().startswith('<?xml'))
 
     return None
 

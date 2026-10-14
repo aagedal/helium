@@ -14,6 +14,7 @@ import os
 import io
 
 import name_substitution_utils as util
+from neo_branding import apply_macos_identity
 
 IGNORE_DIRS = ['.pc', 'chromeos', 'remoting', 'ash', 'testdata']
 
@@ -23,14 +24,15 @@ def replacement_sanity():
     before_after = [
         ('chrome://about', 'helium://about'),
         ('Chrome Root Program', 'Chrome Root Program'),
-        (' Chrome  ', ' Helium  '),
+        (' Chrome  ', ' Helium Neo  '),
         ('Chrome Web Store', 'Chrome Web Store'),
         ('Chromium Web Store', 'Chromium Web Store'),
         ('Chrome Remote Desktop', 'Chrome Remote Desktop'),
-        ('Google Chrome', 'Helium'),
-        ('Chrome Google Chrome Chrome Chromium', 'Helium Helium Helium Helium'),
-        ('Chrome', 'Helium'),
-        ('Chromium', 'Helium'),
+        ('Google Chrome', 'Helium Neo'),
+        ('Chrome Google Chrome Chrome Chromium', 'Helium Neo Helium Neo Helium Neo Helium Neo'),
+        ('Chrome', 'Helium Neo'),
+        ('Chromium', 'Helium Neo'),
+        ('Helium settings', 'Helium Neo settings'),
     ]
 
     for source, expected in before_after:
@@ -168,6 +170,7 @@ def maybe_make_tarball(tar_path, modified_files):
 
 def do_substitution(tree, tarpath, workers, dry_run):
     """Performs name substitutions on all candidate files"""
+    identity_backups = apply_macos_identity(tree, dry_run=dry_run)
     util.add_grit_to_path(tree)
 
     files = list(get_substitutable_files(tree, ['grd', 'grdp']))
@@ -187,7 +190,9 @@ def do_substitution(tree, tarpath, workers, dry_run):
         results = executor.map(substitute_xtb_file, file_args)
         modified_files += [r for r in results if r is not None]
 
-    maybe_make_tarball(tarpath, map(lambda f: f[0], modified_files))
+    maybe_make_tarball(tarpath,
+                       identity_backups + [f[0] for f in modified_files
+                                           if f[0] is not None])
     print(f"Modified {len(modified_files)} files")
 
 

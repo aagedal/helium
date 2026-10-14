@@ -11,12 +11,12 @@
 -MAC_BUNDLE_ID=org.chromium.Chromium
 +COMPANY_FULLNAME=The Helium Authors
 +COMPANY_SHORTNAME=The Helium Authors
-+PRODUCT_FULLNAME=Helium
-+PRODUCT_SHORTNAME=Helium
-+PRODUCT_INSTALLER_FULLNAME=Helium Installer
-+PRODUCT_INSTALLER_SHORTNAME=Helium Installer
++PRODUCT_FULLNAME=Helium Neo
++PRODUCT_SHORTNAME=Helium Neo
++PRODUCT_INSTALLER_FULLNAME=Helium Neo Installer
++PRODUCT_INSTALLER_SHORTNAME=Helium Neo Installer
 +COPYRIGHT=Copyright @LASTCHANGE_YEAR@ The Helium Authors. All rights reserved.
-+MAC_BUNDLE_ID=net.imput.helium
++MAC_BUNDLE_ID=no.aagedal.helium-neo
  MAC_CREATOR_CODE=Cr24
 -MAC_TEAM_ID=
 +MAC_TEAM_ID=S4Q33XPHB4

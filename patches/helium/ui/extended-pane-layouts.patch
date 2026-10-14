@@ -1,0 +1,672 @@
+--- a/chrome/app/generated_resources.grd
++++ b/chrome/app/generated_resources.grd
+@@ -282,6 +282,8 @@
+       <message name="IDS_HELIUM_LAYOUT_LEFT_THREE" desc="Split pane arrangement with 4 pages.">One Left, Three Right</message>
+       <message name="IDS_HELIUM_LAYOUT_THREE_LEFT" desc="Split pane arrangement with 4 pages.">Three Left, One Right</message>
+       <message name="IDS_HELIUM_LAYOUT_TOP_THREE" desc="Split pane arrangement with 4 pages.">One Above, Three Below</message>
++      <message name="IDS_HELIUM_LAYOUT_GRID_THREE_TWO" desc="Split arrangement with six pages in three columns and two rows.">3 × 2 Grid</message>
++      <message name="IDS_HELIUM_LAYOUT_TWO_LEFT_THREE_COLUMNS" desc="Five pages: two stacked in the leftmost column and three full-height columns to their right.">Two Stacked Left + Three Columns</message>
+       <message name="IDS_HELIUM_LAYOUT_THREE_TOP" desc="Split pane arrangement with 4 pages.">Three Above, One Below</message>
+       <message name="IDS_HELIUM_CREATE_FOUR_PANE_SPLIT" desc="Tab context menu action creating a grid with this tab and three new tabs.">Create Four-Way Split</message>
+       <message name="IDS_HELIUM_EXPAND_FOUR_PANE_SPLIT" desc="Tab context menu action adding new tabs to fill an existing split to four panes.">Expand to Four-Way Split</message>
+--- a/chrome/browser/sessions/session_restore.cc
++++ b/chrome/browser/sessions/session_restore.cc
+@@ -1077,7 +1077,7 @@
+ 
+     for (const auto& [split_id, tabs] : tabs_by_split_id) {
+       // Skip incomplete splits and layouts newer than this implementation.
+-      if (tabs.size() < 2 || tabs.size() > 4) {
++      if (tabs.size() < 2 || tabs.size() > split_tabs::kMaxSplitPanes) {
+         continue;
+       }
+       std::vector<int> tab_indices;
+--- a/chrome/browser/sessions/session_restore_browsertest.cc
++++ b/chrome/browser/sessions/session_restore_browsertest.cc
+@@ -1480,6 +1480,52 @@
+             2u);
+ }
+ 
++IN_PROC_BROWSER_TEST_F(SessionRestoreTest, SixPaneGridRestored) {
++  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), GetUrl1()));
++  for (int i = 1; i < 6; ++i) {
++    ui_test_utils::NavigateToURLWithDisposition(
++        browser(), GetUrl1(), WindowOpenDisposition::NEW_FOREGROUND_TAB,
++        ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP);
++  }
++  auto* model = browser()->tab_strip_model();
++  model->ActivateTabAt(0);
++  split_tabs::SplitTabVisualData expected(
++      split_tabs::SplitTabLayout::kStacked, .57);
++  expected.set_arrangement(split_tabs::SplitTabArrangement::kGrid);
++  expected.set_pane_weights({0.6, 1.4, 1, 1.2, 0.9, 0.9});
++  const auto split = model->AddToNewSplit(
++      {0, 1, 2, 3, 4, 5}, expected,
++      split_tabs::SplitTabCreatedSource::kTabContextMenu);
++  auto* restored = QuitBrowserAndRestore(browser());
++  ASSERT_TRUE(restored->GetTabStripModel()->ContainsSplit(split));
++  const auto* data = restored->GetTabStripModel()->GetSplitData(split);
++  EXPECT_EQ(6u, data->ListTabs().size());
++  EXPECT_EQ(expected, *data->visual_data());
++}
++
++IN_PROC_BROWSER_TEST_F(SessionRestoreTest, FivePaneMixedLayoutRestored) {
++  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), GetUrl1()));
++  for (int i = 1; i < 5; ++i) {
++    ui_test_utils::NavigateToURLWithDisposition(
++        browser(), GetUrl1(), WindowOpenDisposition::NEW_FOREGROUND_TAB,
++        ui_test_utils::BROWSER_TEST_WAIT_FOR_LOAD_STOP);
++  }
++  auto* model = browser()->tab_strip_model();
++  model->ActivateTabAt(0);
++  split_tabs::SplitTabVisualData expected(
++      split_tabs::SplitTabLayout::kSideBySide, .25);
++  expected.set_arrangement(split_tabs::SplitTabArrangement::kLeadingStacked);
++  expected.set_pane_weights({0.6, 1.4, 0.8, 1.2, 1, 1});
++  const auto split = model->AddToNewSplit(
++      {0, 1, 2, 3, 4}, expected,
++      split_tabs::SplitTabCreatedSource::kTabContextMenu);
++  auto* restored = QuitBrowserAndRestore(browser());
++  ASSERT_TRUE(restored->GetTabStripModel()->ContainsSplit(split));
++  const auto* data = restored->GetTabStripModel()->GetSplitData(split);
++  EXPECT_EQ(5u, data->ListTabs().size());
++  EXPECT_EQ(expected, *data->visual_data());
++}
++
+ IN_PROC_BROWSER_TEST_F(SessionRestoreTest, CustomSplitPaneSizesRestored) {
+   ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), GetUrl1()));
+   for (int i = 1; i < 4; ++i) {
+@@ -1492,7 +1538,7 @@
+   split_tabs::SplitTabVisualData expected(
+       split_tabs::SplitTabLayout::kStacked, 0.6);
+   expected.set_arrangement(split_tabs::SplitTabArrangement::kLeadingSingle);
+-  expected.set_pane_weights({1, 1.7, 0.8, 0.5});
++  expected.set_pane_weights({1, 1.7, 0.8, 0.5, 1, 1});
+   const auto split = model->AddToNewSplit(
+       {0, 1, 2, 3}, expected,
+       split_tabs::SplitTabCreatedSource::kTabContextMenu);
+--- a/chrome/browser/sessions/session_service_unittest.cc
++++ b/chrome/browser/sessions/session_service_unittest.cc
+@@ -1312,11 +1312,12 @@
+   for (auto arrangement : {split_tabs::SplitTabArrangement::kGrid,
+                             split_tabs::SplitTabArrangement::kLinear,
+                             split_tabs::SplitTabArrangement::kLeadingSingle,
+-                            split_tabs::SplitTabArrangement::kTrailingSingle}) {
++                            split_tabs::SplitTabArrangement::kTrailingSingle,
++                            split_tabs::SplitTabArrangement::kLeadingStacked}) {
+     split_tabs::SplitTabVisualData data(split_tabs::SplitTabLayout::kStacked,
+                                         0.65);
+     data.set_arrangement(arrangement);
+-    data.set_pane_weights({0.6, 1.4, 1.2, 0.8});
++    data.set_pane_weights({0.6, 1.4, 1.2, 0.8, 1, 1});
+     service()->SetSplitTabData(window_id, split, &data);
+     std::vector<std::unique_ptr<sessions::SessionWindow>> windows;
+     ReadWindows(&windows, nullptr, nullptr, nullptr);
+--- a/chrome/browser/ui/tabs/split_tab_menu_model.cc
++++ b/chrome/browser/ui/tabs/split_tab_menu_model.cc
+@@ -309,11 +309,8 @@
+       }
+       tab_strip_model_->UpdateSplitLayout(split_id, new_layout, source);
+       const auto arrangement = split_tab_data->visual_data()->arrangement();
+-      const double ratio = arrangement == split_tabs::SplitTabArrangement::kLinear
+-                               ? static_cast<double>(split_tabs::FirstSplitPaneCount(
+-                                     tabs_in_split.size(), arrangement)) /
+-                                     tabs_in_split.size()
+-                               : 0.5;
++      const double ratio = split_tabs::DefaultSplitPaneRatio(tabs_in_split.size(),
++                                                              arrangement);
+       tab_strip_model_->UpdateSplitRatio(split_id, ratio);
+       break;
+     }
+--- a/chrome/browser/ui/tabs/tab_menu_model.cc
++++ b/chrome/browser/ui/tabs/tab_menu_model.cc
+@@ -115,6 +115,10 @@
+      split_tabs::SplitTabArrangement::kLeadingSingle, IDS_HELIUM_LAYOUT_TOP_THREE},
+     {4, split_tabs::SplitTabLayout::kStacked,
+      split_tabs::SplitTabArrangement::kTrailingSingle, IDS_HELIUM_LAYOUT_THREE_TOP},
++    {6, split_tabs::SplitTabLayout::kStacked,
++     split_tabs::SplitTabArrangement::kGrid, IDS_HELIUM_LAYOUT_GRID_THREE_TWO},
++    {5, split_tabs::SplitTabLayout::kSideBySide,
++     split_tabs::SplitTabArrangement::kLeadingStacked, IDS_HELIUM_LAYOUT_TWO_LEFT_THREE_COLUMNS},
+ };
+ constexpr int kFirstPaneLayoutCommand = 2050;
+ 
+@@ -124,7 +128,7 @@
+   PaneLayoutMenuModel(TabStripModel* model, tabs::TabInterface* tab)
+       : ui::SimpleMenuModel(this), model_(model), tab_(tab->GetWeakPtr()) {
+     for (size_t i = 0; i < std::size(kPaneLayouts); ++i) {
+-      if (i == 5 || i == 9) {
++      if (i == 5 || i == 9 || i == 13) {
+         AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
+       }
+       AddCheckItem(kFirstPaneLayoutCommand + i,
+@@ -159,10 +163,8 @@
+       return;
+     }
+     const auto& option = kPaneLayouts[command - kFirstPaneLayoutCommand];
+-    const double ratio = option.arrangement == split_tabs::SplitTabArrangement::kLinear
+-                             ? static_cast<double>(split_tabs::FirstSplitPaneCount(
+-                                   option.count, option.arrangement)) / option.count
+-                             : 0.5;
++    const double ratio = split_tabs::DefaultSplitPaneRatio(option.count,
++                                                            option.arrangement);
+     split_tabs::SplitTabVisualData visual_data(option.orientation, ratio);
+     visual_data.set_arrangement(option.arrangement);
+     model_->CreateOrUpdatePaneSplit(model_->GetIndexOfTab(tab_.get()),
+@@ -501,7 +503,7 @@
+       }
+       const int add_to_split_index = GetItemCount() - 1;
+       SetEnabledAt(add_to_split_index,
+-                   num_tabs >= 1 && num_tabs <= 4 &&
++                   num_tabs >= 1 && num_tabs <= split_tabs::kMaxSplitPanes &&
+                        std::ranges::none_of(indices, [this](int i) {
+                          return tab_strip_->GetTabAtIndex(i)->IsSplit();
+                        }));
+--- a/chrome/browser/ui/tabs/tab_strip_model.cc
++++ b/chrome/browser/ui/tabs/tab_strip_model.cc
+@@ -2098,7 +2098,7 @@
+ 
+ void TabStripModel::UpdateSplitPaneWeights(
+     split_tabs::SplitTabId split_id,
+-    const std::array<double, 4>& weights,
++    const std::array<double, 6>& weights,
+     bool is_intermediate) {
+   ReentrancyCheck reentrancy_check(&reentrancy_guard_);
+   auto* split_data = GetSplitData(split_id);
+@@ -2160,7 +2160,7 @@
+     split_tabs::SplitTabCreatedSource source) {
+   ReentrancyCheck reentrancy_check(&reentrancy_guard_);
+ 
+-  CHECK(!indices.empty() && indices.size() <= 4u)
++  CHECK(!indices.empty() && indices.size() <= split_tabs::kMaxSplitPanes)
+       << "Invalid index count: " << indices.size();
+ 
+   // If there is only one entry in `indices`, use the active index as the pivot
+@@ -2204,7 +2204,7 @@
+   ReentrancyCheck reentrancy_check(&reentrancy_guard_);
+   CHECK(std::ranges::is_sorted(indices));
+   CHECK_GE(indices.size(), 2u);
+-  CHECK_LE(indices.size(), 4u);
++  CHECK_LE(indices.size(), split_tabs::kMaxSplitPanes);
+ 
+   // Ideally these are consecutive indices from the restore flow and the pivot
+   // index does not matter. However, given there are numerous steps in restore
+@@ -3398,7 +3398,7 @@
+     int context_index,
+     size_t pane_count,
+     split_tabs::SplitTabVisualData visual_data) {
+-  if (!ContainsIndex(context_index) || pane_count < 2 || pane_count > 4) {
++  if (!ContainsIndex(context_index) || pane_count < 2 || pane_count > split_tabs::kMaxSplitPanes) {
+     return;
+   }
+   tabs::TabInterface* context_tab = GetTabAtIndex(context_index);
+@@ -3454,7 +3454,7 @@
+   if (indices.size() >= 3) {
+     // Preserve the complete selection. The legacy delegate infers a pair from
+     // one inactive tab, so its active-tab removal must only apply to pairs.
+-    if (indices.size() > 4 ||
++    if (indices.size() > split_tabs::kMaxSplitPanes ||
+         std::ranges::any_of(indices, [this](int index) {
+           return GetTabAtIndex(index)->IsSplit();
+         })) {
+--- a/chrome/browser/ui/tabs/tab_strip_model.h
++++ b/chrome/browser/ui/tabs/tab_strip_model.h
+@@ -653,7 +653,7 @@
+                         bool is_intermediate = false);
+ 
+   void UpdateSplitPaneWeights(split_tabs::SplitTabId split_id,
+-                              const std::array<double, 4>& weights,
++                              const std::array<double, 6>& weights,
+                               bool is_intermediate = false);
+ 
+   // Updates the split tab at index `split_index` with the tab at
+--- a/chrome/browser/ui/tabs/tab_strip_model_unittest.cc
++++ b/chrome/browser/ui/tabs/tab_strip_model_unittest.cc
+@@ -3237,13 +3237,32 @@
+   EXPECT_EQ("0 1 2s 3s 4", GetTabStripStateString(tabstrip()));
+ }
+ 
++TEST_F(TabStripModelTest, SixPaneSplitSelectionAndFocus) {
++  PrepareTabs(tabstrip(), 7);
++  tabstrip()->ActivateTabAt(0);
++  const auto split = tabstrip()->AddToNewSplit(
++      {0, 1, 2, 3, 4, 5}, split_tabs::SplitTabVisualData(),
++      split_tabs::SplitTabCreatedSource::kTabContextMenu);
++  ASSERT_EQ(6u, tabstrip()->GetSplitData(split)->ListTabs().size());
++  const std::array<double, 6> weights = {0.6, 1.4, 1, 1.2, 0.9, 0.9};
++  tabstrip()->UpdateSplitPaneWeights(split, weights);
++  for (int i = 0; i < 6; ++i) {
++    tabstrip()->ActivateTabAt(i);
++    EXPECT_EQ(6u, tabstrip()->GetForegroundTabs().size());
++  }
++  tabstrip()->ActivateTabAt(6);
++  EXPECT_EQ(1u, tabstrip()->GetForegroundTabs().size());
++  tabstrip()->ActivateTabAt(5);
++  EXPECT_EQ(weights, tabstrip()->GetSplitData(split)->visual_data()->pane_weights());
++}
++
+ TEST_F(TabStripModelTest, SplitPaneSizesSurviveTabActivation) {
+   PrepareTabs(tabstrip(), 5);
+   tabstrip()->ActivateTabAt(0);
+   const auto split = tabstrip()->AddToNewSplit(
+       {0, 1, 2, 3}, split_tabs::SplitTabVisualData(),
+       split_tabs::SplitTabCreatedSource::kTabContextMenu);
+-  const std::array<double, 4> weights = {0.6, 1.4, 1.2, 0.8};
++  const std::array<double, 6> weights = {0.6, 1.4, 1.2, 0.8, 1, 1};
+   tabstrip()->UpdateSplitPaneWeights(split, weights);
+   tabstrip()->ActivateTabAt(4);
+   tabstrip()->ActivateTabAt(2);
+--- a/chrome/browser/ui/views/frame/multi_contents_view.cc
++++ b/chrome/browser/ui/views/frame/multi_contents_view.cc
+@@ -106,7 +106,7 @@
+   contents_container_views_.push_back(
+       AddChildView(std::make_unique<ContentsContainerView>(browser_view_)));
+   contents_container_views_[1]->SetVisible(false);
+-  for (int i = 2; i < 4; ++i) {
++  for (size_t i = 2; i < split_tabs::kMaxSplitPanes; ++i) {
+     auto* pane = AddChildView(
+         std::make_unique<ContentsContainerView>(browser_view_));
+     pane->SetVisible(false);
+@@ -468,10 +468,12 @@
+ }
+ 
+ void MultiContentsView::UpdatePaneResizeAreas() {
+-  const bool vertical =
+-      (GetSplitLayout() == split_tabs::SplitTabLayout::kSideBySide) !=
+-      (visual_data_.arrangement() == split_tabs::SplitTabArrangement::kLinear);
++  const size_t first_count = split_tabs::FirstSplitPaneCount(
++      pane_count_, visual_data_.arrangement());
+   for (size_t i = 0; i < pane_resize_areas_.size(); ++i) {
++    const bool vertical = split_tabs::SplitPaneGroupIsVertical(
++        GetSplitLayout(), visual_data_.arrangement(),
++        FirstPaneAtBoundary(i) < first_count);
+     pane_resize_areas_[i]->SetLayout(
+         vertical ? split_tabs::SplitTabLayout::kStacked
+                  : split_tabs::SplitTabLayout::kSideBySide);
+@@ -980,12 +982,17 @@
+   int min_start = GetMinViewSize(available_space);
+   int min_end = min_start;
+   if (pane_count_ > 2) {
+-    const bool linear = visual_data_.arrangement() ==
+-                        split_tabs::SplitTabArrangement::kLinear;
+-    const int first_count = linear ? split_tabs::FirstSplitPaneCount(
+-                                        pane_count_, visual_data_.arrangement())
+-                                   : 1;
+-    const int end_count = linear ? pane_count_ - first_count : 1;
++    const size_t leading_count = split_tabs::FirstSplitPaneCount(
++        pane_count_, visual_data_.arrangement());
++    const bool primary_vertical = GetSplitLayout() == split_tabs::SplitTabLayout::kStacked;
++    const int first_count = split_tabs::SplitPaneGroupIsVertical(
++                                GetSplitLayout(), visual_data_.arrangement(), true) ==
++                                    primary_vertical
++                               ? leading_count : 1;
++    const int end_count = split_tabs::SplitPaneGroupIsVertical(
++                              GetSplitLayout(), visual_data_.arrangement(), false) ==
++                                  primary_vertical
++                             ? pane_count_ - leading_count : 1;
+     // The pair's minimum is too large for three or four rows, often leaving
+     // no usable drag range. Keep a minimum for each leaf instead.
+     const int leaf_min = std::min(
+--- a/chrome/browser/ui/views/frame/multi_contents_view.h
++++ b/chrome/browser/ui/views/frame/multi_contents_view.h
+@@ -44,7 +44,7 @@
+ class WebView;
+ }  // namespace views
+ 
+-// MultiContentsView shows up to four contents web views, with two-pane splits
++// MultiContentsView shows up to six contents web views, with two-pane splits
+ // or a mixed horizontal/vertical grid, and manages their relative layout.
+ class MultiContentsView
+     : public views::View,
+@@ -329,13 +329,13 @@
+   // each other.
+   raw_ptr<MultiContentsResizeArea> resize_area_ = nullptr;
+ 
+-  std::array<raw_ptr<MultiContentsResizeArea>, 2> pane_resize_areas_{};
++  std::array<raw_ptr<MultiContentsResizeArea>, 4> pane_resize_areas_{};
+   struct PaneResizeState {
+-    std::array<double, 4> weights;
++    std::array<double, 6> weights;
+     int initial_size;
+     int total_size;
+   };
+-  std::array<std::optional<PaneResizeState>, 2> pane_resize_state_{};
++  std::array<std::optional<PaneResizeState>, 4> pane_resize_state_{};
+   void UpdatePaneResizeAreas();
+   size_t FirstPaneAtBoundary(size_t boundary) const;
+ 
+@@ -357,7 +357,7 @@
+ 
+   // Current ratio of |contents_views_|'s first ContentsContainerView's width /
+   // overall contents view width.
+-  // Two-pane splits retain their original layout. Three/four panes subdivide
++  // Two-pane splits retain their original layout. Additional panes subdivide
+   // each half on the opposite axis, producing a mixed-orientation grid.
+   size_t pane_count_ = 2;
+   split_tabs::SplitTabVisualData visual_data_;
+--- a/chrome/browser/ui/views/frame/multi_contents_view_delegate.cc
++++ b/chrome/browser/ui/views/frame/multi_contents_view_delegate.cc
+@@ -88,7 +88,7 @@
+   }
+ }
+ 
+-void MultiContentsViewDelegateImpl::ResizePaneContents(const std::array<double, 4>& weights,
++void MultiContentsViewDelegateImpl::ResizePaneContents(const std::array<double, 6>& weights,
+                                                       bool done_resizing) {
+   const std::optional<split_tabs::SplitTabId> split_tab_id =
+       tab_strip_model_->GetActiveTab()->GetSplit();
+--- a/chrome/browser/ui/views/frame/multi_contents_view_delegate.h
++++ b/chrome/browser/ui/views/frame/multi_contents_view_delegate.h
+@@ -23,7 +23,7 @@
+ 
+   virtual void WebContentsFocused(content::WebContents* contents) = 0;
+   virtual void ResizeWebContents(double ratio, bool done_resizing) = 0;
+-  virtual void ResizePaneContents(const std::array<double, 4>& weights,
++  virtual void ResizePaneContents(const std::array<double, 6>& weights,
+                                   bool done_resizing) {}
+   virtual void ReverseWebContents() = 0;
+ };
+@@ -46,7 +46,7 @@
+   // Must already be in a split.
+   void ResizeWebContents(double ratio, bool done_resizing) override;
+ 
+-  void ResizePaneContents(const std::array<double, 4>& weights,
++  void ResizePaneContents(const std::array<double, 6>& weights,
+                           bool done_resizing) override;
+ 
+   // Reverses the order of split tabs.
+--- a/components/sessions/core/session_service_commands.cc
++++ b/components/sessions/core/session_service_commands.cc
+@@ -847,19 +847,26 @@
+             SplitTabLayoutFromString(split_layout_str), split_ratio);
+         // Older session commands end after the orientation string.
+         int arrangement = 0;
+-        if (iter.ReadInt(&arrangement) && arrangement >= 0 && arrangement <= 3) {
++        if (iter.ReadInt(&arrangement) && arrangement >= 0 && arrangement <= 4) {
+           split->split_visual_data_.set_arrangement(
+               static_cast<split_tabs::SplitTabArrangement>(arrangement));
+           // Optional tail: older commands keep equal subdivisions.
+-          std::array<double, 4> weights;
++          std::array<double, 6> weights = {1, 1, 1, 1, 1, 1};
+           bool complete = true;
+-          for (double& weight : weights) {
+-            if (!iter.ReadDouble(&weight)) {
++          // Older custom sessions contain four weights; the extra two are an
++          // optional tail so existing sessions continue to restore unchanged.
++          for (size_t i = 0; i < 4; ++i) {
++            if (!iter.ReadDouble(&weights[i])) {
+               complete = false;
+               break;
+             }
+           }
+           if (complete) {
++            for (size_t i = 4; i < weights.size(); ++i) {
++              if (!iter.ReadDouble(&weights[i])) {
++                break;
++              }
++            }
+             split->split_visual_data_.set_pane_weights(weights);
+           }
+         }
+--- a/components/split_tabs/split_tab_visual_data.h
++++ b/components/split_tabs/split_tab_visual_data.h
+@@ -1,220 +1,246 @@
+ // Copyright 2025 The Chromium Authors
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
+ #ifndef COMPONENTS_SPLIT_TABS_SPLIT_TAB_VISUAL_DATA_H_
+ #define COMPONENTS_SPLIT_TABS_SPLIT_TAB_VISUAL_DATA_H_
+ 
+ #include <algorithm>
+ #include <array>
+ #include <cmath>
+ #include <cstddef>
+ 
+ namespace split_tabs {
++
++inline constexpr size_t kMaxSplitPanes = 6;
+ 
+ // Orientation of a split view. Needs to be kept in sync with
+ // tab_search::mojom::SplitTabLayout in
+ // chrome/browser/ui/webui/tab_search/tab_search.mojom.
+ // LINT.IfChange(SplitTabLayout)
+ enum class SplitTabLayout {
+   // Two tabs will display next to each other, side-by-side.
+   kSideBySide,
+   // Two tabs will appear stacked, one above the other.
+   kStacked,
+   kMaxValue = kStacked
+ };
+ // LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:SplitTabLayout)
+ 
+-// Bounds for one leaf in the experimental four-pane grid. This helper has no
++// Bounds for one leaf in the experimental multi-pane layout. This helper has no
+ // Views dependency, so the partitioning can be tested without a browser build.
+ struct GridPaneBounds {
+   int x = 0;
+   int y = 0;
+   int width = 0;
+   int height = 0;
+ };
+ 
+-inline std::array<GridPaneBounds, 4> CalculateGridPaneBounds(
++inline std::array<GridPaneBounds, kMaxSplitPanes> CalculateGridPaneBounds(
+     GridPaneBounds start,
+     GridPaneBounds end,
+     size_t pane_count,
+     SplitTabLayout layout) {
+-  std::array<GridPaneBounds, 4> panes{};
++  std::array<GridPaneBounds, kMaxSplitPanes> panes{};
+   if (pane_count < 2 || pane_count > panes.size()) {
+     return panes;
+   }
+   const size_t first_half_count = (pane_count + 1) / 2;
+   const auto subdivide = [&](GridPaneBounds bounds, size_t first, size_t count) {
+     for (size_t i = 0; i < count; ++i) {
+       auto pane = bounds;
+       const bool vertical = layout == SplitTabLayout::kSideBySide;
+       const int extent = vertical ? bounds.height : bounds.width;
+       const int begin = extent * static_cast<int>(i) / static_cast<int>(count);
+       const int limit =
+           extent * static_cast<int>(i + 1) / static_cast<int>(count);
+       if (vertical) {
+         pane.y += begin;
+         pane.height = limit - begin;
+       } else {
+         pane.x += begin;
+         pane.width = limit - begin;
+       }
+       panes[first + i] = pane;
+     }
+   };
+   subdivide(start, 0, first_half_count);
+   subdivide(end, first_half_count, pane_count - first_half_count);
+   return panes;
+ }
+ 
+ // Partitioning within each side of the main, resizable divider.
+ // Values are stored in session commands; do not renumber.
+ enum class SplitTabArrangement {
+   kGrid = 0,
+   kLinear = 1,
+   kLeadingSingle = 2,
+   kTrailingSingle = 3,
++  kLeadingStacked = 4,
+ };
+ 
+ inline size_t FirstSplitPaneCount(size_t count, SplitTabArrangement arrangement) {
++  if (arrangement == SplitTabArrangement::kLeadingStacked) {
++    return std::min<size_t>(2, count - 1);
++  }
+   if (arrangement == SplitTabArrangement::kLeadingSingle) {
+     return 1;
+   }
+   if (arrangement == SplitTabArrangement::kTrailingSingle) {
+     return count - 1;
+   }
+   return (count + 1) / 2;
+ }
+ 
+-inline std::array<GridPaneBounds, 4> CalculateSplitPaneBounds(
++inline bool SplitPaneGroupIsVertical(SplitTabLayout layout,
++                                     SplitTabArrangement arrangement,
++                                     bool leading) {
++  const bool vertical = (layout == SplitTabLayout::kSideBySide) !=
++                        (arrangement == SplitTabArrangement::kLinear);
++  return arrangement == SplitTabArrangement::kLeadingStacked && !leading
++             ? !vertical
++             : vertical;
++}
++
++inline double DefaultSplitPaneRatio(size_t count,
++                                    SplitTabArrangement arrangement) {
++  if (arrangement == SplitTabArrangement::kLinear) {
++    return static_cast<double>(FirstSplitPaneCount(count, arrangement)) / count;
++  }
++  if (arrangement == SplitTabArrangement::kLeadingStacked) {
++    return 1.0 / (count - 1);
++  }
++  return 0.5;
++}
++
++inline std::array<GridPaneBounds, kMaxSplitPanes> CalculateSplitPaneBounds(
+     GridPaneBounds start,
+     GridPaneBounds end,
+     size_t count,
+     SplitTabLayout layout,
+     SplitTabArrangement arrangement,
+-    const std::array<double, 4>& weights = {1, 1, 1, 1},
++    const std::array<double, 6>& weights = {1, 1, 1, 1, 1, 1},
+     int divider_size = 0) {
+-  std::array<GridPaneBounds, 4> panes{};
++  std::array<GridPaneBounds, kMaxSplitPanes> panes{};
+   if (count < 2 || count > panes.size()) {
+     return panes;
+   }
+   const size_t first_count = FirstSplitPaneCount(count, arrangement);
+-  const bool vertical = (layout == SplitTabLayout::kSideBySide) !=
+-                        (arrangement == SplitTabArrangement::kLinear);
+   const auto subdivide = [&](GridPaneBounds bounds, size_t first, size_t size) {
++    const bool vertical = SplitPaneGroupIsVertical(layout, arrangement, first == 0);
+     const int extent = vertical ? bounds.height : bounds.width;
+     const int gap = size > 1
+                         ? std::clamp(divider_size, 0,
+                                      extent / static_cast<int>(size - 1))
+                         : 0;
+     const int content_extent = extent - gap * static_cast<int>(size - 1);
+     double total_weight = 0;
+     for (size_t i = 0; i < size; ++i) {
+       total_weight += weights[first + i];
+     }
+     double cumulative_weight = 0;
+     int previous_limit = 0;
+     for (size_t i = 0; i < size; ++i) {
+       auto pane = bounds;
+       const int begin = previous_limit;
+       cumulative_weight += weights[first + i];
+       const int limit = i + 1 == size
+                             ? content_extent
+                             : static_cast<int>(content_extent *
+                                                cumulative_weight / total_weight);
+       previous_limit = limit;
+       if (vertical) {
+         pane.y += begin + gap * static_cast<int>(i);
+         pane.height = limit - begin;
+       } else {
+         pane.x += begin + gap * static_cast<int>(i);
+         pane.width = limit - begin;
+       }
+       panes[first + i] = pane;
+     }
+   };
+   subdivide(start, 0, first_count);
+   subdivide(end, first_count, count - first_count);
+   return panes;
+ }
+ 
+ // Resize adjacent leaves without moving the other leaves in their group.
+-inline std::array<double, 4> ResizeSplitPaneWeights(
+-    std::array<double, 4> weights,
++inline std::array<double, 6> ResizeSplitPaneWeights(
++    std::array<double, 6> weights,
+     size_t first,
+     int initial_size,
+     int total_size,
+     int delta) {
+   if (first >= weights.size() - 1 || total_size <= 0) {
+     return weights;
+   }
+   const int minimum = std::min(80, total_size / 2);
+   int start = std::clamp(initial_size + delta, minimum, total_size - minimum);
+   if (std::abs(start - total_size / 2) <= 8) {
+     start = total_size / 2;
+   }
+   const double total_weight = weights[first] + weights[first + 1];
+   // Keep positive weights even when the window has almost no room left.
+   const double ratio = std::clamp(static_cast<double>(start) / total_size,
+                                   0.01, 0.99);
+   weights[first] = total_weight * ratio;
+   weights[first + 1] = total_weight * (1 - ratio);
+   return weights;
+ }
+ 
+ // Represents the visual state of a split tab, including its layout type and the
+ // proportional size of the webcontents.
+ class SplitTabVisualData {
+  public:
+   SplitTabVisualData();
+   explicit SplitTabVisualData(SplitTabLayout split_layout);
+   SplitTabVisualData(SplitTabLayout split_layout, double split_ratio);
+   ~SplitTabVisualData();
+ 
+   SplitTabVisualData(const SplitTabVisualData& other) = default;
+   SplitTabVisualData(SplitTabVisualData&& other) = default;
+ 
+   SplitTabVisualData& operator=(const SplitTabVisualData& other) = default;
+   SplitTabVisualData& operator=(SplitTabVisualData&& other) = default;
+ 
+   void set_split_layout(SplitTabLayout split_layout) {
+     split_layout_ = split_layout;
+   }
+ 
+   void set_split_ratio(double split_ratio) { split_ratio_ = split_ratio; }
+ 
+   SplitTabLayout split_layout() const { return split_layout_; }
+ 
+   double split_ratio() const { return split_ratio_; }
+ 
+   void set_arrangement(SplitTabArrangement arrangement) {
+     arrangement_ = arrangement;
+-    pane_weights_ = {1, 1, 1, 1};
++    pane_weights_ = {1, 1, 1, 1, 1, 1};
+   }
+   SplitTabArrangement arrangement() const { return arrangement_; }
+ 
+-  const std::array<double, 4>& pane_weights() const { return pane_weights_; }
+-  void set_pane_weights(const std::array<double, 4>& weights) {
++  const std::array<double, 6>& pane_weights() const { return pane_weights_; }
++  void set_pane_weights(const std::array<double, 6>& weights) {
+     for (double weight : weights) {
+       if (!std::isfinite(weight) || weight < 0.001 || weight > 1000) {
+         return;
+       }
+     }
+     pane_weights_ = weights;
+   }
+ 
+   // Checks whether two instances are visually equivalent.
+   friend bool operator==(const SplitTabVisualData&,
+                          const SplitTabVisualData&) = default;
+ 
+  private:
+-  std::array<double, 4> pane_weights_ = {1, 1, 1, 1};
++  std::array<double, 6> pane_weights_ = {1, 1, 1, 1, 1, 1};
+   SplitTabArrangement arrangement_ = SplitTabArrangement::kGrid;
+   SplitTabLayout split_layout_;
+   // ratio of the first split tab's width to the available width.
+   double split_ratio_ = 0.5;
+ };
+ 
+ }  // namespace split_tabs
+ 
+ #endif  // COMPONENTS_SPLIT_TABS_SPLIT_TAB_VISUAL_DATA_H_

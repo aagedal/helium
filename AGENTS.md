@@ -8,7 +8,7 @@
 
 - Reuse `[user_home]/Developer/helium/build` for local Apple Silicon builds. It contains the prepared Chromium source, downloaded toolchains, and compiled outputs. Preserve it when creating or removing worktrees; do not create a fresh Chromium checkout for routine changes.
 - Build command: `[user_home]/Developer/helium/build/build-local.sh`. Launch command: `[user_home]/Developer/helium/build/run-local.sh` (uses a separate development profile).
-- Prepared source: `build/macos/build/src`; compiled output: `build/macos/build/src/out/Default`; app: `build/macos/build/src/out/Default/Helium.app`, all relative to `[user_home]/Developer/helium`.
+- Prepared source: `build/macos/build/src`; compiled output: `build/macos/build/src/out/Default`; app: `build/macos/build/src/out/Default/Helium Neo.app`, all relative to `[user_home]/Developer/helium`.
 - `build/fork-source` preserves the fork source used for the build, including local compiler fixes. `build/macos/helium-chromium` points to this snapshot. Check `build/fork-revision.txt` and the snapshot's Git diff before changing it. The main checkout or a new worktree may be at a different revision.
 - The build command compiles the existing prepared source. Updating repository patches or the snapshot does **not** apply them to Chromium automatically. Reconcile and apply the intended changes to the existing source tree before rebuilding; retain unrelated compiled outputs.
 - Only one build/agent may modify the shared source and output directories at a time. Do not run reset, initial setup, or the platform release build script against this cache without checking for destructive steps; `prepare_sources` deletes the output directory.

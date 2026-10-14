@@ -1,13 +1,20 @@
-### THIS IS A PRIVATE FORK CHANGES WILL NOT BE PUSHED TO THE MAIN REPO
+# Helium Neo
+
+This is a private fork of Helium. Changes and pull requests stay in
+[aagedal/helium](https://github.com/aagedal/helium).
+
+Helium Neo uses its own macOS app identifier, profile directory, and Keychain
+entry so it can coexist with the normal Helium release. The upstream links below
+refer to Helium; they do not distribute Helium Neo.
 #### Changes include:
-- Four way tab split
+- Resizable tab splits with up to six panes
 - Automatic refresh per tab
 - Mobile view per tab without dev tools visible
 
 <div align="center">
     <img src="resources/branding/app_icon/raw.png"
-        title="Helium" alt="Helium logo" width="120" />
-    <h1>Helium</h1>
+        title="Helium Neo" alt="Helium Neo orbital logo" width="120" />
+    <h1>Helium Neo</h1>
     <p>
         The browser built around privacy, consent, and comfort.
     </p>
