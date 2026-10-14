@@ -94,21 +94,22 @@ int main() {
 
 
 def extract_helper():
-    patch = PatchSet((REPO / 'patches/helium/ui/multi-pane-split-view.patch')
-                     .read_text())
+    """Extract the production grid helper from the split-view patch."""
+    patch = PatchSet((REPO / 'patches/helium/ui/multi-pane-split-view.patch').read_text())
     file = next(file for file in patch if file.path == HEADER)
-    inserted = ''.join(line.value for hunk in file for line in hunk
-                       if line.is_added)
+    inserted = ''.join(line.value for hunk in file for line in hunk if line.is_added)
     start = inserted.index('struct GridPaneBounds')
     end = inserted.index('\n  return panes;\n}', start) + len('\n  return panes;\n}')
     return ('#include <array>\n#include <cstddef>\nnamespace split_tabs {\n'
-            'enum class SplitTabLayout { kSideBySide, kStacked };\n' +
-            inserted[start:end] + '\n}\n')
+            'enum class SplitTabLayout { kSideBySide, kStacked };\n' + inserted[start:end] +
+            '\n}\n')
 
 
 def main():
+    """Compile and run the multi-pane geometry checks."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source-tree', type=Path,
+    parser.add_argument('--source-tree',
+                        type=Path,
                         help='Chromium source tree with the Helium patches applied')
     parser.add_argument('--cxx', default='clang++')
     args = parser.parse_args()
@@ -117,13 +118,15 @@ def main():
         parser.error(f'C++ compiler not found: {args.cxx}')
     with tempfile.TemporaryDirectory(prefix='helium-grid-test-') as directory:
         temp = Path(directory)
-        header = ((args.source_tree / HEADER).read_text()
-                  if args.source_tree else extract_helper())
+        header = ((args.source_tree / HEADER).read_text() if args.source_tree else extract_helper())
         (temp / 'grid.h').write_text(header)
         (temp / 'test.cc').write_text(HARNESS)
-        subprocess.run([compiler, '-std=c++20', '-Wall', '-Wextra', '-Werror',
-                        '-fsanitize=address,undefined', str(temp / 'test.cc'),
-                        '-o', str(temp / 'test')], check=True)
+        subprocess.run([
+            compiler, '-std=c++20', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined',
+            str(temp / 'test.cc'), '-o',
+            str(temp / 'test')
+        ],
+                       check=True)
         subprocess.run([str(temp / 'test')], check=True)
 
 
