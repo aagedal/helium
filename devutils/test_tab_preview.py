@@ -62,14 +62,14 @@ int main() {
 
 
 def extract_header():
-    patch = PatchSet((REPO / 'patches/helium/ui/tab-preview-workspaces.patch')
-                     .read_text())
+    """Extract the production geometry header from the preview patch."""
+    patch = PatchSet((REPO / 'patches/helium/ui/tab-preview-workspaces.patch').read_text())
     file = next(file for file in patch if file.path == HEADER)
-    return ''.join(line.value for hunk in file for line in hunk
-                   if line.is_added)
+    return ''.join(line.value for hunk in file for line in hunk if line.is_added)
 
 
 def main():
+    """Compile and run the viewport and refresh-interval checks."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-tree', type=Path)
     parser.add_argument('--cxx', default='clang++')
@@ -79,13 +79,15 @@ def main():
         parser.error(f'C++ compiler not found: {args.cxx}')
     with tempfile.TemporaryDirectory(prefix='helium-preview-test-') as directory:
         temp = Path(directory)
-        header = ((args.source_tree / HEADER).read_text()
-                  if args.source_tree else extract_header())
+        header = ((args.source_tree / HEADER).read_text() if args.source_tree else extract_header())
         (temp / 'settings.h').write_text(header)
         (temp / 'test.cc').write_text(HARNESS)
-        subprocess.run([compiler, '-std=c++20', '-Wall', '-Wextra', '-Werror',
-                        '-fsanitize=address,undefined', str(temp / 'test.cc'),
-                        '-o', str(temp / 'test')], check=True)
+        subprocess.run([
+            compiler, '-std=c++20', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined',
+            str(temp / 'test.cc'), '-o',
+            str(temp / 'test')
+        ],
+                       check=True)
         subprocess.run([str(temp / 'test')], check=True)
 
 
