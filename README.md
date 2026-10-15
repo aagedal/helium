@@ -55,6 +55,70 @@ between devices.
   coexist with the normal Helium release. Existing Helium profiles are not
   migrated. The local development launcher uses its own development profile.
 
+### Screenshots with source documentation
+
+Press **Command-Shift-S** on macOS (**Ctrl-Shift-S** on Windows/Linux), or
+right-click an HTTP or HTTPS page and choose **Capture screenshot with source…**,
+then drag a rectangle over the content to preserve. In a split workspace, the
+shortcut uses the focused pane; the context menu uses the pane you right-clicked.
+Release the mouse to capture only your rectangle. Escape cancels selection.
+Press Enter instead of dragging to capture the visible pane using the keyboard.
+The macOS File menu also shows the command and its shortcut. Change the binding
+in **Settings → Keyboard shortcuts**, under **Capture screenshot with source**.
+
+The review dialog records the page URL, title, capture times in UTC, selection
+bounds and image dimensions. You can optionally enter a post permalink, posting
+account, publication date as displayed, and notes or post text. These entries
+are recorded separately from observed page details. The browser can suggest a
+post permalink for Twitter/X, Instagram, Facebook, Threads and Truth Social using
+visible links and the post container overlapping your selection. One clear match fills the field;
+multiple matches offer a chooser. Check or edit the link before saving. The
+record preserves candidate links and the chosen link's origin. Suggestions are
+heuristics, not verified attribution. Posting account and publication date can
+also fill from the selected post when the site exposes them. The record keeps
+the displayed date, any tooltip or machine-readable timestamp, and linked
+account details separate from your reviewed values. Relative dates and missing
+timezones are preserved as shown. You can edit or clear any field; notes remain
+manual. The screenshot capture time is always recorded separately.
+For supported social timestamp links that expose the full date only on hover, the
+browser briefly hovers the timestamp after capturing the pixels. It uses that
+full date for the publication field and keeps the relative label separately.
+If the tooltip is unavailable, the original site text remains the fallback.
+For Twitter/X and Threads quote posts, a capture including the enclosing post prefers its
+permalink, account and date. A crop confined to the quoted post prefers the
+original. Both links remain available in the source chooser, and the embedded
+record preserves their relationship and separate source details. Facebook photo
+posts prefer the enclosing post's permalink, account and date; attached photo
+links remain available as secondary sources, including for a photo-only crop.
+
+Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
+and JPEG XL use lossless compression; JPEG uses lossy compression. Each image
+embeds IPTC Core fields in XMP, including a readable source description, capture
+date and posting account, plus the complete source record. The posting account
+is recorded as a source, not assumed to be the image creator or copyright owner.
+The IPTC Copyright Notice uses **Screenshot / [account] / [platform]**.
+Choose **Norsk — Skjermbilde** under **Copyright text language** for
+**Skjermbilde / [account] / [platform]**. The choice is remembered, and a live
+preview shows the resulting text. Twitter/X uses the platform name **Twitter**.
+The field stays empty when no posting account is supplied.
+
+**Automatically preserve HDR** is on by default and remembered for your profile.
+When the selected rendered pixels contain HDR brightness, the dialog automatically
+chooses **16-bit JPEG XL**, including Rec.2100 PQ color information. Ordinary
+SDR selections save at 8-bit. You can turn preservation off or choose PNG/JPEG
+for SDR output; the dialog and embedded record identify the conversion. HDR
+readback availability, detection, output depth and color encoding are recorded.
+The preview and clipboard are SDR. HDR already tone-mapped by the webpage,
+renderer or display pipeline cannot be recovered by screenshot capture.
+
+**Save capture…** opens a save-location prompt. Clear **Include source report and
+checksum (ZIP)** to save the image alone. Leave it checked for a ZIP containing
+`screenshot.png`, `.jpg` or `.jxl`, `metadata.json` and a readable `source.txt`,
+with a SHA-256 hash of the completed image. Format and ZIP choices are remembered
+for your profile. **Copy image** copies pixels without the embedded source record.
+A capture preserves the selected rendered region. Capture times use the computer's
+clock; the hash alone does not establish authenticity or publication time.
+
 Split layouts remain experimental. Geometry and viewport helpers have standalone
 sanitizer checks; the full Chromium browser regressions require an unpruned test
 build. See [developer notes and validation](devutils/README.md).

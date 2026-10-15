@@ -2,6 +2,330 @@
 
 This is a collection of scripts written for developing on ungoogled-chromium. See the descriptions at the top of each script for more information.
 
+## Screenshots with source documentation
+
+`helium/ui/screenshot-source-documentation.patch` extends Chromium's existing
+manual region selector and screenshot review dialog. The context-menu command
+uses the clicked pane's `WebContents`, including an inactive pane in a split.
+It is available on HTTP(S) pages when screenshots are permitted by policy.
+The default shortcut is Command-Shift-S on macOS and Ctrl-Shift-S on other
+desktop platforms. macOS owns this binding through the File menu and Cocoa
+accelerator map so the existing Keyboard shortcuts settings can remap or remove
+it; other desktop platforms use the browser accelerator table.
+Selection remains available with accessibility clients connected. Enter captures
+the visible pane explicitly, and Escape cancels without changing the clipboard.
+
+The renderer surface is copied at its native pixel density. Browser chrome,
+the selection overlay and other windows are excluded; macOS desktop capture
+permission is not required. Source URL/title, view bounds, selection coordinates
+in device-independent pixels, and snapshot request/completion times are frozen
+with the capture. A document or URL change before completion discards the
+result. Later navigation does not rewrite the source details in the review.
+
+The optional permalink, posting account, publication date text and notes remain
+separate from automatically observed fields. Unknown dates are not inferred or
+converted to a fabricated exact timestamp. A read-only isolated-world DOM query
+runs alongside the snapshot to find post permalinks for Twitter/X, Instagram,
+Facebook, Threads and Truth Social. It associates visible links with the crop or an
+overlapping post container, converts view DIPs to CSS viewport coordinates, normalizes tracking
+URLs, and retains meaningful Facebook comment IDs. No API calls, extra network
+fetches or click actions are performed. DOM inspection remains read-only.
+Supported social timestamp links without a full date can receive a browser-delivered
+mouse hover after the pixel copy completes. The system cursor stays in place.
+Scoped profile links and time
+attributes provide optional posting-account and publication-date suggestions.
+Truth Social's observed `data-testid="status"` feed wrappers and
+`.detailed-actualStatus` detail wrappers are supported, including detail-page
+footer dates and both `/@account/posts/id` and legacy `/@account/id` links.
+Threads supports both `threads.com` and legacy `threads.net` post links,
+including pressable post containers without article semantics. Instagram's
+account-prefixed post footer supplies the post date; caption/comment timestamps
+and comment permalinks are excluded. Facebook timeline wrappers, plain
+accessible timestamp links and compound numeric post IDs are supported.
+Valid `data-utime` values are recorded as epoch seconds and exact UTC values.
+Other site text is retained verbatim, without guessing missing timezones.
+Fragment-only controls are excluded from post links.
+
+One unambiguous post link fills the editable permalink field with a review
+notice. Multiple candidates, multiple selected posts or an incomplete scan
+require choosing a candidate or entering a link. Hidden/occluded content and
+profile links are excluded. Candidate collection is capped at eight links and
+10,000 anchors / 1,000 post containers; reaching a limit disables autofill.
+Initial inspection times out after one second. Optional timestamp tooltip reads
+use bounded retries and a shared five-second budget for starting further reads;
+an in-flight renderer read also has a short timeout. No hover runs before the
+captured pixels are frozen. Timestamp mouse-leave events clean up the hover.
+Navigation or view resizing invalidates a pending result. Main-document DOM
+inspection cannot read cross-origin embedded posts or inaccessible shadow DOM.
+The embedded/ZIP source record stores `automatic.permalink_suggestions`, its
+observation time and unverified status; `user_provided.post_permalink_origin`
+distinguishes a reviewed suggestion from a manually entered/edited link.
+Candidate `site_details` preserves observed profile links/display names, visible
+date text, date tooltips, and original `datetime` / `data-utime` attributes.
+The machine-readable timestamp is used verbatim when present; relative dates
+and unspecified timezones are never parsed into an invented exact time.
+`selected_post_details` can preserve account/date observations for one selected
+post on a supported site even when its permalink is unavailable. Nested quote
+metadata is scoped to its own post. Conflicting observations suppress autofill.
+Account/date fields remain editable; changing link candidates replaces only
+untouched suggestions. The record stores `posting_account_origin` and
+`publication_date_text_origin`, alongside the unchanged site observations.
+The browser's screenshot capture time remains separate from publication time.
+For X's public portal tooltip, extraction requires exactly one open timestamp
+trigger matching the candidate permalink and one visible timestamp tooltip.
+Quoted posts, unrelated/closing portals and ambiguous triggers cannot provide
+its date. Other platforms validate the original timestamp element, enclosing
+href and unchanged displayed text before accepting a full title or explicitly
+ARIA-associated date. A fallback requires one newly exposed nearby tooltip on
+the hovered timestamp. Hidden, stale, unrelated and ambiguous tooltips are
+rejected. Transient DOM selectors/hover targets are removed before export. `publication_date_tooltip`, `date_evidence` and
+`tooltip_observed_at_utc` identify a later hover observation; the original
+`publication_date_displayed` remains unchanged. Missing tooltips retain the
+original relative/date text, with no ID-based or relative-time calculation.
+Twitter/X and Threads nested quote posts can return `status: preferred` with multiple
+documented candidates. A crop confined to a nested post prefers that post;
+otherwise the enclosing post is preferred when it contains the selection or
+its own selected header/comment. Separate sibling posts and structurally
+unresolved links remain ambiguous. An unlinked enclosing post with selected
+own content prevents its quote from being treated as the sole source.
+`selection_reason` and candidate `relationship`, `quoted_by` or
+`contains_selected_post` fields retain the heuristic decision. Each post's
+account/date stays scoped to its own container. The preferred post is first
+for bounded hover inspection, and a preselected source chooser allows an
+override while preserving manual field edits.
+Facebook posts with attached photos can also return `status: preferred`.
+Exactly one timestamped post source must enclose every detected photo source;
+photo candidates require an actual image link in that post. The enclosing
+post stays primary for image-only crops. Photo URLs remain in the chooser and
+record with `relationship: attached_media` and `attached_to`; account/date
+observations from a shared container belong only to the post. Independent
+nested media details remain separate. Sibling posts, comment permalinks,
+plain text links to other photos and incomplete scans remain ambiguous.
+Cocoa mouse capture accepts descendant content views, uses the release position
+for the crop, and consumes scrolling without implicitly committing selection.
+
+Encoding, metadata embedding, SHA-256 calculation and optional ZIP creation run
+on a blocking worker. The remembered per-profile choices are PNG, JPEG (quality
+95, 4:4:4) or lossless JPEG XL, and standalone image or documentation ZIP.
+JPEG uses Chromium's existing encoder. JPEG XL statically links the standalone
+fast lossless encoder from libjxl 0.12.0, downloaded with a pinned SHA-256 in
+`deps.ini`; it does not require a system library, Homebrew or a subprocess.
+Fresh builds unpack this dependency through the normal dependency step. For an
+existing prepared cache, retrieve/unpack only this new dependency without running
+`prepare_sources` or replacing unrelated source/build outputs.
+
+The default-on per-profile preference `helium.screenshot_preserve_hdr` appears as
+**Automatically preserve HDR** in capture review. Turning it on for an HDR
+selection selects JPEG XL immediately; a subsequent explicit format choice is
+honored. The preference persists when toggled, even if review is cancelled.
+Every capture requests an F16 master so changing this export setting can apply
+to the current frozen snapshot without recapturing a later page state. The
+separate N32 sRGB preview/clipboard never replaces the export master.
+
+The opt-in `CopyFromSurfaceWithHDR` API uses a main-renderer-surface copy on
+macOS and Aura. GPU readback converts the source render pass into half-float
+linear Rec.2020, preserving values beyond reference white. F16 bitmap type,
+color space and odd dimensions survive Viz/Mojo transport. Existing capture
+APIs keep their behavior. Unsupported platforms/backends may return ordinary
+SDR; failed high-precision copies retry the normal copy path with its own
+bounded timeout. This captures rendered pixels, not original HDR media, and
+cannot undo earlier tone mapping. Native popup surfaces are excluded.
+
+Selected pixels above linear reference white (with half-float rounding tolerance)
+trigger HDR output when preservation and JPEG XL are selected. The exporter
+maps linear Rec.2020 to 16-bit integer Rec.2100 PQ at 203 cd/m² reference white.
+The standalone encoder has a narrow local extension for explicit D65/Rec.2020,
+ST 2084 and absolute luminance metadata; the pinned upstream compression code
+is retained. Out-of-gamut/nonfinite or >10000 cd/m² samples fail HDR export
+rather than claiming successful preservation. PQ quantization precedes lossless
+compression. SDR conversion clips extended values and is explicitly documented.
+
+Schema-2 records now include automatic preservation preference, high-precision
+readback availability, selected HDR detection and peak relative signal. The
+`screenshot` object records output bits per channel, HDR preservation, color
+encoding, reference white and range conversion. The readable report and embedded
+XMP carry the same information. Capture precision never implies original-media
+precision or verified source authenticity.
+
+All three image formats embed the same XMP packet: IPTC Core Title
+(`dc:title`), Description (`dc:description`, readable source report), Source
+(`photoshop:Source`, the reviewed posting account), and Date Created
+(`photoshop:DateCreated`, screenshot capture time). `dc:source` records the page
+URL; XMP CreatorTool/CreateDate record the browser and capture time. A custom
+`helium:SourceRecord` property preserves the complete schema-2 JSON, including
+selection/viewport geometry and separately identified automatic/user fields.
+Publication date text remains reviewed source text with its origin recorded;
+no creator or copyright ownership is inferred. Copyright Notice (`dc:rights`)
+contains the requested source credit: `Screenshot / [account] / [platform]` or
+`Skjermbilde / [account] / [platform]`. The remembered English/Norwegian selector
+updates a live preview. The notice uses the reviewed account and recognized
+permalink platform, falling back to the captured page's platform or hostname;
+an empty account leaves the notice absent. Twitter/X is labeled Twitter. XMP
+stores the selected text as both `x-default` and `en`/`nb`; the complete source
+record also identifies the language and formatted-source-credit method.
+No creator or rights-holder flag is set. XML is escaped, and JPEG uses Adobe
+Extended XMP for long records.
+PNG uses the standard XMP iTXt keyword; JPEG XL uses an uncompressed `xml ` box.
+
+Copyright-language validation passed the persistent macOS browser build, all
+nine export tests, GN dependency checks, patch lint and strict patch apply/reverse.
+ExifTool independently read the exact English/Norwegian Copyright Notice and
+language alternatives from all six PNG/JPEG/JPEG XL fixtures. Native UI checks
+verified live account edits, remembered language on the next capture, and a
+saved PNG containing `Skjermbilde / @brukernavn / Twitter`.
+
+A ZIP contains exactly `screenshot.png`, `.jpg` or `.jxl`, `metadata.json`
+(schema version 2) and `source.txt`. Its SHA-256 hashes the final image including
+embedded metadata. The embedded record omits that hash: a file cannot include
+its own final hash. Page/user strings are file contents, never paths or commands.
+Temporary files are removed after archive creation. A browser-created blob
+hands the complete image or ZIP to Chromium's download manager with a
+save-location prompt, avoiding data-URL size limits. The archive excludes cookies and browser
+storage, but the selected pixels, page URL/title and user notes may themselves
+contain private information. The user explicitly chooses when and where to save.
+
+Build with the persistent command from `AGENTS.md`. The patch also adds a small
+standalone Chromium test target, independent of the pruned full browser suite:
+
+```sh
+autoninja -C out/Default screenshot_documentation_tests screenshot_color_tests
+out/Default/screenshot_documentation_tests
+out/Default/screenshot_color_tests
+```
+
+Tests unpack the production archive and check lossless PNG pixels, final-file
+hashes, dimensions, distinct automatic/user fields, UTF-8/multiline values,
+XML escaping, absent metadata, JPEG decoding, extended JPEG metadata, JPEG XL
+container structure, default-on HDR/disabled/SDR-format exports, metadata, and
+empty-image rejection. Copyright tests cover English/Norwegian, reviewed accounts,
+platform selection, empty accounts, XML escaping and all three export formats.
+Color tests cover selected-area detection, PQ highlights,
+out-of-range failure and exact half-float IPC round trips with odd dimensions.
+Optional independent validation
+fixtures can be generated by running the test executable with
+the following flags:
+
+```sh
+--gtest_filter=ScreenshotDocumentationTest.ExportsExactImageAndDistinctSourceFields \
+--screenshot-fixture-dir=/absolute/output/directory
+```
+
+This writes PNG/JPEG/JPEG XL images, their documentation ZIPs, and a JPEG with
+a long metadata record for inspection with ExifTool and `djxl` (development
+tools only).
+ UI validation should cover manual selection, reverse dragging, Escape,
+copying, invalid permalink correction, save cancellation/retry, large captures,
+inactive split panes, mobile previews, navigation during/after capture and a
+closed source tab. A hash is an integrity aid relative to the saved manifest,
+not independent proof of authenticity or of the computer's clock.
+
+Local Apple Silicon validation passed the persistent browser build, GN header
+dependency checks, patch lint, a no-fuzz patch apply/reverse check and the
+initial three archive tests. Native UI checks covered forward/reverse rectangle dragging,
+Escape cancellation, Enter capture, permalink validation and source-field entry.
+Saved 950 × 380 and 2170 × 1200 crops retained their native 2× pixel density;
+the latter produced a 7.5 MB ZIP. The exported PNG dimensions and SHA-256 values
+matched their manifests, including Unicode/multiline notes and empty optional
+fields. Split/mobile combinations and navigation races still need broader
+browser QA before release.
+The default screenshot shortcut was also verified in the native macOS app:
+Command-Shift-S opens selection, the File menu exposes the command, and Keyboard
+shortcuts settings show the binding with editable Add/Remove controls.
+
+Format export validation on Apple Silicon passed the rebuilt browser, all six
+export tests, GN dependency checks, patch lint and strict patch application.
+ExifTool read IPTC/XMP fields and the complete source JSON from PNG, JPEG and
+JPEG XL without warnings, including a JPEG with 150 KB notes. XML parsing
+verified that escaped control/noncharacter input survives in the JSON record.
+The independent libjxl decoder produced pixels identical to the PNG gradient,
+and all three ZIP manifests hashed the final embedded-metadata images correctly.
+Native review exposed all three format choices and the ZIP checkbox, and the
+save path produced a complete documented PNG ZIP. Standalone JPEG/JPEG XL
+encoding was independently verified; their native save-dialog paths and other
+desktop platforms still need broader UI QA before release.
+
+Permalink validation passed four standalone C++ tests and 21 real-DOM fixtures
+covering all three platforms, quoted/multiple posts, partial post crops, hidden
+and occluded links, URL normalization, preserved Facebook comment IDs, zoom
+coordinate conversion and conservative scan limits. The pinch-offset fixture
+simulates visual viewport geometry; physical pinch/mobile behavior still needs
+broader device QA. Run the production script fixtures with:
+
+```sh
+python3 devutils/screenshot_source_server.py
+# Open http://127.0.0.1:8232/ and click Run permalink checks.
+# The browser console can also call runScreenshotSourceTests().
+```
+
+The standalone C++ target is `screenshot_source_tests`. The existing export
+tests additionally cover preserved suggestion records and a distinct reviewed
+permalink. The macOS browser build and GN checks passed. Native checks verified
+Command-Shift-S selection, a 1580 × 366 manual crop with its timestamp outside
+the crop, automatic permalink fill, scrolling without capture, Escape, Enter,
+an ambiguous-link chooser and editable candidate selection. ExifTool read the
+saved PNG's complete source JSON and confirmed the original/normalized candidate
+URLs, reviewed-suggestion origin, native 2× geometry and user notes. Tests use
+controlled local markup; authenticated live layouts for Twitter/X, Instagram
+and Facebook still need field testing as those sites change.
+
+Truth Social and account/date validation passed the development browser build,
+GN dependency checks, all ten C++ source/export tests and 38 browser fixtures.
+The production inspector was also exercised on public Truth Social feed/detail
+pages and X's public profile view. It kept re-shared/quoted accounts and dates
+separate, read Truth Social's relative label plus full tooltip/footer date,
+and preserved X's plain relative timestamp links without fabricating an exact
+time. Authenticated layouts and other languages still need broader site QA.
+Native macOS checks confirmed account/date autofill, distinct UTC capture time,
+updated untouched fields when choosing another source, and preservation of a
+manual account edit and deliberately cleared date. ExifTool recovered both
+saved PNGs' site observations and reviewed field origins correctly.
+
+Twitter hover validation passed five C++ source tests, all nine export tests,
+48 real-DOM fixtures, the persistent browser build, GN checks and patch lint.
+A native selection of the reported public X post filled
+`11:57 PM · Oct 15, 2026` automatically. ExifTool recovered the same reviewed
+date and tooltip, the original `25m` label, and a distinct tooltip observation
+time after pixel capture. The saved crop retained the site's relative label.
+
+Quote-post validation passed six C++ source tests, nine export tests, 57 DOM
+fixtures, the browser build, GN checks and strict patch apply/reverse. Live X
+inspection covered full enclosing posts and crops confined to quoted cards.
+Native macOS review selected Elon's permalink, account and full hover timestamp
+for the reported full quote post; switching the source chooser selected Arash's
+account and distinct date. ExifTool confirmed the saved PNG's primary source,
+matching Copyright Notice, and the quoted post's separate link/account/date and
+`quoted_by` relationship.
+
+Expanded social timestamp validation passed eight C++ source tests, nine export
+tests and 79 production-script browser fixtures, the persistent macOS build,
+GN dependency checks, patch lint and strict no-fuzz patch apply/reverse. Public
+examples supplied for Instagram, Threads and Truth Social were inspected with
+the production script. Instagram used the post footer datetime rather than the
+caption's later datetime or comment dates. Threads kept the enclosing post and
+quoted post separate. Truth Social used the main detail footer rather than the
+quoted post's earlier timestamp.
+Native Facebook selection automatically read `Saturday, October 3, 2026 at
+3:33 PM` from hover while preserving the original `October 3 at 3:33 PM` label.
+Facebook's deeply nested markup uses a bounded 64-level selector so its date
+link remains an exact hover target. Native Threads capture selected the main
+post's account and ISO timestamp, with the quoted source retained separately.
+ExifTool verified both saved PNGs, reviewed date/account origins, matching
+Norwegian Copyright Notice and removal of transient hover selectors. Missing
+years are not inferred; unavailable hover dates retain the site's original
+label. Authenticated layouts, additional locales and other desktop platforms
+still require broader field testing.
+
+Facebook photo-source validation passed nine C++ source tests, nine export tests
+and 88 production-script DOM fixtures, including full/photo-only crops, multiple
+attachments, sibling posts and comment/text-link exclusions. Native macOS
+capture of the reported profile-picture post selected its `/posts/` URL and
+filled `Truls Aagedal` and `Sunday, August 9, 2026 at 12:27 AM` automatically.
+A native photo-only crop filled the same post source, account and full date.
+ExifTool confirmed the reviewed source and date, matching Copyright Notice and
+separate attached photo URL, without assigning the post's account/date to that
+photo. The browser build, GN dependency check, patch lint and strict no-fuzz
+patch apply/reverse also passed.
+
 ## Experimental multi-pane split view
 
 `helium/ui/multi-pane-split-view.patch` extends the base split implementation;
@@ -343,3 +667,30 @@ Chromium's protected preferences discarded the injected pinned-tab entries.
 Apple's Icon Composer renderer reproduced the old filled oval and verified the
 corrected orbital foreground; the built app's asset catalog matches the new
 checked-in catalog.
+
+HDR export fixtures are generated by including
+`ScreenshotDocumentationTest.HDRExports16BitPQAndDocumentsSDRConversions` in the
+filter (or running all tests with `--screenshot-fixture-dir`). Decode
+`hdr-auto.jxl` using upstream `djxl --bits_per_sample=16`; its PNG color profile
+must report Rec.2100 PQ and BT.2020. Compare decoded integer samples against the
+ST 2084 calculation, and check `hdr-disabled.jxl`/PNG/JPEG are documented SDR.
+
+HDR validation: all four color/transport tests, seven export tests and four
+source validation tests pass. An independent libjxl decoder reads the HDR
+fixture as 16-bit Rec.2100 PQ / BT.2020 and reproduces the expected PQ codes
+for linear values 4, 2 and 1 exactly. A separate 321×179 gradient including
+varying 16-bit alpha also round-tripped sample-for-sample.
+
+Native macOS verification used an HDR-capable display with a PQ PNG fixture.
+The default-on preference selected JPEG XL automatically; full-pane and manual
+HDR captures exported genuine 16-bit PQ with embedded source records. A
+separate SDR crop on the same page exported at 8-bit. Disabling preservation
+persisted into the next capture and exported documented SDR; re-enabling it
+updated the same frozen capture. With `--disable-gpu`, rendering was SDR and
+the PNG export correctly recorded no HDR preservation. Normal GPU rendering
+and the previous page were restored after testing.
+
+The final persistent application build passed after the complete Skia/Viz F16
+serialization integration. All 15 screenshot regressions were rerun successfully
+against that completed output. Header dependency checks, repository lint and
+strict no-fuzz patch apply/reverse checks also passed.

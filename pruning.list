@@ -9393,6 +9393,9 @@ third_party/harfbuzz/src/test/subset/data/fonts/gsub_chaining3_simple_f2.otf
 third_party/harfbuzz/src/test/subset/data/fonts/gsub_context1_multiple_subrules_f2.otf
 third_party/harfbuzz/src/test/subset/data/fonts/gsub_context2_multiple_subrules_f2.otf
 third_party/harfbuzz/src/test/subset/data/fonts/gsub_context3_successive_f1.otf
+third_party/helium_jxl/src/tools/scripts/test_cost-armhf.zip
+third_party/helium_jxl/src/tools/scripts/test_cost-i386.zip
+third_party/helium_jxl/src/tools/scripts/test_cost-x64.zip
 third_party/hunspell/fuzz/bdict_corpus/02a25363e79f11115132055fb880773b325f6aef
 third_party/hunspell/fuzz/bdict_corpus/0883e336027e9e21911a277a9d8fa4c1b9490edd
 third_party/hunspell/fuzz/bdict_corpus/0c70b309d63d09ac033b8c80abff19457c93772a

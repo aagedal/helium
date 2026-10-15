@@ -376,3 +376,4 @@ helium/ui/pane-stability.patch
 helium/ui/resizable-multi-pane-splits.patch
 helium/ui/extended-pane-layouts.patch
 helium/ui/pinned-split-pane-state.patch
+helium/ui/screenshot-source-documentation.patch

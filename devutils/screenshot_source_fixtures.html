@@ -1,0 +1,301 @@
+<!doctype html>
+<!-- Copyright 2026 The Helium Authors.
+You can use, redistribute, and/or modify this source code under
+ the terms of the GPL-3.0 license that can be found in the LICENSE file. -->
+<meta charset="utf-8">
+<title>Screenshot permalink regression fixtures</title>
+<style>
+body { margin: 0; font: 16px system-ui; }
+#fixture { position: absolute; inset: 0; }
+article, [role=article], [data-testid=status], .detailed-actualStatus { position: absolute; left: 20px; top: 20px; width: 360px; height: 160px; background: #eee; }
+.body { position: absolute; left: 15px; top: 55px; width: 300px; height: 80px; background: white; }
+header { height: 28px; }
+a { display: inline-block; }
+</style>
+<script src="/source.js"></script>
+<div id="fixture"><button onclick="runScreenshotSourceTests()">Run permalink checks</button></div>
+<script>
+window.runScreenshotSourceTests = () => {
+  const fixture = document.getElementById('fixture');
+  const results = [];
+  const post = (url, extra = '') => `<article><header><a href="${url}"><time>15 October 2026</time></a></header><div id="crop" class="body">Post body without its timestamp ${extra}</div></article>`;
+  const crop = id => {
+    const r = document.getElementById(id).getBoundingClientRect();
+    return {x:r.x, y:r.y, width:r.width, height:r.height, view_width:innerWidth, view_height:innerHeight};
+  };
+  const check = (name, html, expected, expectedUrl, region = () => crop('crop')) => {
+    fixture.innerHTML = html;
+    const actual = detectScreenshotSource(region());
+    const passed = actual.status === expected &&
+        (expectedUrl === undefined || actual.suggested_permalink === expectedUrl);
+    results.push({name, passed, expected, expectedUrl, actual});
+  };
+  check('Twitter cropped body associates timestamp outside crop',
+    post('https://twitter.com/reporter/status/12345?s=20'), 'unique', 'https://x.com/reporter/status/12345');
+  check('Duplicate X photo links collapse to the original post',
+    post('https://x.com/reporter/status/12345', '<a href="https://x.com/reporter/status/12345/photo/1">Photo</a>'),
+    'unique', 'https://x.com/reporter/status/12345');
+  check('Profile and tracking links are not post permalinks',
+    post('https://x.com/reporter', '<a href="https://x.com.attacker.test/reporter/status/123">Bad host</a>'), 'none', '');
+  check('Two selected posts remain ambiguous',
+    post('https://x.com/reporter/status/12345') + post('https://x.com/other/status/67890').replace('<article>', '<article style="top:195px">').replace('id="crop"', 'id="second"'),
+    'ambiguous', '', () => ({x:20,y:20,width:360,height:335,view_width:innerWidth,view_height:innerHeight}));
+  check('Two posts with only one discoverable permalink remain ambiguous',
+    post('https://x.com/reporter/status/12345') + '<article style="top:195px"><div class="body">A second post with no exposed permalink</div></article>',
+    'ambiguous', '', () => ({x:20,y:20,width:360,height:335,view_width:innerWidth,view_height:innerHeight}));
+  check('Quoted post does not replace the enclosing post',
+    post('https://x.com/reporter/status/12345', '<a href="https://x.com/source/status/67890"><time>Quoted post</time></a>'), 'ambiguous', '');
+  const quotePost = `<article id="outer" style="width:400px;height:300px">
+    <header><a href="https://x.com/reporter">@reporter</a><a href="https://x.com/reporter/status/123"><time datetime="2026-10-15T22:57:00Z">29m</time></a></header>
+    <p dir="auto" id="outer-comment" style="position:absolute;top:25px;left:15px;width:360px;height:45px">An enclosing comment</p>
+    <div role="link" data-href="https://x.com/quoted/status/456" style="position:absolute;left:15px;top:100px;width:360px;height:140px">
+      <article id="quote" style="position:relative;left:0;top:0;width:360px;height:140px">
+        <header><a href="https://x.com/quoted">@quoted</a><a href="https://x.com/quoted/status/456"><time datetime="2026-10-15T14:00:00Z">9h</time></a></header>
+        <p dir="auto" id="quote-body" style="position:absolute;left:10px;top:30px;width:330px;height:80px">The original quoted post</p>
+      </article>
+    </div></article>`;
+  const quoteCheck = (name, html, id, expected, url, account, date) => {
+    check(name, html, expected, url, () => crop(id));
+    const r = results[results.length - 1];
+    const primary = r.actual.candidates.find(c => c.url === url);
+    if (account) r.passed &&= primary?.site_details.posting_account === account && primary?.site_details.publication_date_text === date;
+  };
+  quoteCheck('Full quote post prefers enclosing account, permalink and timestamp',
+    quotePost, 'outer', 'preferred', 'https://x.com/reporter/status/123', '@reporter', '2026-10-15T22:57:00Z');
+  const fullQuoteResult = results[results.length - 1];
+  fullQuoteResult.passed &&= fullQuoteResult.actual.selection_reason === 'enclosing_post_in_selection' &&
+      fullQuoteResult.actual.candidates.find(c => c.url.endsWith('/456'))?.quoted_by === 'https://x.com/reporter/status/123';
+  quoteCheck('Quote-only crop uses the original quoted post',
+    quotePost, 'quote', 'preferred', 'https://x.com/quoted/status/456', '@quoted', '2026-10-15T14:00:00Z');
+  quoteCheck('Crop confined to quoted text uses the original post',
+    quotePost, 'quote-body', 'preferred', 'https://x.com/quoted/status/456', '@quoted', '2026-10-15T14:00:00Z');
+  quoteCheck('Outer comment alone retains its own source',
+    quotePost, 'outer-comment', 'unique', 'https://x.com/reporter/status/123', '@reporter', '2026-10-15T22:57:00Z');
+  quoteCheck('Quote of the same account keeps separate post dates',
+    quotePost.replaceAll('x.com/quoted', 'x.com/reporter').replaceAll('@quoted','@reporter'),
+    'outer', 'preferred', 'https://x.com/reporter/status/123', '@reporter', '2026-10-15T22:57:00Z');
+  quoteCheck('Unlinked enclosing post prevents attribution to its quote',
+    quotePost.replace('https://x.com/reporter/status/123', 'https://example.com/unavailable'),
+    'outer', 'ambiguous', '');
+  quoteCheck('Unlinked outer post does not prevent an isolated quote crop',
+    quotePost.replace('https://x.com/reporter/status/123', 'https://example.com/unavailable'),
+    'quote', 'unique', 'https://x.com/quoted/status/456', '@quoted', '2026-10-15T14:00:00Z');
+  check('Two separate quote posts remain ambiguous',
+    quotePost + quotePost.replaceAll('id="outer"','id="second"').replaceAll('id="quote"','id="second-quote"').replaceAll('id="quote-body"','id="second-quote-body"').replace('width:400px;height:300px','width:400px;height:300px;top:340px').replaceAll('status/123','status/789'),
+    'ambiguous', '', () => ({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  quoteCheck('Authenticated quoteTweet container has separate ownership',
+    quotePost.replace('<article id="quote"', '<div data-testid="quoteTweet" id="quote"').replace('</article>\n    </div></article>', '</div>\n    </div></article>'),
+    'outer', 'preferred', 'https://x.com/reporter/status/123', '@reporter', '2026-10-15T22:57:00Z');
+  check('Truth Social post tracking normalization', post('https://www.truthsocial.com/@reporter/posts/123456/?utm_source=share'), 'unique', 'https://truthsocial.com/@reporter/posts/123456');
+  check('Truth Social legacy and current paths collapse',
+    post('https://truthsocial.com/@reporter/123456', '<a href="https://truthsocial.com/@reporter/posts/123456">Same post</a>'), 'unique', 'https://truthsocial.com/@reporter/posts/123456');
+  check('Truth Social profile is not a post', post('https://truthsocial.com/@reporter'), 'none', '');
+  check('Truth Social lookalike host is not supported', post('https://truthsocial.com.attacker.test/@reporter/posts/123'), 'none', '');
+  const detailsCheck = (name, html, url, expected, region) => {
+    check(name, html, 'unique', url, region);
+    const result = results[results.length - 1];
+    const details = result.actual.candidates.find(c => c.url === url)?.site_details || {};
+    result.passed &&= Object.entries(expected).every(([key,value]) => details[key] === value);
+    result.expectedDetails = expected;
+  };
+  const detailedPost = (link, profile, time, extra = '') =>
+    `<article><header><a href="${profile}">Reporter</a><a href="${link}">${time}</a></header><div id="crop" class="body">Own post ${extra}</div></article>`;
+  detailsCheck('Twitter account and machine timestamp are site-reported',
+    detailedPost('https://x.com/reporter/status/123', 'https://x.com/reporter', '<time datetime="2026-10-15T12:34:00Z" title="October 15">2h</time>'),
+    'https://x.com/reporter/status/123', {posting_account:'@reporter',publication_date_text:'2026-10-15T12:34:00Z',publication_date_displayed:'2h',publication_datetime_attribute:'2026-10-15T12:34:00Z'});
+  detailsCheck('X public timestamp link preserves its relative label',
+    '<article><div class="x-middot-group"><a href="https://x.com/reporter">Reporter</a><a href="https://x.com/reporter/status/123" data-base-ui-tooltip-trigger>17h</a></div><div id="crop" class="body">Post</div></article>',
+    'https://x.com/reporter/status/123', {posting_account:'@reporter',publication_date_text:'17h',publication_date_displayed:'17h',date_evidence:'post_permalink_timestamp_text'});
+  detailsCheck('X timestamp title belongs to its containing permalink',
+    detailedPost('https://x.com/reporter/status/123', 'https://x.com/reporter', '<time>9m</time>').replace('<a href="https://x.com/reporter/status/123">', '<a href="https://x.com/reporter/status/123" title="11:57 PM · Oct 15, 2026">'),
+    'https://x.com/reporter/status/123', {publication_date_text:'11:57 PM · Oct 15, 2026',publication_date_displayed:'9m'});
+  const trigger = '<a href="https://x.com/reporter/status/123" data-base-ui-tooltip-trigger data-popup-open>9m</a>';
+  const portal = '<div data-base-ui-portal><div data-open data-base-ui-focusable class="bg-(--x-tooltip-bg)">11:57 PM · Oct 15, 2026</div></div>';
+  const tooltipCheck = (name, html, expected) => {
+    fixture.innerHTML = html;
+    const actual = detectScreenshotTimestamp('https://x.com/reporter/status/123');
+    results.push({name,passed:expected ? actual?.tooltip === expected : actual === null,actual:actual || {status:'none'}});
+  };
+  tooltipCheck('X public portal supplies full hover timestamp', trigger + portal, '11:57 PM · Oct 15, 2026');
+  tooltipCheck('X tooltip never belongs to a different post', trigger.replace('/reporter/status/123','/quoted/status/456') + portal, null);
+  tooltipCheck('Two open timestamps cannot claim one portal', trigger + trigger.replace('/reporter/status/123','/quoted/status/456') + portal, null);
+  tooltipCheck('Hidden and closing tooltip text is ignored', trigger + portal.replace('data-open data-base-ui-focusable','data-open data-base-ui-focusable data-ending-style'), null);
+  tooltipCheck('Multiple tooltip portals stay ambiguous', trigger + portal + portal, null);
+  tooltipCheck('Transparent tooltip ancestor is ignored', trigger + '<div style="opacity:0">' + portal + '</div>', null);
+  tooltipCheck('An action tooltip is not a publication time', trigger + portal.replace('11:57 PM · Oct 15, 2026','Copy link'), null);
+  tooltipCheck('Closed timestamp does not claim stale portal', trigger.replace(' data-popup-open','') + portal, null);
+  tooltipCheck('ARIA linked timestamp tooltip is supported', trigger.replace(' data-popup-open',' data-popup-open aria-describedby="timestamp-tooltip"') + '<div id="timestamp-tooltip" role="tooltip">11:57 PM · Oct 15, 2026</div>', '11:57 PM · Oct 15, 2026');
+  detailsCheck('Relative date is retained without inventing an exact time',
+    detailedPost('https://x.com/reporter/status/123', 'https://x.com/reporter', '<time>Yesterday</time>'),
+    'https://x.com/reporter/status/123', {publication_date_text:'Yesterday',publication_date_displayed:'Yesterday'});
+  detailsCheck('Instagram account-prefixed footer ignores comment and caption times',
+    '<div style="position:absolute;left:20px;top:20px;width:500px;height:300px"><header><a href="https://www.instagram.com/reporter/">Reporter</a></header><img id="crop" alt="Photo by Reporter" style="width:180px;height:180px" src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'180\' height=\'180\'%3E%3C/svg%3E"><div><time datetime="2026-10-15T12:34:05Z">Caption 2h</time></div><a href="https://www.instagram.com/p/Ab12/c/999/"><time datetime="2026-10-15T14:00:00Z">Comment 1h</time></a><a href="https://www.instagram.com/reporter/p/Ab12/?hl=en"><time datetime="2026-10-15T12:34:00Z" title="October 15, 2026">2h</time></a></div>',
+    'https://www.instagram.com/p/Ab12/', {posting_account:'@reporter',publication_date_text:'2026-10-15T12:34:00Z',publication_date_displayed:'2h'});
+  check('Instagram comment date is not the post date',
+    post('https://www.instagram.com/p/Ab12/c/999/'), 'none', '');
+  detailsCheck('Threads pressable row supplies full timestamp and account',
+    '<div data-pressable-container="true" style="position:absolute;left:20px;top:20px;width:400px;height:160px"><a href="https://www.threads.net/@reporter">Reporter</a><a href="https://www.threads.net/@reporter/post/ABC_12?xmt=track"><time datetime="2026-10-15T13:53:48.000Z" title="Thursday, October 15, 2026 at 3:53 PM">8h</time></a><div id="crop" class="body">Thread text</div></div>',
+    'https://www.threads.com/@reporter/post/ABC_12', {posting_account:'@reporter',publication_date_text:'2026-10-15T13:53:48.000Z',publication_date_tooltip:'Thursday, October 15, 2026 at 3:53 PM'});
+  check('Threads lookalike host is rejected', post('https://www.threads.com.attacker.test/@reporter/post/ABC_12'), 'none', '');
+  check('Threads profile is not a post', post('https://www.threads.com/@reporter'), 'none', '');
+  detailsCheck('Facebook timeline timestamp link gets a scoped hover target',
+    '<div data-pagelet="TimelineFeedUnit_0" style="position:absolute;left:20px;top:20px;width:400px;height:160px"><h3><a href="https://www.facebook.com/reporter">Reporter</a></h3><a href="https://www.facebook.com/reel/123/" aria-label="1h">1h</a><div id="crop" class="body">Post text</div></div>',
+    'https://www.facebook.com/reel/123', {posting_account:'Reporter',publication_date_text:'1h',publication_date_aria_label:'1h'});
+  results[results.length-1].passed &&= !!results[results.length-1].actual.candidates[0].site_details.publication_date_hover_target?.selector;
+  detailsCheck('Facebook full accessible timestamp is preserved',
+    detailedPost('https://www.facebook.com/reporter/posts/123', 'https://www.facebook.com/reporter', '1h').replace('>1h</a>', ' aria-label="Thursday, October 15, 2026 at 12:34 PM">1h</a>'),
+    'https://www.facebook.com/reporter/posts/123', {publication_date_text:'Thursday, October 15, 2026 at 12:34 PM'});
+  detailsCheck('Facebook older date label without year still gets a hover target',
+    detailedPost('https://www.facebook.com/reporter/posts/123', 'https://www.facebook.com/reporter', 'October 3 at 3:33 PM').replace('>October 3', ' aria-label="October 3 at 3:33 PM">October 3'),
+    'https://www.facebook.com/reporter/posts/123', {publication_date_text:'October 3 at 3:33 PM'});
+  results[results.length-1].passed &&= !!results[results.length-1].actual.candidates[0].site_details.publication_date_hover_target?.selector;
+  detailsCheck('Deep Facebook wrapper retains a bounded exact hover target',
+    '<div>'.repeat(35) + detailedPost('https://www.facebook.com/reporter/posts/123', 'https://www.facebook.com/reporter', '1h').replace('>1h</a>', ' aria-label="1h">1h</a>') + '</div>'.repeat(35),
+    'https://www.facebook.com/reporter/posts/123', {publication_date_text:'1h'});
+  results[results.length-1].passed &&= !!results[results.length-1].actual.candidates[0].site_details.publication_date_hover_target?.selector;
+  detailsCheck('Facebook compound post ID and calendar label are preserved',
+    detailedPost('https://www.facebook.com/reporter/posts/28386850450919676:1795671375121229', 'https://www.facebook.com/reporter', 'August 9').replace('>August 9', ' aria-label="August 9">August 9'),
+    'https://www.facebook.com/reporter/posts/28386850450919676:1795671375121229', {publication_date_text:'August 9'});
+  detailsCheck('Facebook comment date does not become the enclosing post date',
+    detailedPost('https://www.facebook.com/reporter/posts/123', 'https://www.facebook.com/reporter', '<time datetime="2026-10-15T12:00:00Z">1h</time>', '<div aria-label="Comment by Reader a minute ago"><a href="https://www.facebook.com/reporter/posts/123"><time datetime="2026-10-15T13:00:00Z">1m</time></a></div>'),
+    'https://www.facebook.com/reporter/posts/123', {publication_date_text:'2026-10-15T12:00:00Z'});
+  detailsCheck('Facebook epoch gives an exact UTC date without a tooltip',
+    detailedPost('https://www.facebook.com/reporter/posts/123', 'https://www.facebook.com/reporter', '<abbr data-utime="1792067640">2h</abbr>'),
+    'https://www.facebook.com/reporter/posts/123', {publication_date_text:new Date(1792067640*1000).toISOString(),publication_epoch_attribute:'1792067640',publication_datetime_from_epoch_utc:new Date(1792067640*1000).toISOString()});
+  detailsCheck('Truth Social timestamp wrapper title is retained',
+    detailedPost('https://truthsocial.com/@reporter/posts/123', 'https://truthsocial.com/@reporter', '<time>5d</time>').replace('<a href="https://truthsocial.com/@reporter/posts/123">','<a href="https://truthsocial.com/@reporter/posts/123" title="May 31, 2025, 9:39 PM">'),
+    'https://truthsocial.com/@reporter/posts/123', {posting_account:'@reporter',publication_date_text:'May 31, 2025, 9:39 PM'});
+  const socialTipCheck = (name, html, options, expected) => {
+    fixture.innerHTML=html;
+    const stamp=document.getElementById('social-stamp');
+    const url=options.url || 'https://www.facebook.com/reporter/posts/123';
+    const actual=detectScreenshotTimestamp({url,target:{selector:'#social-stamp',permalink:url,
+      displayed:stamp.innerText,href:stamp.closest('a[href]')?.href || '',existing_tooltips:[],...options.target}});
+    results.push({name,passed:expected ? actual?.tooltip===expected : actual===null,actual:actual || {status:'none'}});
+  };
+  const socialStamp='<a id="social-stamp" href="https://www.facebook.com/reporter/posts/123" aria-describedby="social-tooltip">1h</a>';
+  const socialTip='<div id="social-tooltip" role="tooltip">Thursday, October 15, 2026 at 12:34 PM</div>';
+  socialTipCheck('Facebook ARIA-associated full hover date',socialStamp+socialTip,{},'Thursday, October 15, 2026 at 12:34 PM');
+  socialTipCheck('Hidden associated tooltip is rejected',socialStamp+socialTip.replace('role="tooltip"','role="tooltip" hidden'),{},null);
+  socialTipCheck('Changed post element cannot reuse a hover target',socialStamp+socialTip,{target:{href:'https://www.facebook.com/other/posts/456'}},null);
+  socialTipCheck('Replaced timestamp text cannot reuse a hover target',socialStamp+socialTip,{target:{displayed:'Yesterday'}},null);
+  socialTipCheck('Unrelated date tooltip is rejected',socialStamp.replace(' aria-describedby="social-tooltip"','')+socialTip,{},null);
+  socialTipCheck('Relative ARIA label is not an exact timestamp',socialStamp+socialTip.replace('Thursday, October 15, 2026 at 12:34 PM','about an hour ago'),{},null);
+  socialTipCheck('Instagram hover title on timestamp wrapper', '<a title="October 15, 2026 at 12:34 PM" href="https://www.instagram.com/p/Ab12/"><time id="social-stamp">2h</time></a>',{url:'https://www.instagram.com/p/Ab12/'},'October 15, 2026 at 12:34 PM');
+  socialTipCheck('Threads linked hover date is supported',socialStamp.replace('https://www.facebook.com/reporter/posts/123','https://www.threads.com/@reporter/post/ABC_12')+socialTip,{url:'https://www.threads.com/@reporter/post/ABC_12'},'Thursday, October 15, 2026 at 12:34 PM');
+  socialTipCheck('Truth Social linked hover date is supported',socialStamp.replace('https://www.facebook.com/reporter/posts/123','https://truthsocial.com/@reporter/posts/123')+socialTip,{url:'https://truthsocial.com/@reporter/posts/123'},'Thursday, October 15, 2026 at 12:34 PM');
+  detailsCheck('Instagram scoped author and date',
+    detailedPost('https://www.instagram.com/p/Ab12/', 'https://www.instagram.com/reporter/', '<time datetime="2026-10-15T12:34:00+02:00">October 15</time>'),
+    'https://www.instagram.com/p/Ab12/', {posting_account:'@reporter',publication_date_text:'2026-10-15T12:34:00+02:00'});
+  const facebookPostUrl = 'https://www.facebook.com/reporter/posts/28386850450919676:1795671375121229';
+  const facebookPhotoUrl = 'https://www.facebook.com/photo/?fbid=28386850450919676';
+  const facebookPhotoPost = `<article id="facebook-post" style="width:400px;height:300px">
+    <header><a href="https://www.facebook.com/reporter">Reporter</a><a href="${facebookPostUrl}" aria-label="August 9">August 9</a></header>
+    <a id="photo-crop" href="${facebookPhotoUrl}&set=a.42" style="position:absolute;top:60px;left:10px;width:380px;height:200px"><img alt="Post photo" style="width:380px;height:200px"></a>
+  </article>`;
+  const facebookPhotoCheck = (name, html, id = 'facebook-post') => {
+    quoteCheck(name, html, id, 'preferred', facebookPostUrl, 'Reporter', 'August 9');
+    const r=results[results.length-1], photo=r.actual.candidates.find(c=>c.url===facebookPhotoUrl);
+    r.passed &&= r.actual.selection_reason==='enclosing_post_with_attached_media' &&
+        photo?.relationship==='attached_media' && photo?.attached_to===facebookPostUrl;
+    if (photo) r.passed &&= !photo.site_details.publication_date_text && !photo.site_details.posting_account;
+  };
+  facebookPhotoCheck('Facebook photo post prefers its enclosing timestamp and account', facebookPhotoPost);
+  facebookPhotoCheck('Facebook photo-only crop still documents the enclosing post', facebookPhotoPost, 'photo-crop');
+  facebookPhotoCheck('Facebook TimelineFeedUnit photo uses its post source',
+    facebookPhotoPost.replace('<article ', '<div data-pagelet="TimelineFeedUnit_0" ').replace('</article>', '</div>'));
+  facebookPhotoCheck('Facebook album keeps multiple photos as secondary sources',
+    facebookPhotoPost.replace('</article>', `<a href="https://www.facebook.com/photo.php?fbid=456" style="position:absolute;left:20px;top:270px;width:60px;height:20px"><img alt="Second photo" width="60" height="20"></a></article>`));
+  check('Facebook selected sibling posts stay ambiguous despite attached photos',
+    facebookPhotoPost + facebookPhotoPost.replace('id="facebook-post"','id="second-facebook"').replace('height:300px','height:300px;top:330px').replaceAll('28386850450919676:1795671375121229','222:333').replaceAll('fbid=28386850450919676','fbid=222'),
+    'ambiguous', '', () => ({x:20,y:20,width:400,height:610,view_width:innerWidth,view_height:innerHeight}));
+  check('Facebook text link to another photo is not treated as an attachment',
+    facebookPhotoPost.replace('<img alt="Post photo" style="width:380px;height:200px">','A link to another photo'), 'ambiguous','',()=>crop('facebook-post'));
+  check('Facebook standalone photo remains its own source',
+    post(facebookPhotoUrl), 'unique',facebookPhotoUrl);
+  check('Facebook comment permalink is not an attached-media alternative',
+    facebookPhotoPost.replace('</article>', `<a href="${facebookPostUrl}?comment_id=555">Comment</a></article>`), 'ambiguous','',()=>crop('facebook-post'));
+  check('Facebook unrelated photo post is not preferred without a timestamp source',
+    facebookPhotoPost.replace(' aria-label="August 9">August 9','>Read post'), 'ambiguous','',()=>crop('facebook-post'));
+  detailsCheck('Facebook header author and site timestamp',
+    detailedPost('https://www.facebook.com/reporter/posts/pfbid123', 'https://www.facebook.com/reporter', '<abbr data-utime="1792067640" title="15 October 2026 at 12:34">2h</abbr>'),
+    'https://www.facebook.com/reporter/posts/pfbid123', {posting_account:'Reporter',publication_date_text:'15 October 2026 at 12:34',publication_date_displayed:'2h',publication_epoch_attribute:'1792067640'});
+  detailsCheck('Truth Social feed account and tooltip date',
+    detailedPost('https://truthsocial.com/@reporter/posts/123', 'https://truthsocial.com/@reporter', '<time title="Oct 09, 2026, 10:11 PM">5d</time>').replace('<article>', '<div data-testid="status">').replace('</article>', '</div>'),
+    'https://truthsocial.com/@reporter/posts/123', {posting_account:'@reporter',publication_date_text:'Oct 09, 2026, 10:11 PM',publication_date_displayed:'5d'});
+  check('Missing account/date remain missing', post('https://truthsocial.com/@reporter/posts/123').replace('<time>15 October 2026</time>', 'Open post'), 'unique', 'https://truthsocial.com/@reporter/posts/123');
+  results[results.length-1].passed &&= !results[results.length-1].actual.candidates[0].site_details.posting_account && !results[results.length-1].actual.candidates[0].site_details.publication_date_text;
+  check('Multiple accounts in an Instagram header require review',
+    detailedPost('https://www.instagram.com/p/Ab12/', 'https://www.instagram.com/reporter/', '<time>Today</time>').replace('<header>', '<header><a href="https://www.instagram.com/coauthor/">Coauthor</a>'), 'unique', 'https://www.instagram.com/p/Ab12/');
+  results[results.length-1].passed &&= !results[results.length-1].actual.candidates[0].site_details.posting_account && results[results.length-1].actual.candidates[0].site_details.account_candidates.length === 2;
+  // A cookie dialog's fragment-only links may resolve to a post-page URL.
+  // They must never be mistaken for the post itself.
+  const base = document.createElement('base'); base.href = 'https://truthsocial.com/@reporter/posts/123'; document.head.append(base);
+  check('Fragment-only cookie links are not post links',
+    '<div role="dialog" id="crop" style="position:absolute;left:20px;top:20px;width:300px;height:100px"><a href="#cookies">Cookie options</a></div>', 'none', '');
+  base.remove();
+  const truthCanonical = document.createElement('link'); truthCanonical.rel = 'canonical'; truthCanonical.href = 'https://truthsocial.com/@reporter/posts/123'; document.head.append(truthCanonical);
+  detailsCheck('Truth Social detail footer supplies its own date',
+    '<div class="detailed-actualStatus"><div><a href="https://truthsocial.com/@reporter">Reporter</a><div id="crop" class="body" data-testid="status-content">Own post</div></div><div><div>42 likes</div><span>Oct 09, 2026, 10:11 PM</span></div></div>',
+    truthCanonical.href, {posting_account:'@reporter',publication_date_text:'Oct 09, 2026, 10:11 PM',date_evidence:'truth_social_detail_footer'});
+  check('Truth Social detail and quoted post remain distinct',
+    '<div class="detailed-actualStatus" id="crop"><div><a href="https://truthsocial.com/@reporter">Reporter</a><div data-testid="status" style="position:relative;left:0;top:40px;width:280px;height:80px"><a href="https://truthsocial.com/@quoted">Quoted account</a><a href="https://truthsocial.com/@quoted/posts/456"><time datetime="2025-01-01T00:00:00Z">Old date</time></a></div></div><div><span>Oct 09, 2026, 10:11 PM</span></div></div>', 'ambiguous', '');
+  const quotedResult = results[results.length-1];
+  const outer = quotedResult.actual.candidates.find(c => c.url === truthCanonical.href);
+  quotedResult.passed &&= outer?.site_details.posting_account === '@reporter' && outer?.site_details.publication_date_text === 'Oct 09, 2026, 10:11 PM';
+  truthCanonical.remove();
+  check('Conflicting dates for the same post do not silently fill a date',
+    detailedPost('https://truthsocial.com/@reporter/posts/123', 'https://truthsocial.com/@reporter', '<time>Today</time>') +
+    detailedPost('https://truthsocial.com/@reporter/posts/123', 'https://truthsocial.com/@reporter', '<time>Yesterday</time>').replace('<article>', '<article style="top:195px">').replace('id="crop"','id="second"'),
+    'ambiguous', '', () => ({x:20,y:20,width:360,height:335,view_width:innerWidth,view_height:innerHeight}));
+  const conflicting = results[results.length-1].actual.candidates[0]?.site_details;
+  results[results.length-1].passed &&= conflicting?.conflicting_observations === true && !conflicting.publication_date_text;
+  fixture.innerHTML = detailedPost('#timestamp', 'https://truthsocial.com/@reporter', '<time title="Oct 09, 2026, 10:11 PM">5d</time>');
+  const noLink = Function('location','region','return (' + detectScreenshotSource.toString() + ')(region);')(
+      {href:'https://truthsocial.com/home',hostname:'truthsocial.com'}, crop('crop'));
+  results.push({name:'Account and date survive when no permalink is exposed', expected:'none',
+    passed:noLink.status === 'none' && noLink.selected_post_details.posting_account === '@reporter' &&
+      noLink.selected_post_details.publication_date_text === 'Oct 09, 2026, 10:11 PM', actual:noLink});
+  check('Instagram post', post('https://www.instagram.com/p/ABC_12/?igsh=tracking'), 'unique', 'https://www.instagram.com/p/ABC_12/');
+  check('Instagram reel', post('https://www.instagram.com/reel/ABC-12/?utm_source=test'), 'unique', 'https://www.instagram.com/reel/ABC-12/');
+  check('Facebook post', post('https://m.facebook.com/reporter/posts/pfbid123?__cft__[0]=tracking'), 'unique', 'https://www.facebook.com/reporter/posts/pfbid123');
+  check('Facebook story query keeps post identity', post('https://www.facebook.com/permalink.php?story_fbid=pfbid123&id=42&ref=share'), 'unique', 'https://www.facebook.com/permalink.php?story_fbid=pfbid123&id=42');
+  check('Facebook group comment retains comment identity', post('https://www.facebook.com/groups/press/posts/123/?comment_id=456&reply_comment_id=789&ref=share'), 'unique', 'https://www.facebook.com/groups/press/posts/123?comment_id=456&reply_comment_id=789');
+  check('Facebook video', post('https://www.facebook.com/watch/?v=123&ref=watch'), 'unique', 'https://www.facebook.com/watch/?v=123');
+  check('Hidden post link cannot become the source',
+    '<article><a hidden href="https://x.com/source/status/123"><time>Hidden</time></a><div id="crop" class="body">No post link</div></article>', 'none', '');
+  check('Transparent ancestor cannot become the source',
+    '<div style="opacity:0">' + post('https://x.com/source/status/123') + '</div>', 'none', '');
+  check('Occluded feed behind modal cannot become the source',
+    post('https://x.com/source/status/123') + '<div style="position:absolute;inset:0;background:white;z-index:99">Modal</div>', 'none', '');
+  check('Selection outside post stays empty',
+    post('https://x.com/source/status/123') + '<aside id="outside" style="position:absolute;top:200px;left:20px;width:300px;height:60px">Sidebar</aside>',
+    'none', '', () => crop('outside'));
+  check('View DIP to CSS coordinates accounts for page zoom',
+    post('https://x.com/source/status/123'), 'unique', 'https://x.com/source/status/123', () => {
+      const r = crop('crop'); return {x:r.x*2,y:r.y*2,width:r.width*2,height:r.height*2,view_width:innerWidth*2,view_height:innerHeight*2};
+    });
+  const originalViewport = window.visualViewport;
+  Object.defineProperty(window, 'visualViewport', {configurable:true, value:{
+    width:innerWidth/2, height:innerHeight/2, offsetLeft:20, offsetTop:40}});
+  check('Pinch offset uses layout coordinates for hit testing',
+    post('https://x.com/source/status/123'), 'unique', 'https://x.com/source/status/123', () => {
+      const r = crop('crop'); return {x:(r.x-20)*2,y:(r.y-40)*2,width:r.width*2,height:r.height*2,view_width:innerWidth,view_height:innerHeight};
+    });
+  Object.defineProperty(window, 'visualViewport', {configurable:true, value:originalViewport});
+  check('Scanning limit never silently fills the first result',
+    post('https://x.com/source/status/123') + '<a href="https://example.com">link</a>'.repeat(10001), 'incomplete', '');
+  check('Candidate limit never silently fills the first result',
+    post('https://x.com/source/status/123', Array.from({length:9}, (_,i) => `<a href="https://x.com/source/status/${200+i}">p</a>`).join('')), 'incomplete', '');
+  const canonical = document.createElement('link');
+  canonical.rel = 'canonical'; canonical.href = 'https://www.instagram.com/p/Canonical1/';
+  document.head.append(canonical);
+  check('Single post canonical fallback', '<article><div id="crop" class="body">Image without linked timestamp</div></article>', 'unique', canonical.href);
+  canonical.remove();
+  fixture.innerHTML = '<pre></pre>';
+  fixture.firstChild.textContent = JSON.stringify(results.map(({name,passed,actual}) => ({name,passed,status:actual.status})), null, 2);
+  document.title = results.every(r => r.passed) ? 'PASS — screenshot permalink fixtures' : 'FAIL — screenshot permalink fixtures';
+  window.screenshotSourceResults = results;
+  return results;
+};
+</script>
