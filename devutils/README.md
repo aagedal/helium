@@ -2,6 +2,46 @@
 
 This is a collection of scripts written for developing on ungoogled-chromium. See the descriptions at the top of each script for more information.
 
+## Standalone local macOS app
+
+After building with the persistent cache described in `AGENTS.md`, package the
+Apple Silicon component build without changing its GN arguments:
+
+```sh
+python3 devutils/package_standalone_macos.py \
+  --build-output "$HOME/Developer/helium/build/macos/build/src/out/Default" \
+  --destination /tmp/helium-neo-standalone
+```
+
+Choose a destination that does not exist. The script copies the app, includes
+its transitive component libraries, replaces development loader paths with
+bundle-relative paths, checks arm64 architecture, and ad-hoc signs and verifies
+the result. It requires the macOS command-line developer tools.
+The original cache is preserved. The resulting app runs independently
+of the checkout; it remains a component development build with updates disabled.
+Ad-hoc signing does not provide a verified publisher or Apple notarization.
+Public distribution requires a Developer ID signing and notarization workflow.
+
+To replace the ad-hoc signatures with an installed Developer ID identity:
+
+```sh
+python3 devutils/sign_standalone_macos.py \
+  --app '/tmp/helium-neo-standalone/Helium Neo.app' \
+  --source-tree "$HOME/Developer/helium/build/macos/build/src" \
+  --identity 'Developer ID Application: Your Name (TEAMID)'
+```
+
+This signs every bundled component with a secure timestamp, enables hardened
+runtime for executables, applies Chromium's renderer/GPU JIT entitlements, and
+verifies the app. Keychain access must be available; a sandbox can hide installed
+identities even when `security find-identity` reports success with no identities.
+Package the signed app in a DMG, sign the DMG with the same identity, then submit
+it using `xcrun notarytool submit --keychain-profile PROFILE --wait`. After an
+accepted result, staple and validate the DMG with `xcrun stapler`.
+For a saved keychain service named
+`com.apple.gke.notary.tool.saved-creds.PROFILE`, pass only `PROFILE` to
+`--keychain-profile`.
+
 ## Experimental multi-pane split view
 
 `helium/ui/multi-pane-split-view.patch` extends the base split implementation;
