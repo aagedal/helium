@@ -129,7 +129,12 @@ The preset matches the 402 × 874 CSS-pixel dimensions corresponding to the
 [standard iPhone 17's 1206 × 2622 display](https://support.apple.com/en-us/125089)
 at 3× density. This is a Chromium responsive preview: it does not emulate
 Safari/WebKit, an iPhone user agent, browser bars, or a screen cutout.
-Server-side user-agent detection still sees the normal browser.
+`helium/ui/mobile-preview-device-identity.patch` adds an Android mobile Chromium
+user agent and matching Client Hints to both mobile modes. HTTP requests and
+JavaScript device detection see a mobile device, while other panes retain their
+desktop identity. Switching between desktop and mobile reloads eligible HTTP(S)
+GET pages; POST pages are not automatically resubmitted. Changing only the mobile
+height does not reload. Restored panes receive their identity before loading.
 
 Tab settings are included in session snapshots and recently closed tab data
 and copied when a tab is discarded. Refresh skips loading, crashed, discarded,
@@ -343,3 +348,53 @@ Chromium's protected preferences discarded the injected pinned-tab entries.
 Apple's Icon Composer renderer reproduced the old filled oval and verified the
 corrected orbital foreground; the built app's asset catalog matches the new
 checked-in catalog.
+
+## Mobile device identity and active split indication
+
+`mobile-preview-device-identity.patch` supplements both mobile viewport modes
+with per-pane Android Chromium identification in HTTP headers, Client Hints,
+and navigator properties. Enabling/disabling mobile mode reloads eligible GET
+pages; restoring settings and changing mobile height do not start another load.
+The browser regression in `TabMenuModelBrowserTest.MobilePreviewDeviceIdentity`
+checks echoed request headers, JavaScript identity, desktop-pane isolation,
+height changes, and returning to desktop.
+
+`split-active-pane-indicator.patch` uses the normal theme-aware active-tab
+background for the actual active sub-tab and inactive backgrounds for its
+siblings. The highlight remains visible while the toolbar or a context menu has focus. Clicking another
+sub-tab within the current split explicitly selects that pane; returning from
+another tab still restores the split's last focused pane.
+
+Validation: both changes compiled in the persistent Apple Silicon component
+build; the browser regression source compiled using its generated Chromium
+command. The full browser-test executable was not built/run in this pruned
+cache. Native app checks confirmed mobile HTTP/JavaScript identity, TV 2's
+latest-news strip, desktop/mobile isolation, and selection indication in
+two-pane and compact pinned three-pane splits. Clicking a pinned sub-tab selected its corresponding pane after restart. A restored inactive
+saved split showed blank contents during the additional session-restore check;
+that restore path remains unverified.
+
+The split indicator uses existing theme background states rather than a custom
+underline or thicker pane outline. The revised component app built successfully,
+and native checks confirmed the highlight follows compact pinned sub-tab selection.
+The old downloaded installer contained the malformed modern macOS icon catalog;
+macOS resolved the current running build to the correct orbital icon.
+
+## Vertical pinned split tabs
+
+`vertical-pinned-split-tabs.patch` applies active-pane background highlighting
+and direct sub-tab selection to the vertical tab implementation. Each pinned
+sub-tab paints its own theme background rather than sharing the first pane's
+background. In an expanded sidebar, pinned split icons share a row and wrap
+when the sidebar cannot fit all panes; the collapsed sidebar keeps its vertical
+icon stack. Expanding/collapsing invalidates the split layout.
+
+`PinnedSplitTabViewTest.ExpandedTilesAndSelection` covers two through six panes,
+multiple sidebar widths, non-overlapping bounds, direct selection and style
+state, and the collapsed stack.
+
+Validation: the persistent Apple Silicon app build and independent Chromium
+browser-test source compilation passed. Native UI checks verified the expanded
+three-pane pinned icon row, per-pane selection, the collapsed icon stack, and
+expanding back to a row. Full browser-test execution remains unavailable in the
+pruned cache.

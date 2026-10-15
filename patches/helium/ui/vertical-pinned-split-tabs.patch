@@ -1,0 +1,220 @@
+--- a/chrome/browser/ui/views/tabs/common/tab_strip_collection_controller.cc
++++ b/chrome/browser/ui/views/tabs/common/tab_strip_collection_controller.cc
+@@ -288,7 +288,10 @@
+   }
+ 
+   std::optional<split_tabs::SplitTabId> split_id = tab_interface->GetSplit();
+-  if (split_id.has_value()) {
++  // Restore the last pane on entry, but honor an explicit sub-tab selection
++  // within the current split, just like the horizontal tab strip.
++  if (split_id.has_value() &&
++      model_->GetActiveTab()->GetSplit() != split_id) {
+     tab_index = split_tabs::GetIndexOfLastActiveTab(model_, split_id.value());
+   }
+ 
+--- a/chrome/browser/ui/views/tabs/common/tab_view.cc
++++ b/chrome/browser/ui/views/tabs/common/tab_view.cc
+@@ -154,9 +154,15 @@
+ 
+   const views::View* GetView() const override { return tab_view_; }
+ 
+-  bool IsActive() const override { return tab_view_->IsActive(); }
++  bool IsActive() const override {
++    const auto* tab = tab_view_->GetTabInterface();
++    return tab && tab->IsActivated();
++  }
+ 
+   bool IsSelected() const override {
++    if (tab_view_->split()) {
++      return IsActive();
++    }
+     return tab_view_->GetSelectionState() ==
+            TabStyle::TabSelectionState::kSelected;
+   }
+@@ -789,12 +795,8 @@
+ }
+ 
+ void TabView::OnPaint(gfx::Canvas* canvas) {
+-  // Split pinned tabs have a merged background that is rendered in
+-  // `SplitTabView`.
+-  if (pinned_ && split_) {
+-    return;
+-  }
+-
++  // Each sub-tab paints its own state, including pinned splits, so the
++  // pane receiving browser commands remains visible in both sidebar modes.
+   tab_styling()->PaintTab(canvas);
+ 
+   views::View::OnPaint(canvas);
+--- a/chrome/browser/ui/views/tabs/common/split_tab_view_browsertest.cc
++++ b/chrome/browser/ui/views/tabs/common/split_tab_view_browsertest.cc
+@@ -5,8 +5,12 @@
+ 
+ #include "chrome/browser/ui/views/tabs/common/split_tab_view.h"
+ 
++#include "base/test/run_until.h"
+ #include "build/build_config.h"
+ #include "chrome/browser/ui/tabs/features.h"
++#include "chrome/browser/ui/layout_constants.h"
++#include "chrome/browser/ui/views/tabs/common/tab_view.h"
++#include "chrome/browser/ui/views/tabs/tab_style_views.h"
+ #include "chrome/browser/ui/tabs/tab_strip_model.h"
+ #include "chrome/browser/ui/views/tabs/common/tab_collection_node.h"
+ #include "chrome/browser/ui/views/tabs/common/tab_group_line_view.h"
+@@ -198,3 +202,72 @@
+                          SplitTabViewParameterizedTest,
+                          testing::Values(TabStripOrientation::kVertical,
+                                          TabStripOrientation::kHorizontal));
++
++class PinnedSplitTabViewTest
++    : public VerticalTabsBrowserTestMixin<InProcessBrowserTest>,
++      public testing::WithParamInterface<int> {};
++
++IN_PROC_BROWSER_TEST_P(PinnedSplitTabViewTest, ExpandedTilesAndSelection) {
++  std::vector<int> indices;
++  for (int i = 0; i < GetParam(); ++i) {
++    AppendTab();
++    indices.push_back(tab_strip_model()->active_index());
++  }
++  tab_strip_model()->AddToNewSplit(
++      indices, {}, split_tabs::SplitTabCreatedSource::kTabContextMenu);
++  tab_strip_model()->SetTabPinned(tab_strip_model()->active_index(), true);
++  auto* node = pinned_collection_node()->GetChildNodeOfType(
++      TabCollectionNode::Type::SPLIT);
++  ASSERT_TRUE(node);
++  auto* split = views::AsViewClass<SplitTabView>(node->view());
++  ASSERT_TRUE(split);
++  const auto children = node->GetDirectChildren();
++  ASSERT_EQ(children.size(), static_cast<size_t>(GetParam()));
++  vertical_tab_strip_state_controller()->RequestCollapse(false);
++  ASSERT_TRUE(base::test::RunUntil([&] {
++    return !vertical_tab_strip_state_controller()->IsCollapsed();
++  }));
++  for (int width : {36, 65, 100, 180, 300}) {
++    const auto layout = split->CalculateProposedLayout(views::SizeBounds(width, {}));
++    for (size_t i = 0; i < children.size(); ++i) {
++      const auto& bounds = layout.GetLayoutFor(children[i])->bounds;
++      EXPECT_GT(bounds.width(), 0);
++      EXPECT_EQ(bounds.height(),
++                GetLayoutConstant(LayoutConstant::kVerticalTabPinnedHeight));
++      EXPECT_TRUE(gfx::Rect(layout.host_size).Contains(bounds));
++      for (size_t j = 0; j < i; ++j) {
++        EXPECT_FALSE(bounds.Intersects(layout.GetLayoutFor(children[j])->bounds));
++      }
++    }
++    if (width == 300) {
++      EXPECT_EQ(layout.GetLayoutFor(children[0])->bounds.y(),
++                layout.GetLayoutFor(children[children.size() - 1])->bounds.y());
++    }
++  }
++  for (auto* child : children) {
++    auto* tab = views::AsViewClass<TabView>(child);
++    ASSERT_TRUE(tab);
++    vertical_tab_strip_controller()->SelectTab(
++        tab->GetTabInterface(),
++        TabStripUserGestureDetails(TabStripUserGestureDetails::GestureType::kOther));
++    EXPECT_TRUE(tab->GetTabInterface()->IsActivated());
++    for (auto* sibling : children) {
++      auto* sibling_tab = views::AsViewClass<TabView>(sibling);
++      EXPECT_EQ(sibling == child, sibling_tab->tab_styling()->delegate()->IsActive());
++      EXPECT_EQ(sibling == child, sibling_tab->tab_styling()->delegate()->IsSelected());
++    }
++  }
++  vertical_tab_strip_state_controller()->RequestCollapse(true);
++  ASSERT_TRUE(base::test::RunUntil([&] {
++    return vertical_tab_strip_state_controller()->IsCollapsed();
++  }));
++  const auto collapsed = split->CalculateProposedLayout(views::SizeBounds(36, {}));
++  for (size_t i = 1; i < children.size(); ++i) {
++    EXPECT_GT(collapsed.GetLayoutFor(children[i])->bounds.y(),
++              collapsed.GetLayoutFor(children[i - 1])->bounds.y());
++  }
++}
++
++INSTANTIATE_TEST_SUITE_P(TwoThroughSixPanes,
++                         PinnedSplitTabViewTest,
++                         testing::Values(2, 3, 4, 5, 6));
+--- a/chrome/browser/ui/views/tabs/common/split_tab_view.cc
++++ b/chrome/browser/ui/views/tabs/common/split_tab_view.cc
+@@ -95,25 +95,6 @@
+ }
+ 
+ void SplitTabView::OnPaint(gfx::Canvas* canvas) {
+-  if (pinned_) {
+-    const auto children = collection_node_
+-                              ? collection_node_->GetDirectChildren()
+-                              : TabCollectionNode::ChildViews();
+-    std::optional<SkColor> background_color =
+-        !children.empty()
+-            ? views::AsViewClass<TabView>(children[0])->GetBackgroundColor()
+-            : std::nullopt;
+-    if (background_color.has_value()) {
+-      cc::PaintFlags flags;
+-      flags.setAntiAlias(true);
+-      flags.setColor(background_color.value());
+-      const float corner_radius =
+-          GetLayoutConstant(LayoutConstant::kVerticalTabCornerRadius) -
+-          GetInsets().top() / 2.0;
+-      canvas->DrawRoundRect(GetContentsBounds(), corner_radius, flags);
+-    }
+-  }
+-
+   views::View::OnPaint(canvas);
+ }
+ 
+@@ -290,6 +271,41 @@
+       pinned_
+           ? GetLayoutConstant(LayoutConstant::kVerticalTabPinnedBorderThickness)
+           : 0;
++
++  // Expanded pinned splits contain icon tiles, not full-width tab rows.
++  // Wrap larger splits while retaining the collapsed sidebar's vertical stack.
++  if (pinned_ && !collapsed_) {
++    const int count = static_cast<int>(children.size());
++    const int min_tile_width =
++        GetLayoutConstant(LayoutConstant::kVerticalTabMinWidth);
++    const int tile_height =
++        GetLayoutConstant(LayoutConstant::kVerticalTabPinnedHeight);
++    width = std::max(0, size_bounds.width().value_or(
++                            count * min_tile_width +
++                            (count - 1) * kSplitViewGap + 2 * border_thickness));
++    const int available = std::max(0, width - 2 * border_thickness);
++    const int columns = std::clamp(
++        (available + kSplitViewGap) / (min_tile_width + kSplitViewGap),
++        1, count);
++    const int rows = (count + columns - 1) / columns;
++    const int tile_space =
++        std::max(0, available - (columns - 1) * kSplitViewGap);
++    for (int i = 0; i < count; ++i) {
++      const int column = i % columns;
++      const int left = tile_space * column / columns;
++      const int right = tile_space * (column + 1) / columns;
++      gfx::Rect bounds(border_thickness + left + column * kSplitViewGap,
++                       border_thickness + (i / columns) *
++                                              (tile_height + kSplitViewGap),
++                       right - left, tile_height);
++      layouts.child_layouts.emplace_back(children[i], children[i]->GetVisible(),
++                                          bounds);
++    }
++    height = 2 * border_thickness + rows * tile_height +
++             (rows - 1) * kSplitViewGap;
++    layouts.host_size = gfx::Size(width, height);
++    return layouts;
++  }
+ 
+   // Layout children in order. Children will have their preferred height and
+   // fill available width. If unbounded or uncollapsed and both children fit on
+@@ -343,7 +359,12 @@
+ 
+ void SplitTabView::OnCollapseStateChanged(
+     tabs::VerticalTabStripCollapseState state) {
+-  collapsed_ = state == tabs::VerticalTabStripCollapseState::kCollapsed;
++  const bool collapsed =
++      state == tabs::VerticalTabStripCollapseState::kCollapsed;
++  if (collapsed_ != collapsed) {
++    collapsed_ = collapsed;
++    InvalidateLayout();
++  }
+ }
+ 
+ std::unique_ptr<views::View> SplitTabView::RemoveChildViewForReparenting(
