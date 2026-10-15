@@ -43,11 +43,25 @@ int main() {
         assert(std::abs(width - fit.width - 2 * fit.x) <= 1);
         assert(std::abs(height - fit.height - 2 * fit.y) <= 1);
       }
+      const auto flexible = tabs::FitMobilePreview(width, height, true);
+      if (width == 0 || height == 0) {
+        assert(flexible.width == 0 && flexible.height == 0);
+      } else {
+        assert(flexible.width == std::min(width, 402));
+        assert(flexible.height == height && flexible.y == 0);
+        assert(flexible.scale > 0 && flexible.scale <= 1);
+        assert(std::abs(flexible.width - 402 * flexible.scale) <= 1);
+        assert(std::abs(width - flexible.width - 2 * flexible.x) <= 1);
+      }
       ++cases;
     }
   }
   const auto full = tabs::FitMobilePreview(1600, 2000);
   assert(full.width == 402 && full.height == 874 && full.scale == 1);
+  const auto tall = tabs::FitMobilePreview(1600, 2000, true);
+  assert(tall.width == 402 && tall.height == 2000 && tall.scale == 1);
+  const auto narrow = tabs::FitMobilePreview(201, 2000, true);
+  assert(narrow.width == 201 && narrow.height == 2000 && narrow.scale == 0.5);
   for (int seconds = -300; seconds <= 300; ++seconds) {
     const bool expected = seconds == 0 || seconds == 15 || seconds == 30 ||
         seconds == 45 || seconds == 60 || seconds == 75 || seconds == 90 ||
@@ -65,7 +79,16 @@ def extract_header():
     """Extract the production geometry header from the preview patch."""
     patch = PatchSet((REPO / 'patches/helium/ui/tab-preview-workspaces.patch').read_text())
     file = next(file for file in patch if file.path == HEADER)
-    return ''.join(line.value for hunk in file for line in hunk if line.is_added)
+    lines = ''.join(line.value for hunk in file for line in hunk if line.is_added).splitlines(True)
+    followup = PatchSet((REPO / 'patches/helium/ui/pinned-split-pane-state.patch').read_text())
+    changes = next(file for file in followup if file.path == HEADER)
+    for hunk in reversed(changes):
+        start = hunk.source_start - 1
+        before = [line.value for line in hunk if not line.is_added]
+        after = [line.value for line in hunk if not line.is_removed]
+        assert lines[start:start + len(before)] == before
+        lines[start:start + len(before)] = after
+    return ''.join(lines)
 
 
 def main():
