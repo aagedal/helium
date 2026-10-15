@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "Helium atbrīvo atmiņu no neaktīvajām cilnēm. Tas nodrošina aktīvajām cilnēm un citām lietotnēm vairāk datora resursu un uztur Helium ātru darbību. Neaktīvās cilnes automātiski kļūst atkal aktīvas, kad atgriežaties tajās."
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "Helium Neo atbrīvo atmiņu no neaktīvajām cilnēm. Tas nodrošina aktīvajām cilnēm un citām lietotnēm vairāk datora resursu un uztur Helium Neo ātru darbību. Neaktīvās cilnes automātiski kļūst atkal aktīvas, kad atgriežaties tajās."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "Helium taupa akumulatora enerģiju, ierobežojot fona darbību un vizuālos efektus, piemēram, vienmērīgu ritināšanu un video kadru ātrumu."
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "Helium Neo taupa akumulatora enerģiju, ierobežojot fona darbību un vizuālos efektus, piemēram, vienmērīgu ritināšanu un video kadru ātrumu."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "Helium iepriekš ielādē lapas, padarot pārlūkošanu un meklēšanu ātrāku."
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "Helium Neo iepriekš ielādē lapas, padarot pārlūkošanu un meklēšanu ātrāku."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "Importēts no <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "Importēts no <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
     "feminine": "Importēta no <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>"
   },
   {
@@ -47,18 +47,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "Helium pakalpojumi"
+    "source": "Helium Neo services",
+    "message": "Helium Neo pakalpojumi"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "Pārvaldiet, kuri Helium pakalpojumi ir atļauti jūsu pārlūkprogrammā"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "Pārvaldiet, kuri Helium Neo pakalpojumi ir atļauti jūsu pārlūkprogrammā"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "Helium pakalpojumu atjauninājumi:"
+    "source": "Updates to Helium Neo services:",
+    "message": "Helium Neo pakalpojumu atjauninājumi:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -73,23 +73,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Atļaut savienojumu ar Helium pakalpojumiem"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Atļaut savienojumu ar Helium Neo pakalpojumiem"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "Ja iespējots, Helium varēs izveidot savienojumu ar anonīmiem tīmekļa pakalpojumiem, lai nodrošinātu papildu funkcionalitāti. Ja atspējots, papildu funkcijas nedarbosies."
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "Ja iespējots, Helium Neo varēs izveidot savienojumu ar anonīmiem tīmekļa pakalpojumiem, lai nodrošinātu papildu funkcionalitāti. Ja atspējots, papildu funkcijas nedarbosies."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "Izmantot savu Helium pakalpojumu instanci"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Izmantot savu Helium Neo pakalpojumu instanci"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "Varat mitināt savu Helium pakalpojumu instanci un izmantot to savā pārlūkprogrammā noklusējuma instances vietā. Tikai HTTPS."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "Varat mitināt savu Helium Neo pakalpojumu instanci un izmantot to savā pārlūkprogrammā noklusējuma instances vietā. Tikai HTTPS."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -98,18 +98,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "Pielāgots izcelsmes URL Helium pakalpojumiem"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "Pielāgots izcelsmes URL Helium Neo pakalpojumiem"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "Helium pakalpojumi ir atjaunināti. Lūdzu, pārskatiet izmaiņas."
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "Helium Neo pakalpojumi ir atjaunināti. Lūdzu, pārskatiet izmaiņas."
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "Pārskatīt Helium pakalpojumu atjauninājumus"
+    "source": "Review Helium Neo services updates",
+    "message": "Pārskatīt Helium Neo pakalpojumu atjauninājumus"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -118,8 +118,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "Helium pakalpojumi nav pieejami, kamēr nav pabeigta iestatīšana, lai nodrošinātu jūsu privātumu un piekrišanu."
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "Helium Neo pakalpojumi nav pieejami, kamēr nav pabeigta iestatīšana, lai nodrošinātu jūsu privātumu un piekrišanu."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -158,8 +158,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Ja iespējots, Helium starpniekos paplašinājumu lejupielādes un atjauninājumus, lai aizsargātu jūsu privātumu. Ja atspējots, paplašinājumu lejupielāde un atjaunināšana nedarbosies."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Ja iespējots, Helium Neo starpniekos paplašinājumu lejupielādes un atjauninājumus, lai aizsargātu jūsu privātumu. Ja atspējots, paplašinājumu lejupielāde un atjaunināšana nedarbosies."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -168,13 +168,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium iegūs bangs sarakstu, kas palīdz ātrāk pārlūkot internetu, piemēram, !w vai !gh. Ja atspējots, bangs nedarbosies."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo iegūs bangs sarakstu, kas palīdz ātrāk pārlūkot internetu, piemēram, !w vai !gh. Ja atspējots, bangs nedarbosies."
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "Lūdzu, pārbaudiet, vai Helium pakalpojumi ir iespējoti (ieskaitot pareizrakstības vārdnīcu lejupielādes), un pārliecinieties, ka ugunsmūris nebloķē lejupielādes no Helium serveriem."
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "Lūdzu, pārbaudiet, vai Helium Neo pakalpojumi ir iespējoti (ieskaitot pareizrakstības vārdnīcu lejupielādes), un pārliecinieties, ka ugunsmūris nebloķē lejupielādes no Helium Neo serveriem."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -183,8 +183,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium iegūs vārdnīcu failus, kas tiek izmantoti pareizrakstības pārbaudei. Ja atspējots, pareizrakstības pārbaude nedarbosies."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo iegūs vārdnīcu failus, kas tiek izmantoti pareizrakstības pārbaudei. Ja atspējots, pareizrakstības pārbaude nedarbosies."
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -198,8 +198,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium iegūs jaunus filtru sarakstus uBlock Origin. Visi pieprasījumi uz sarakstiem tiek starpniekoti, lai aizsargātu jūsu privātumu. Ja atspējots, noklusējuma filtru saraksti tiks ielādēti no lokālās krātuves un tie tiek atjaunināti tikai kopā ar Helium. Papildu filtru saraksti tiks pieprasīti bez starpniekošanas."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo iegūs jaunus filtru sarakstus uBlock Origin. Visi pieprasījumi uz sarakstiem tiek starpniekoti, lai aizsargātu jūsu privātumu. Ja atspējots, noklusējuma filtru saraksti tiks ielādēti no lokālās krātuves un tie tiek atjaunināti tikai kopā ar Helium Neo. Papildu filtru saraksti tiks pieprasīti bez starpniekošanas."
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -213,8 +213,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "Komponentu atjauninājumi ir atspējoti. Skatiet Helium pakalpojumus iestatījumos."
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "Komponentu atjauninājumi ir atspējoti. Skatiet Helium Neo pakalpojumus iestatījumos."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -233,8 +233,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "Kad rakstāt adrešu joslā, Helium nosūta ievadīto tekstu jūsu noklusējuma meklētājprogrammai, lai iegūtu ieteikumus. Inkognito režīmā tas ir izslēgts."
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "Kad rakstāt adrešu joslā, Helium Neo nosūta ievadīto tekstu jūsu noklusējuma meklētājprogrammai, lai iegūtu ieteikumus. Inkognito režīmā tas ir izslēgts."
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -263,8 +263,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "Paplašinājumu lejupielādes ir atspējotas. Iespējojiet šo funkciju Helium pakalpojumu iestatījumos un mēģiniet vēlreiz."
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "Paplašinājumu lejupielādes ir atspējotas. Iespējojiet šo funkciju Helium Neo pakalpojumu iestatījumos un mēģiniet vēlreiz."
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -278,13 +278,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "Helium nesaglabās neko par jūsu pārlūkošanu inkognito režīmā, bet lejupielādes un grāmatzīmes tiks saglabātas. Jūsu pārlūkošana neatstās pēdas šajā ierīcē, un citi lietotāji nevarēs redzēt jūsu darbības."
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "Helium Neo nesaglabās neko par jūsu pārlūkošanu inkognito režīmā, bet lejupielādes un grāmatzīmes tiks saglabātas. Jūsu pārlūkošana neatstās pēdas šajā ierīcē, un citi lietotāji nevarēs redzēt jūsu darbības."
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "Helium komponents"
+    "source": "Helium Neo component",
+    "message": "Helium Neo komponents"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -368,8 +368,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "Helium nevar iestatīt kā noklusējuma pārlūkprogrammu, jo nevienā no šīm atrašanās vietām netika atrasts fails <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph>: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "Helium Neo nevar iestatīt kā noklusējuma pārlūkprogrammu, jo nevienā no šīm atrašanās vietām netika atrasts fails <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph>: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -428,8 +428,8 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
-    "message": "Lai importētu jūsu grāmatzīmes no Safari, Helium nepieciešama pilna piekļuve diskam."
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
+    "message": "Lai importētu jūsu grāmatzīmes no Safari, Helium Neo nepieciešama pilna piekļuve diskam."
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_LINK",
@@ -683,8 +683,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium automātiski pārbaudīs atjauninājumus un instalēs tos. Tas ietver pārlūka un komponentu atjauninājumus. Iesakām paturēt šo iestatījumu iespējotu, lai jūs saņemtu jaunākās funkcijas un drošības atjauninājumus."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo automātiski pārbaudīs atjauninājumus un instalēs tos. Tas ietver pārlūka un komponentu atjauninājumus. Iesakām paturēt šo iestatījumu iespējotu, lai jūs saņemtu jaunākās funkcijas un drošības atjauninājumus."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -693,8 +693,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium automātiski pārbaudīs komponentu atjauninājumus un instalēs tos. Iesakām paturēt šo iestatījumu iespējotu. Linux sistēmā pārlūka atjauninājumus pārvalda jūsu distributīva pakotņu pārvaldnieks. Lūdzu, pārbaudiet Helium pakotnes atjauninājumus vismaz reizi nedēļā."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo automātiski pārbaudīs komponentu atjauninājumus un instalēs tos. Iesakām paturēt šo iestatījumu iespējotu. Linux sistēmā pārlūka atjauninājumus pārvalda jūsu distributīva pakotņu pārvaldnieks. Lūdzu, pārbaudiet Helium Neo pakotnes atjauninājumus vismaz reizi nedēļā."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -823,8 +823,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "Izvēlieties, vai Helium var lūgt nosūtīt avāriju ziņojumus vai nosūtīt tos automātiski. Ziņojumu atspējošana izdzēsīs visus neizsūtītos ziņojumus."
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "Izvēlieties, vai Helium Neo var lūgt nosūtīt avāriju ziņojumus vai nosūtīt tos automātiski. Ziņojumu atspējošana izdzēsīs visus neizsūtītos ziņojumus."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -848,13 +848,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "Helium negaidīti aizvērās. Avārijas ziņojums varētu palīdzēt mums novērst problēmu, ar kuru saskārāties, un neļaut tai atkārtoties."
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "Helium Neo negaidīti aizvērās. Avārijas ziņojums varētu palīdzēt mums novērst problēmu, ar kuru saskārāties, un neļaut tai atkārtoties."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "Avārijas ziņojumā var nejauši tikt iekļauti daži sensitīvi dati, kas avārijas brīdī atradās Helium atmiņā."
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "Avārijas ziņojumā var nejauši tikt iekļauti daži sensitīvi dati, kas avārijas brīdī atradās Helium Neo atmiņā."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -873,8 +873,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "Avāriju ziņošana ir atspējota Helium iestatījumos vai ar politiku."
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "Avāriju ziņošana ir atspējota Helium Neo iestatījumos vai ar politiku."
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -903,8 +903,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "Helium iestatīšana"
+    "source": "Helium Neo Setup",
+    "message": "Helium Neo iestatīšana"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -918,18 +918,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "Helium partneris"
+    "source": "Helium Neo Partner",
+    "message": "Helium Neo partneris"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "Maksājot par šo pakalpojumu, jūs atbalstīsiet Helium izstrādi."
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "Maksājot par šo pakalpojumu, jūs atbalstīsiet Helium Neo izstrādi."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
-    "message": "Iepazīstieties ar Helium"
+    "source": "Meet Helium Neo",
+    "message": "Iepazīstieties ar Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_TITLE",
@@ -939,8 +939,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "Helium pakalpojumi"
+    "source": "Helium Neo services",
+    "message": "Helium Neo pakalpojumi"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -949,13 +949,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Atļaut savienojumu ar Helium pakalpojumiem"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Atļaut savienojumu ar Helium Neo pakalpojumiem"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "Helium pakalpojumi nodrošina papildu funkcionalitāti, piemēram: paplašinājumu lejupielādes, vietējos !bangs, filtru sarakstu atjauninājumus un pārlūkprogrammas atjauninājumus. Kad tie ir atspējoti, neviena no šīm funkcijām nedarbosies, taču Helium neveiks nekādus tīmekļa pieprasījumus."
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "Helium Neo pakalpojumi nodrošina papildu funkcionalitāti, piemēram: paplašinājumu lejupielādes, vietējos !bangs, filtru sarakstu atjauninājumus un pārlūkprogrammas atjauninājumus. Kad tie ir atspējoti, neviena no šīm funkcijām nedarbosies, taču Helium Neo neveiks nekādus tīmekļa pieprasījumus."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -964,8 +964,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium ielādēs bangs sarakstu, kas palīdz ātrāk pārlūkot internetu, piemēram, !w vai !gh. Kad atspējots, bangs nedarbosies."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo ielādēs bangs sarakstu, kas palīdz ātrāk pārlūkot internetu, piemēram, !w vai !gh. Kad atspējots, bangs nedarbosies."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -974,8 +974,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Kad iespējots, Helium novirzīs paplašinājumu lejupielādes un atjauninājumus caur starpniekserveri, lai aizsargātu jūsu privātumu. Kad atspējots, paplašinājumu lejupielāde un atjaunināšana nedarbosies."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Kad iespējots, Helium Neo novirzīs paplašinājumu lejupielādes un atjauninājumus caur starpniekserveri, lai aizsargātu jūsu privātumu. Kad atspējots, paplašinājumu lejupielāde un atjaunināšana nedarbosies."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -984,8 +984,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium ielādēs jaunus filtru sarakstus programmai uBlock Origin. Visi pieprasījumi sarakstiem tiek novirzīti caur starpniekserveri, lai aizsargātu jūsu privātumu. Kad atspējots, noklusējuma filtru saraksti tiks ielādēti no vietējās krātuves, un tie tiek atjaunināti tikai kopā ar Helium. Neobligātie filtru saraksti tiks pieprasīti bez starpniekservera."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo ielādēs jaunus filtru sarakstus programmai uBlock Origin. Visi pieprasījumi sarakstiem tiek novirzīti caur starpniekserveri, lai aizsargātu jūsu privātumu. Kad atspējots, noklusējuma filtru saraksti tiks ielādēti no vietējās krātuves, un tie tiek atjaunināti tikai kopā ar Helium Neo. Neobligātie filtru saraksti tiks pieprasīti bez starpniekservera."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -994,8 +994,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium automātiski pārbaudīs, vai ir atjauninājumi, un tos instalēs. Tas ietver pārlūkprogrammas un komponentu atjauninājumus. Iesakām atstāt šo iestatījumu iespējotu, lai nodrošinātu, ka saņemat jaunākās funkcijas un drošības atjauninājumus."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo automātiski pārbaudīs, vai ir atjauninājumi, un tos instalēs. Tas ietver pārlūkprogrammas un komponentu atjauninājumus. Iesakām atstāt šo iestatījumu iespējotu, lai nodrošinātu, ka saņemat jaunākās funkcijas un drošības atjauninājumus."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1004,8 +1004,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium automātiski pārbaudīs, vai ir komponentu atjauninājumi, un tos instalēs. Iesakām atstāt šo iestatījumu iespējotu. Operētājsistēmā Linux pārlūkprogrammas atjauninājumus pārvalda jūsu distribūcijas pakotņu pārvaldnieks. Lūdzu, pārbaudiet Helium pakotņu atjauninājumus vismaz reizi nedēļā."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo automātiski pārbaudīs, vai ir komponentu atjauninājumi, un tos instalēs. Iesakām atstāt šo iestatījumu iespējotu. Operētājsistēmā Linux pārlūkprogrammas atjauninājumus pārvalda jūsu distribūcijas pakotņu pārvaldnieks. Lūdzu, pārbaudiet Helium Neo pakotņu atjauninājumus vismaz reizi nedēļā."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1014,18 +1014,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium pēc pieprasījuma ielādēs vārdnīcas failus, kas tiek izmantoti pareizrakstības pārbaudei. Kad atspējots, pareizrakstības pārbaude nedarbosies."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo pēc pieprasījuma ielādēs vārdnīcas failus, kas tiek izmantoti pareizrakstības pārbaudei. Kad atspējots, pareizrakstības pārbaude nedarbosies."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "Izmantot savu Helium pakalpojumu instanci"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Izmantot savu Helium Neo pakalpojumu instanci"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "Jūs varat mitināt savu Helium pakalpojumu instanci un izmantot to savā pārlūkprogrammā iepriekš mitinātā servera vietā. Ja jums tāda ir, varat to iestatīt Helium iestatījumos."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "Jūs varat mitināt savu Helium Neo pakalpojumu instanci un izmantot to savā pārlūkprogrammā iepriekš mitinātā servera vietā. Ja jums tāda ir, varat to iestatīt Helium Neo iestatījumos."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1044,8 +1044,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "Pielāgota meklētājprogramma. Helium tās privātumu nav pārbaudījis."
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "Pielāgota meklētājprogramma. Helium Neo tās privātumu nav pārbaudījis."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1059,19 +1059,19 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
-    "message": "Vai esat gatavs pāriet uz Helium?",
+    "source": "Ready to switch to Helium Neo?",
+    "message": "Vai esat gatavs pāriet uz Helium Neo?",
     "feminine": "Vai esat gatava pāriet uz Helium?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "Padarīt Helium par manu noklusējuma pārlūkprogrammu."
+    "source": "Make Helium Neo my default browser.",
+    "message": "Padarīt Helium Neo par manu noklusējuma pārlūkprogrammu."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
-    "message": "Pagaidām tikai izmēģinu Helium."
+    "source": "Just trying Helium Neo for now.",
+    "message": "Pagaidām tikai izmēģinu Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
@@ -1110,8 +1110,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "Pārvaldiet, kā Helium aizsargā jūs pret pirkstu nospiedumu noteikšanu"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "Pārvaldiet, kā Helium Neo aizsargā jūs pret pirkstu nospiedumu noteikšanu"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1120,13 +1120,13 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "Kad aizsardzība pret pirkstu nospiedumu noteikšanu ir ieslēgta, Helium pievieno troksni noteiktām pārlūkprogrammas funkcijām, lai vietnēm būtu grūtāk jūs izsekot un veidot jūsu profilu. Katra vietne pārlūkošanas sesijas laikā redz nemainīgu nejaušinātu informāciju, lai samazinātu atklāšanas iespējamību."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "Kad aizsardzība pret pirkstu nospiedumu noteikšanu ir ieslēgta, Helium Neo pievieno troksni noteiktām pārlūkprogrammas funkcijām, lai vietnēm būtu grūtāk jūs izsekot un veidot jūsu profilu. Katra vietne pārlūkošanas sesijas laikā redz nemainīgu nejaušinātu informāciju, lai samazinātu atklāšanas iespējamību."
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
-    "message": "Pirkstu nospiedumu noteikšanu nav iespējams pilnībā novērst, taču Helium pretanalīzes aizsardzība apgrūtina sākotnējā pirksta nospieduma atgūšanu."
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
+    "message": "Pirkstu nospiedumu noteikšanu nav iespējams pilnībā novērst, taču Helium Neo pretanalīzes aizsardzība apgrūtina sākotnējā pirksta nospieduma atgūšanu."
   },
   {
     "name": "IDS_SETTINGS_NOISE_CUSTOM_DESCRIPTION",
@@ -1155,8 +1155,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "Kad aizsardzība pret pirkstu nospiedumu noteikšanu ir ieslēgta, Helium pievieno troksni noteiktām pārlūkprogrammas funkcijām, lai vietnēm būtu grūtāk jūs izsekot un veidot jūsu profilu."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "Kad aizsardzība pret pirkstu nospiedumu noteikšanu ir ieslēgta, Helium Neo pievieno troksni noteiktām pārlūkprogrammas funkcijām, lai vietnēm būtu grūtāk jūs izsekot un veidot jūsu profilu."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1165,8 +1165,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "Aizsardzība pret pirkstu nospiedumu noteikšanu ir izslēgta Helium iestatījumos."
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "Aizsardzība pret pirkstu nospiedumu noteikšanu ir izslēgta Helium Neo iestatījumos."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1280,8 +1280,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "Pārvaldīt, kā Helium savienojas ar vietnēm, kādi privātuma signāli ir atļauti, un citus iestatījumus"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "Pārvaldīt, kā Helium Neo savienojas ar vietnēm, kādi privātuma signāli ir atļauti, un citus iestatījumus"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1345,23 +1345,23 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "Helium nevarēja piekļūt macOS Keychain. Lai aizsargātu jūsu datus, pārlūkprogramma tiks aizvērta. Ja macOS to pieprasa, atļaujiet piekļuvi Helium šifrēšanas atslēgai. Aizveriet visas pārējās Helium kopijas un pēc tam atveriet Helium vēlreiz."
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "Helium Neo nevarēja piekļūt macOS Keychain. Lai aizsargātu jūsu datus, pārlūkprogramma tiks aizvērta. Ja macOS to pieprasa, atļaujiet piekļuvi Helium Neo šifrēšanas atslēgai. Aizveriet visas pārējās Helium Neo kopijas un pēc tam atveriet Helium Neo vēlreiz."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
-    "message": "Pielāgojiet Helium savai gaumei un importējiet datus no citām pārlūkprogrammām. Iekārtojieties kā mājās vai uzreiz sāciet pārlūkošanu."
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "message": "Pielāgojiet Helium Neo savai gaumei un importējiet datus no citām pārlūkprogrammām. Iekārtojieties kā mājās vai uzreiz sāciet pārlūkošanu."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "Ja izmantosiet noklusējuma iestatījumus, Helium pakalpojumi tiks automātiski iespējoti."
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "Ja izmantosiet noklusējuma iestatījumus, Helium Neo pakalpojumi tiks automātiski iespējoti."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
-    "message": "Iestatīšana ir pabeigta. Paldies, ka izvēlējāties Helium. Laiks atkal izbaudīt internetu."
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
+    "message": "Iestatīšana ir pabeigta. Paldies, ka izvēlējāties Helium Neo. Laiks atkal izbaudīt internetu."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_TITLE",
@@ -1375,13 +1375,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
-    "message": "Labāks privātums, ātrums un ērtības. Viss ar vienu klikšķi. Vai vēlaties, lai saites pēc noklusējuma atvērtos pārlūkprogrammā Helium?"
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
+    "message": "Labāks privātums, ātrums un ērtības. Viss ar vienu klikšķi. Vai vēlaties, lai saites pēc noklusējuma atvērtos pārlūkprogrammā Helium Neo?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "Helium nav iebūvēta paroļu pārvaldnieka. Vai vēlaties to instalēt no interneta veikala?"
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "Helium Neo nav iebūvēta paroļu pārvaldnieka. Vai vēlaties to instalēt no interneta veikala?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_PROTON_PASS",
@@ -1395,8 +1395,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
-    "message": "Populārs maksas paroļu pārvaldnieks ar slēgtu pirmkodu. Piedāvā datu glabāšanu Eiropā vai ASV. Bez papildu konfigurēšanas var nedarboties pareizi pārlūkprogrammā Helium."
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
+    "message": "Populārs maksas paroļu pārvaldnieks ar slēgtu pirmkodu. Piedāvā datu glabāšanu Eiropā vai ASV. Bez papildu konfigurēšanas var nedarboties pareizi pārlūkprogrammā Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ICLOUD_PASSWORDS",

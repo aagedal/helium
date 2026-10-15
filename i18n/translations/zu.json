@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "Helium ikhulula imemori kumathebhu angasebenzi. Lokhu kunika amathebhu asebenzayo nezinye izinhlelo eziningi amandla ekhompyutha futhi kugcina Helium isheshayo. Amathebhu akho angasebenzi azivula kabusha ngokuzenzakalelayo uma ubuyela kuwo."
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "Helium Neo ikhulula imemori kumathebhu angasebenzi. Lokhu kunika amathebhu asebenzayo nezinye izinhlelo eziningi amandla ekhompyutha futhi kugcina Helium Neo isheshayo. Amathebhu akho angasebenzi azivula kabusha ngokuzenzakalelayo uma ubuyela kuwo."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "Helium ilondoloza amandla ebhethri ngokunciphisa umsebenzi wasemuva nemiphumela yokubukeka, njengokusakaza okubushelelezi namazinga efreyimu yevidiyo."
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "Helium Neo ilondoloza amandla ebhethri ngokunciphisa umsebenzi wasemuva nemiphumela yokubukeka, njengokusakaza okubushelelezi namazinga efreyimu yevidiyo."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "Helium ilayisha amakhasi ngaphambili okwenza ukuphequlula nokusesha kusheshe."
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "Helium Neo ilayisha amakhasi ngaphambili okwenza ukuphequlula nokusesha kusheshe."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "Kungeniswe kusuka ku-<ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>"
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "Kungeniswe kusuka ku-<ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>"
   },
   {
     "name": "IDS_EXTENSIONS_IMPORTER_LOCK_TITLE",
@@ -46,18 +46,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "Amasevisi e-Helium"
+    "source": "Helium Neo services",
+    "message": "Amasevisi e-Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "Phatha ukuthi yimaphi amasevisi e-Helium avumelekile esipheqululini sakho"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "Phatha ukuthi yimaphi amasevisi e-Helium Neo avumelekile esipheqululini sakho"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "Izibuyekezo zamasevisi e-Helium:"
+    "source": "Updates to Helium Neo services:",
+    "message": "Izibuyekezo zamasevisi e-Helium Neo:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -71,23 +71,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Vumela ukuxhumeka kumasevisi e-Helium"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Vumela ukuxhumeka kumasevisi e-Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "Uma kunikiwe amandla, Helium izokwazi ukuxhuma kumasevisi ewebhu angaziwa ukuze anikeze ukusebenza okwengeziwe. Uma kukhutshazisiwe, izici ezengeziwe ngeke zisebenze."
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "Uma kunikiwe amandla, Helium Neo izokwazi ukuxhuma kumasevisi ewebhu angaziwa ukuze anikeze ukusebenza okwengeziwe. Uma kukhutshazisiwe, izici ezengeziwe ngeke zisebenze."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "Sebenzisa isibonelo sakho samasevisi e-Helium"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Sebenzisa isibonelo sakho samasevisi e-Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "Ungasingatha isibonelo sakho samasevisi e-Helium bese usisebenzisa esipheqululini sakho esikhundleni sesizenzakalelayo. HTTPS kuphela."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "Ungasingatha isibonelo sakho samasevisi e-Helium Neo bese usisebenzisa esipheqululini sakho esikhundleni sesizenzakalelayo. HTTPS kuphela."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -96,18 +96,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "I-URL yomsuka yangokwezifiso yamasevisi e-Helium"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "I-URL yomsuka yangokwezifiso yamasevisi e-Helium Neo"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "Amasevisi e-Helium abuyekezwe. Sicela ubuyekeze izinguquko."
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "Amasevisi e-Helium Neo abuyekezwe. Sicela ubuyekeze izinguquko."
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "Buyekeza izibuyekezo zamasevisi e-Helium"
+    "source": "Review Helium Neo services updates",
+    "message": "Buyekeza izibuyekezo zamasevisi e-Helium Neo"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -116,8 +116,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "Amasevisi e-Helium awatholakali kuze kube yilapho ukuhlela kuqediwe ukuze kuqinisekiswe ubumfihlo nemvume yakho."
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "Amasevisi e-Helium Neo awatholakali kuze kube yilapho ukuhlela kuqediwe ukuze kuqinisekiswe ubumfihlo nemvume yakho."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -156,8 +156,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Uma kunikiwe amandla, Helium izomela ukulanda nokubuyekeza izandiso ukuze ivikele ubumfihlo bakho. Uma kukhutshazisiwe, ukulanda nokubuyekeza izandiso ngeke kusebenze."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Uma kunikiwe amandla, Helium Neo izomela ukulanda nokubuyekeza izandiso ukuze ivikele ubumfihlo bakho. Uma kukhutshazisiwe, ukulanda nokubuyekeza izandiso ngeke kusebenze."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -166,13 +166,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium izolanda uhlu lwe-bangs olukusiza uphequlule i-Inthanethi ngokushesha, njenge-!w noma !gh. Uma kukhutshazisiwe, ama-bangs ngeke asebenze."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo izolanda uhlu lwe-bangs olukusiza uphequlule i-Inthanethi ngokushesha, njenge-!w noma !gh. Uma kukhutshazisiwe, ama-bangs ngeke asebenze."
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "Sicela uhlole ukuthi amasevisi e-Helium anikiwe amandla (kuhlanganise nokulanda kokuhlola izimpelelo) futhi uqinisekise ukuthi i-firewall ayivimbi ukulanda kumaseva e-Helium."
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "Sicela uhlole ukuthi amasevisi e-Helium Neo anikiwe amandla (kuhlanganise nokulanda kokuhlola izimpelelo) futhi uqinisekise ukuthi i-firewall ayivimbi ukulanda kumaseva e-Helium Neo."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -181,8 +181,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium izolanda amafayela esichazamazwi asetshenziswa ekuhloleni izimpelelo uma kucelwa. Uma kukhutshazisiwe, ukuhlola izimpelelo ngeke kusebenze."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo izolanda amafayela esichazamazwi asetshenziswa ekuhloleni izimpelelo uma kucelwa. Uma kukhutshazisiwe, ukuhlola izimpelelo ngeke kusebenze."
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -196,8 +196,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium izolanda izinhlu zokuhlungela ezintsha ze-uBlock Origin. Zonke izicelo eziya ezinhleni zimeliwe ukuze kuvikelwe ubumfihlo bakho. Uma kukhutshazisiwe, izinhlu zokuhlungela ezizenzakalelayo zizolandwa esitoreji sendawo, ezibuyekezwa kuphela kanye ne-Helium. Izinhlu zokuhlungela ezikhethekayo zizocelwa ngaphandle kokumela."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo izolanda izinhlu zokuhlungela ezintsha ze-uBlock Origin. Zonke izicelo eziya ezinhleni zimeliwe ukuze kuvikelwe ubumfihlo bakho. Uma kukhutshazisiwe, izinhlu zokuhlungela ezizenzakalelayo zizolandwa esitoreji sendawo, ezibuyekezwa kuphela kanye ne-Helium Neo. Izinhlu zokuhlungela ezikhethekayo zizocelwa ngaphandle kokumela."
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -211,8 +211,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "Izibuyekezo zezingxenye zikhutshazisiwe. Bheka amasevisi e-Helium ezilinganiselweni."
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "Izibuyekezo zezingxenye zikhutshazisiwe. Bheka amasevisi e-Helium Neo ezilinganiselweni."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -231,8 +231,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "Uma uthayipha ebhini yekheli, Helium ithumela okuthayiphayo enjinini yakho yokusesha ezenzakalelayo ukuze uthole iziphakamiso. Lokhu kuvaliwe ku-Incognito."
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "Uma uthayipha ebhini yekheli, Helium Neo ithumela okuthayiphayo enjinini yakho yokusesha ezenzakalelayo ukuze uthole iziphakamiso. Lokhu kuvaliwe ku-Incognito."
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -261,8 +261,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "Ukulanda izandiso kukhutshazisiwe. Nika amandla lesi sici ezilinganiselweni zamasevisi e-Helium bese uzama futhi."
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "Ukulanda izandiso kukhutshazisiwe. Nika amandla lesi sici ezilinganiselweni zamasevisi e-Helium Neo bese uzama futhi."
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -276,13 +276,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "Helium ngeke igcine lutho mayelana nokuphequlula kwakho ku-Incognito, kodwa okulandwe nokubhukimakhiwe kuzohlala kukhona. Ukuphequlula kwakho ngeke kushiye zimpawu kuleli divayisi, nabanye abasebenzisi ngeke bakwazi ukubona umsebenzi wakho."
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "Helium Neo ngeke igcine lutho mayelana nokuphequlula kwakho ku-Incognito, kodwa okulandwe nokubhukimakhiwe kuzohlala kukhona. Ukuphequlula kwakho ngeke kushiye zimpawu kuleli divayisi, nabanye abasebenzisi ngeke bakwazi ukubona umsebenzi wakho."
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "Ingxenye ye-Helium"
+    "source": "Helium Neo component",
+    "message": "Ingxenye ye-Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -366,8 +366,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "Helium ayikwazi ukusetwa njengezenzakalelayo, ngoba alikho ifayela le-<ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> elitholiwe kunoma yikuphi kwalokhu: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "Helium Neo ayikwazi ukusetwa njengezenzakalelayo, ngoba alikho ifayela le-<ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> elitholiwe kunoma yikuphi kwalokhu: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -416,8 +416,8 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
-    "message": "Helium idinga Ukufinyelela Okugcwele Kudiski ukuze ingenise amabhukumaka akho asuka ku-Safari."
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
+    "message": "Helium Neo idinga Ukufinyelela Okugcwele Kudiski ukuze ingenise amabhukumaka akho asuka ku-Safari."
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_LINK",
@@ -681,8 +681,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium izohlola ngokuzenzakalela izibuyekezo futhi izifake. Lokhu kuhlanganisa izibuyekezo zesiphequluli nezingxenye. Sincoma ukugcina lesi silungiselelo sinikwe amandla ukuze uqinisekise ukuthi uthola izici zakamuva nezibuyekezo zokuvikeleka."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo izohlola ngokuzenzakalela izibuyekezo futhi izifake. Lokhu kuhlanganisa izibuyekezo zesiphequluli nezingxenye. Sincoma ukugcina lesi silungiselelo sinikwe amandla ukuze uqinisekise ukuthi uthola izici zakamuva nezibuyekezo zokuvikeleka."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -691,8 +691,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium izohlola ngokuzenzakalela izibuyekezo zezingxenye futhi izifake. Sincoma ukugcina lesi silungiselelo sinikwe amandla. Ku-Linux, izibuyekezo zesiphequluli ziphathwa umphathi wamaphakheji we-distro yakho. Sicela uhlole izibuyekezo zephakheji le-Helium okungenani njalo ngeviki."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo izohlola ngokuzenzakalela izibuyekezo zezingxenye futhi izifake. Sincoma ukugcina lesi silungiselelo sinikwe amandla. Ku-Linux, izibuyekezo zesiphequluli ziphathwa umphathi wamaphakheji we-distro yakho. Sicela uhlole izibuyekezo zephakheji le-Helium Neo okungenani njalo ngeviki."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -821,8 +821,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "Khetha ukuthi i-Helium ingacela yini ukuthumela imibiko yokuphahlazeka noma iyithumele ngokuzenzakalelayo. Ukukhubaza imibiko kuzosusa yonke imibiko elindile."
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "Khetha ukuthi i-Helium Neo ingacela yini ukuthumela imibiko yokuphahlazeka noma iyithumele ngokuzenzakalelayo. Ukukhubaza imibiko kuzosusa yonke imibiko elindile."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -846,13 +846,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "I-Helium ivalwe ngokungalindelekile. Umbiko wokuphahlazeka ungasisiza silungise inkinga oye wahlangabezana nayo futhi sivimbele ukuthi yenzeke futhi."
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "I-Helium Neo ivalwe ngokungalindelekile. Umbiko wokuphahlazeka ungasisiza silungise inkinga oye wahlangabezana nayo futhi sivimbele ukuthi yenzeke futhi."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "Umbiko wokuphahlazeka ungahle ufake ngengozi imininingwane ethile ebucayi ebisenkumbulweni ye-Helium ngesikhathi sokuphahlazeka."
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "Umbiko wokuphahlazeka ungahle ufake ngengozi imininingwane ethile ebucayi ebisenkumbulweni ye-Helium Neo ngesikhathi sokuphahlazeka."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -871,8 +871,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "Ukubika ukuphahlazeka kukhutshaziwe kuzilungiselelo ze-Helium noma ngenqubomgomo."
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "Ukubika ukuphahlazeka kukhutshaziwe kuzilungiselelo ze-Helium Neo noma ngenqubomgomo."
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -901,8 +901,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "Ukusetha i-Helium"
+    "source": "Helium Neo Setup",
+    "message": "Ukusetha i-Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -916,18 +916,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "Umlingani we-Helium"
+    "source": "Helium Neo Partner",
+    "message": "Umlingani we-Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "Ukukhokhela le nsizakalo kuzosekela ukuthuthukiswa kwe-Helium."
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "Ukukhokhela le nsizakalo kuzosekela ukuthuthukiswa kwe-Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
-    "message": "Hlangana ne-Helium"
+    "source": "Meet Helium Neo",
+    "message": "Hlangana ne-Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_TITLE",
@@ -936,8 +936,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "Izinsizakalo ze-Helium"
+    "source": "Helium Neo services",
+    "message": "Izinsizakalo ze-Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -946,13 +946,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Vumela ukuxhumana nezinsizakalo ze-Helium"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Vumela ukuxhumana nezinsizakalo ze-Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "Izinsizakalo ze-Helium zinikeza ukusebenza okwengeziwe, njengokuthi: ukulanda izandiso, ama-!bang omdabu, izibuyekezo zohlu lwesihlungi, nezibuyekezo zesiphequluli. Uma kukhutshaziwe, akukho kulezi zici okuzosebenza, kodwa i-Helium ngeke yenze izicelo zewebhu."
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "Izinsizakalo ze-Helium Neo zinikeza ukusebenza okwengeziwe, njengokuthi: ukulanda izandiso, ama-!bang omdabu, izibuyekezo zohlu lwesihlungi, nezibuyekezo zesiphequluli. Uma kukhutshaziwe, akukho kulezi zici okuzosebenza, kodwa i-Helium Neo ngeke yenze izicelo zewebhu."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -961,8 +961,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "I-Helium izolanda uhlu lwama-bang akusiza uphequlule i-Inthanethi ngokushesha, njengo-!w noma !gh. Uma kukhutshaziwe, ama-bang ngeke asebenze."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "I-Helium Neo izolanda uhlu lwama-bang akusiza uphequlule i-Inthanethi ngokushesha, njengo-!w noma !gh. Uma kukhutshaziwe, ama-bang ngeke asebenze."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -971,8 +971,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Uma kunikwe amandla, i-Helium izosebenzisa iphroksi ekulandeni nasekubuyekezweni kwezandiso ukuvikela ubumfihlo bakho. Uma kukhutshaziwe, ukulanda nokubuyekeza izandiso ngeke kusebenze."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Uma kunikwe amandla, i-Helium Neo izosebenzisa iphroksi ekulandeni nasekubuyekezweni kwezandiso ukuvikela ubumfihlo bakho. Uma kukhutshaziwe, ukulanda nokubuyekeza izandiso ngeke kusebenze."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -981,8 +981,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "I-Helium izolanda izinhlu zezihlungi ezintsha ze-uBlock Origin. Zonke izicelo zezinhlu zisetshenziswa ngephroksi ukuvikela ubumfihlo bakho. Uma kukhutshaziwe, izinhlu zezihlungi ezizenzakalelayo zizolayishwa esitoreji sasendaweni, ezibuyekezwa kuphela kanye ne-Helium. Izinhlu zezihlungi ezikhethwayo zizocelwa ngaphandle kwephroksi."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "I-Helium Neo izolanda izinhlu zezihlungi ezintsha ze-uBlock Origin. Zonke izicelo zezinhlu zisetshenziswa ngephroksi ukuvikela ubumfihlo bakho. Uma kukhutshaziwe, izinhlu zezihlungi ezizenzakalelayo zizolayishwa esitoreji sasendaweni, ezibuyekezwa kuphela kanye ne-Helium Neo. Izinhlu zezihlungi ezikhethwayo zizocelwa ngaphandle kwephroksi."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -991,8 +991,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "I-Helium izohlola ngokuzenzakalelayo izibuyekezo bese iyazifaka. Lokhu kufaka izibuyekezo zesiphequluli nezengxenye. Sikhuthaza ukuthi ugcine lesi silungiselelo sivuliwe ukuze uqiniseke ukuthi uthola izici zakamuva nezibuyekezo zokuvikeleka."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "I-Helium Neo izohlola ngokuzenzakalelayo izibuyekezo bese iyazifaka. Lokhu kufaka izibuyekezo zesiphequluli nezengxenye. Sikhuthaza ukuthi ugcine lesi silungiselelo sivuliwe ukuze uqiniseke ukuthi uthola izici zakamuva nezibuyekezo zokuvikeleka."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1001,8 +1001,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "I-Helium izohlola ngokuzenzakalelayo izibuyekezo zezingxenye bese iyazifaka. Sikhuthaza ukuthi ugcine lesi silungiselelo sivuliwe. Ku-Linux, izibuyekezo zesiphequluli ziphathwa umphathi wamaphakheji wesabelo sakho. Sicela uhlole izibuyekezo zephakheji ye-Helium okungenani njalo ngesonto."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "I-Helium Neo izohlola ngokuzenzakalelayo izibuyekezo zezingxenye bese iyazifaka. Sikhuthaza ukuthi ugcine lesi silungiselelo sivuliwe. Ku-Linux, izibuyekezo zesiphequluli ziphathwa umphathi wamaphakheji wesabelo sakho. Sicela uhlole izibuyekezo zephakheji ye-Helium Neo okungenani njalo ngesonto."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1011,18 +1011,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "I-Helium izolanda amafayela esichazamazwi asetshenziswa ukuhlola upelo uma kuceliwe. Uma kukhutshaziwe, ukuhlola upelo ngeke kusebenze."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "I-Helium Neo izolanda amafayela esichazamazwi asetshenziswa ukuhlola upelo uma kuceliwe. Uma kukhutshaziwe, ukuhlola upelo ngeke kusebenze."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "Sebenzisa i-instance yakho yezinsizakalo ze-Helium"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Sebenzisa i-instance yakho yezinsizakalo ze-Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "Ungahlalisa i-instance yakho yezinsizakalo ze-Helium bese uyisebenzisa kusiphequluli sakho esikhundleni seseva enikwe kusengaphambili. Uma unayo, ungayisetha kuzilungiselelo ze-Helium."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "Ungahlalisa i-instance yakho yezinsizakalo ze-Helium Neo bese uyisebenzisa kusiphequluli sakho esikhundleni seseva enikwe kusengaphambili. Uma unayo, ungayisetha kuzilungiselelo ze-Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1041,8 +1041,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "Injini yokusesha yangokwezifiso. Ubumfihlo bayo abuqinisekiswanga yi-Helium."
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "Injini yokusesha yangokwezifiso. Ubumfihlo bayo abuqinisekiswanga yi-Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1056,18 +1056,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
-    "message": "Usukulungele ukushintshela ku-Helium?"
+    "source": "Ready to switch to Helium Neo?",
+    "message": "Usukulungele ukushintshela ku-Helium Neo?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "Yenza i-Helium ibe isiphequluli sami esizenzakalelayo."
+    "source": "Make Helium Neo my default browser.",
+    "message": "Yenza i-Helium Neo ibe isiphequluli sami esizenzakalelayo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
-    "message": "Ngizama nje i-Helium okwamanje."
+    "source": "Just trying Helium Neo for now.",
+    "message": "Ngizama nje i-Helium Neo okwamanje."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
@@ -1106,8 +1106,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "Lawula indlela i-Helium ikuvikela ngayo ekuthathweni kwezigxivizo zeminwe"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "Lawula indlela i-Helium Neo ikuvikela ngayo ekuthathweni kwezigxivizo zeminwe"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1116,13 +1116,13 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "Uma ukuvikelwa kwezigxivizo zeminwe kuvulwe, i-Helium yengeza umsindo kwezinye izici zesiphequluli ukwenza kube nzima kumasayithi ukukulandelela nokukwenzela iphrofayela. Isayithi ngalinye libona imininingwane engahleliwe engaguquki phakathi neseshini yakho yokuphequlula ukuze kuncishiswe amathuba okutholakala."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "Uma ukuvikelwa kwezigxivizo zeminwe kuvulwe, i-Helium Neo yengeza umsindo kwezinye izici zesiphequluli ukwenza kube nzima kumasayithi ukukulandelela nokukwenzela iphrofayela. Isayithi ngalinye libona imininingwane engahleliwe engaguquki phakathi neseshini yakho yokuphequlula ukuze kuncishiswe amathuba okutholakala."
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
-    "message": "Ukuthathwa kwezigxivizo zeminwe ngeke kuvimbelwe ngokuphelele, kodwa izivikelo zokuhlaziya ze-Helium zenza kube nzima ukubuyisa isigxivizo somunwe sokuqala."
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
+    "message": "Ukuthathwa kwezigxivizo zeminwe ngeke kuvimbelwe ngokuphelele, kodwa izivikelo zokuhlaziya ze-Helium Neo zenza kube nzima ukubuyisa isigxivizo somunwe sokuqala."
   },
   {
     "name": "IDS_SETTINGS_NOISE_CUSTOM_DESCRIPTION",
@@ -1151,8 +1151,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "Uma ukuvikelwa kwezigxivizo zeminwe kuvulwe, i-Helium yengeza umsindo kwezinye izici zesiphequluli ukwenza kube nzima kumasayithi ukukulandelela nokukwenzela iphrofayela."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "Uma ukuvikelwa kwezigxivizo zeminwe kuvulwe, i-Helium Neo yengeza umsindo kwezinye izici zesiphequluli ukwenza kube nzima kumasayithi ukukulandelela nokukwenzela iphrofayela."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1161,8 +1161,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "Ukuvikelwa kwezigxivizo zeminwe kuvaliwe kuzilungiselelo ze-Helium."
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "Ukuvikelwa kwezigxivizo zeminwe kuvaliwe kuzilungiselelo ze-Helium Neo."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1276,8 +1276,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "Lawula indlela i-Helium exhuma ngayo kumasayithi, amasignali obumfihlo avunyelwe, nokunye"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "Lawula indlela i-Helium Neo exhuma ngayo kumasayithi, amasignali obumfihlo avunyelwe, nokunye"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1341,23 +1341,23 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "I-Helium ayikwazanga ukufinyelela ku-macOS Keychain. Ukuze ivikele idatha yakho, isiphequluli sizovala. Uma i-macOS ikucela, vumela ukufinyelela kukhiye wokubethela we-Helium. Vala noma yimaphi amanye amakhophi e-Helium, bese uyivula kabusha."
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "I-Helium Neo ayikwazanga ukufinyelela ku-macOS Keychain. Ukuze ivikele idatha yakho, isiphequluli sizovala. Uma i-macOS ikucela, vumela ukufinyelela kukhiye wokubethela we-Helium Neo. Vala noma yimaphi amanye amakhophi e-Helium Neo, bese uyivula kabusha."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
-    "message": "Lungiselela i-Helium ngendlela oyithandayo bese ungenisa idatha evela kwezinye iziphequluli. Yenze ikwenze uzizwe usekhaya noma uqale ukuphequlula khona manjalo."
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "message": "Lungiselela i-Helium Neo ngendlela oyithandayo bese ungenisa idatha evela kwezinye iziphequluli. Yenze ikwenze uzizwe usekhaya noma uqale ukuphequlula khona manjalo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "Uma usebenzisa okuzenzakalelayo, izinsizakalo ze-Helium zizovulwa ngokuzenzakalelayo."
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "Uma usebenzisa okuzenzakalelayo, izinsizakalo ze-Helium Neo zizovulwa ngokuzenzakalelayo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
-    "message": "Ukusetha kuqediwe, siyabonga ngokukhetha i-Helium. Isikhathi sokujabulela i-inthanethi futhi."
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
+    "message": "Ukusetha kuqediwe, siyabonga ngokukhetha i-Helium Neo. Isikhathi sokujabulela i-inthanethi futhi."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_TITLE",
@@ -1371,13 +1371,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
-    "message": "Ubumfihlo, isivinini, nokunethezeka okungcono. Konke ngokuchofoza okukodwa. Ungathanda ukuthi izixhumanisi zivuleke ku-Helium ngokuzenzakalelayo?"
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
+    "message": "Ubumfihlo, isivinini, nokunethezeka okungcono. Konke ngokuchofoza okukodwa. Ungathanda ukuthi izixhumanisi zivuleke ku-Helium Neo ngokuzenzakalelayo?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "I-Helium ayinaye umphathi wamaphasiwedi owakhelwe ngaphakathi. Ungathanda ukufaka oyedwa ovela ku-Web Store?"
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "I-Helium Neo ayinaye umphathi wamaphasiwedi owakhelwe ngaphakathi. Ungathanda ukufaka oyedwa ovela ku-Web Store?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_PROTON_PASS",
@@ -1391,8 +1391,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
-    "message": "Umphathi wamaphasiwedi odumile, okhokhelwayo, onekhodi yomthombo evaliwe. Unikeza isitoreji sedatha eYurophu noma e-US. Angase angasebenzi kahle ne-Helium ngaphandle kokulungiselela okwengeziwe."
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
+    "message": "Umphathi wamaphasiwedi odumile, okhokhelwayo, onekhodi yomthombo evaliwe. Unikeza isitoreji sedatha eYurophu noma e-US. Angase angasebenzi kahle ne-Helium Neo ngaphandle kokulungiselela okwengeziwe."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ICLOUD_PASSWORDS",

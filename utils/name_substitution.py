@@ -191,8 +191,7 @@ def do_substitution(tree, tarpath, workers, dry_run):
         modified_files += [r for r in results if r is not None]
 
     maybe_make_tarball(tarpath,
-                       identity_backups + [f[0] for f in modified_files
-                                           if f[0] is not None])
+                       identity_backups + [f[0] for f in modified_files if f[0] is not None])
     print(f"Modified {len(modified_files)} files")
 
 

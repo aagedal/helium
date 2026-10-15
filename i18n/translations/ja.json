@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "Helium は非アクティブなタブからメモリを解放します。これにより、アクティブなタブや他のアプリがより多くのコンピュータリソースを使用でき、Helium の動作が高速に保たれます。非アクティブなタブは、再度開くと自動的にアクティブになります。"
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "Helium Neo は非アクティブなタブからメモリを解放します。これにより、アクティブなタブや他のアプリがより多くのコンピュータリソースを使用でき、Helium Neo の動作が高速に保たれます。非アクティブなタブは、再度開くと自動的にアクティブになります。"
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "Helium はバックグラウンドアクティビティやスムーズスクロール、動画フレームレートなどの視覚効果を制限してバッテリーを節約します。"
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "Helium Neo はバックグラウンドアクティビティやスムーズスクロール、動画フレームレートなどの視覚効果を制限してバッテリーを節約します。"
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "Helium がページをプリロードすることで、ブラウジングと検索が高速になります。"
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "Helium Neo がページをプリロードすることで、ブラウジングと検索が高速になります。"
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "<ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>からインポート"
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "<ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>からインポート"
   },
   {
     "name": "IDS_EXTENSIONS_IMPORTER_LOCK_TITLE",
@@ -46,18 +46,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "Helium サービス"
+    "source": "Helium Neo services",
+    "message": "Helium Neo サービス"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "ブラウザで許可する Helium サービスを管理します"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "ブラウザで許可する Helium Neo サービスを管理します"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "Helium サービスの更新:"
+    "source": "Updates to Helium Neo services:",
+    "message": "Helium Neo サービスの更新:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -71,23 +71,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Helium サービスへの接続を許可する"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Helium Neo サービスへの接続を許可する"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "有効にすると、Helium は匿名化されたウェブサービスに接続して追加の機能を提供できるようになります。無効にすると、追加機能は動作しません。"
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "有効にすると、Helium Neo は匿名化されたウェブサービスに接続して追加の機能を提供できるようになります。無効にすると、追加機能は動作しません。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "独自の Helium サービスインスタンスを使用する"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "独自の Helium Neo サービスインスタンスを使用する"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "独自の Helium サービスインスタンスをホストし、デフォルトの代わりにブラウザで使用できます。HTTPS のみ。"
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "独自の Helium Neo サービスインスタンスをホストし、デフォルトの代わりにブラウザで使用できます。HTTPS のみ。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -96,18 +96,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "Helium サービスのカスタムオリジン URL"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "Helium Neo サービスのカスタムオリジン URL"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "Helium サービスが更新されました。変更内容を確認してください。"
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "Helium Neo サービスが更新されました。変更内容を確認してください。"
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "Helium サービスの更新を確認"
+    "source": "Review Helium Neo services updates",
+    "message": "Helium Neo サービスの更新を確認"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -116,8 +116,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "プライバシーと同意を確保するため、セットアップが完了するまで Helium サービスは利用できません。"
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "プライバシーと同意を確保するため、セットアップが完了するまで Helium Neo サービスは利用できません。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -156,8 +156,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "有効にすると、Helium はプライバシーを保護するために拡張機能のダウンロードと更新をプロキシ経由で行います。無効にすると、拡張機能のダウンロードと更新は機能しません。"
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "有効にすると、Helium Neo はプライバシーを保護するために拡張機能のダウンロードと更新をプロキシ経由で行います。無効にすると、拡張機能のダウンロードと更新は機能しません。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -166,13 +166,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium は !w や !gh など、インターネットをより速く閲覧するための bangs リストを取得します。無効にすると、bangs は機能しません。"
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo は !w や !gh など、インターネットをより速く閲覧するための bangs リストを取得します。無効にすると、bangs は機能しません。"
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "Helium サービスが有効になっていること（スペルチェック辞書のダウンロードを含む）を確認し、ファイアウォールが Helium サーバーからのダウンロードをブロックしていないことを確認してください。"
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "Helium Neo サービスが有効になっていること（スペルチェック辞書のダウンロードを含む）を確認し、ファイアウォールが Helium Neo サーバーからのダウンロードをブロックしていないことを確認してください。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -181,8 +181,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium は要求に応じてスペルチェックに使用する辞書ファイルを取得します。無効にすると、スペルチェックは機能しません。"
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo は要求に応じてスペルチェックに使用する辞書ファイルを取得します。無効にすると、スペルチェックは機能しません。"
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -196,8 +196,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium は uBlock Origin の最新のフィルターリストを取得します。すべてのリストへのリクエストはプライバシー保護のためプロキシ経由で行われます。無効にすると、デフォルトのフィルターリストがローカルストレージから読み込まれ、Helium の更新時にのみ更新されます。オプションのフィルターリストはプロキシを介さずにリクエストされます。"
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo は uBlock Origin の最新のフィルターリストを取得します。すべてのリストへのリクエストはプライバシー保護のためプロキシ経由で行われます。無効にすると、デフォルトのフィルターリストがローカルストレージから読み込まれ、Helium Neo の更新時にのみ更新されます。オプションのフィルターリストはプロキシを介さずにリクエストされます。"
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -211,8 +211,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "コンポーネントの更新が無効です。設定の Helium サービスを確認してください。"
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "コンポーネントの更新が無効です。設定の Helium Neo サービスを確認してください。"
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -231,8 +231,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "アドレスバーに入力すると、Helium は入力内容をデフォルトの検索エンジンに送信して候補を取得します。シークレットモードではオフになります。"
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "アドレスバーに入力すると、Helium Neo は入力内容をデフォルトの検索エンジンに送信して候補を取得します。シークレットモードではオフになります。"
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -261,8 +261,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "拡張機能のダウンロードが無効になっています。Helium サービスの設定でこの機能を有効にしてから再試行してください。"
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "拡張機能のダウンロードが無効になっています。Helium Neo サービスの設定でこの機能を有効にしてから再試行してください。"
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -276,13 +276,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "Helium はシークレットモードでの閲覧履歴を保存しませんが、ダウンロードとブックマークは保持されます。このデバイスに閲覧の痕跡は残らず、他のユーザーがあなたのアクティビティを見ることはできません。"
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "Helium Neo はシークレットモードでの閲覧履歴を保存しませんが、ダウンロードとブックマークは保持されます。このデバイスに閲覧の痕跡は残らず、他のユーザーがあなたのアクティビティを見ることはできません。"
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "Helium コンポーネント"
+    "source": "Helium Neo component",
+    "message": "Helium Neo コンポーネント"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -366,8 +366,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "<ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> ファイルが ~/.local/share/applications、/usr/share/applications、/usr/local/share/applications のいずれにも見つからなかったため、Helium を既定のブラウザに設定できません。"
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "<ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> ファイルが ~/.local/share/applications、/usr/share/applications、/usr/local/share/applications のいずれにも見つからなかったため、Helium Neo を既定のブラウザに設定できません。"
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -426,8 +426,8 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
-    "message": "Safari からブックマークをインポートするには、Helium にフルディスクアクセスが必要です。"
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
+    "message": "Safari からブックマークをインポートするには、Helium Neo にフルディスクアクセスが必要です。"
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_LINK",
@@ -681,8 +681,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium は更新を自動的に確認してインストールします。これにはブラウザとコンポーネントの更新が含まれます。最新の機能とセキュリティ更新を入手できるよう、この設定を有効にしておくことをおすすめします。"
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo は更新を自動的に確認してインストールします。これにはブラウザとコンポーネントの更新が含まれます。最新の機能とセキュリティ更新を入手できるよう、この設定を有効にしておくことをおすすめします。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -691,8 +691,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium はコンポーネントの更新を自動的に確認してインストールします。この設定を有効にしておくことをおすすめします。Linux では、ブラウザの更新はディストリビューションのパッケージ マネージャーによって処理されます。少なくとも週に 1 回は Helium パッケージの更新を確認してください。"
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo はコンポーネントの更新を自動的に確認してインストールします。この設定を有効にしておくことをおすすめします。Linux では、ブラウザの更新はディストリビューションのパッケージ マネージャーによって処理されます。少なくとも週に 1 回は Helium Neo パッケージの更新を確認してください。"
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -821,8 +821,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "Helium がクラッシュレポートの送信を確認するか、自動的に送信するかを選択します。レポートを無効にすると、保留中のレポートはすべて削除されます。"
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "Helium Neo がクラッシュレポートの送信を確認するか、自動的に送信するかを選択します。レポートを無効にすると、保留中のレポートはすべて削除されます。"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -846,13 +846,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "Helium が予期せず終了しました。クラッシュレポートは、発生した問題の修正と再発防止に役立ちます。"
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "Helium Neo が予期せず終了しました。クラッシュレポートは、発生した問題の修正と再発防止に役立ちます。"
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "クラッシュレポートには、クラッシュ時に Helium のメモリ内にあった機密データが偶発的に含まれる場合があります。"
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "クラッシュレポートには、クラッシュ時に Helium Neo のメモリ内にあった機密データが偶発的に含まれる場合があります。"
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -871,8 +871,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "クラッシュレポートは Helium の設定またはポリシーによって無効になっています。"
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "クラッシュレポートは Helium Neo の設定またはポリシーによって無効になっています。"
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -901,8 +901,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "Helium のセットアップ"
+    "source": "Helium Neo Setup",
+    "message": "Helium Neo のセットアップ"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -916,18 +916,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "Helium パートナー"
+    "source": "Helium Neo Partner",
+    "message": "Helium Neo パートナー"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "このサービスの利用料は Helium の開発を支援します。"
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "このサービスの利用料は Helium Neo の開発を支援します。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
-    "message": "Helium のご紹介"
+    "source": "Meet Helium Neo",
+    "message": "Helium Neo のご紹介"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_TITLE",
@@ -936,8 +936,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "Helium サービス"
+    "source": "Helium Neo services",
+    "message": "Helium Neo サービス"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -946,13 +946,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Helium サービスへの接続を許可する"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Helium Neo サービスへの接続を許可する"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "Helium サービスは、拡張機能のダウンロード、ネイティブ !bangs、フィルターリストの更新、ブラウザの更新などの追加機能を提供します。無効にすると、これらの機能はいずれも動作しませんが、Helium はウェブリクエストを一切行いません。"
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "Helium Neo サービスは、拡張機能のダウンロード、ネイティブ !bangs、フィルターリストの更新、ブラウザの更新などの追加機能を提供します。無効にすると、これらの機能はいずれも動作しませんが、Helium Neo はウェブリクエストを一切行いません。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -961,8 +961,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium は、!w や !gh など、インターネットをより速く閲覧するのに役立つ bangs のリストを取得します。無効にすると、bangs は動作しません。"
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo は、!w や !gh など、インターネットをより速く閲覧するのに役立つ bangs のリストを取得します。無効にすると、bangs は動作しません。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -971,8 +971,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "有効にすると、Helium はプライバシー保護のため、拡張機能のダウンロードと更新をプロキシ経由で行います。無効にすると、拡張機能のダウンロードと更新は動作しません。"
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "有効にすると、Helium Neo はプライバシー保護のため、拡張機能のダウンロードと更新をプロキシ経由で行います。無効にすると、拡張機能のダウンロードと更新は動作しません。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -981,8 +981,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium は uBlock Origin の最新のフィルターリストを取得します。リストへのすべてのリクエストは、プライバシー保護のためプロキシ経由で行われます。無効にすると、既定のフィルターリストがローカルストレージから読み込まれ、これらは Helium の更新時にのみ更新されます。オプションのフィルターリストは、プロキシを経由せずにリクエストされます。"
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo は uBlock Origin の最新のフィルターリストを取得します。リストへのすべてのリクエストは、プライバシー保護のためプロキシ経由で行われます。無効にすると、既定のフィルターリストがローカルストレージから読み込まれ、これらは Helium Neo の更新時にのみ更新されます。オプションのフィルターリストは、プロキシを経由せずにリクエストされます。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -991,8 +991,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium は自動的に更新を確認してインストールします。これにはブラウザとコンポーネントの更新が含まれます。最新の機能とセキュリティ更新を確実に入手するため、この設定を有効のままにすることをおすすめします。"
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo は自動的に更新を確認してインストールします。これにはブラウザとコンポーネントの更新が含まれます。最新の機能とセキュリティ更新を確実に入手するため、この設定を有効のままにすることをおすすめします。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1001,8 +1001,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium は自動的にコンポーネントの更新を確認してインストールします。この設定は有効のままにすることをおすすめします。Linux では、ブラウザの更新はお使いのディストリビューションのパッケージマネージャーによって処理されます。少なくとも週に一度は Helium パッケージの更新を確認してください。"
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo は自動的にコンポーネントの更新を確認してインストールします。この設定は有効のままにすることをおすすめします。Linux では、ブラウザの更新はお使いのディストリビューションのパッケージマネージャーによって処理されます。少なくとも週に一度は Helium Neo パッケージの更新を確認してください。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1011,18 +1011,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium は、必要に応じてスペルチェックに使用される辞書ファイルを取得します。無効にすると、スペルチェックは動作しません。"
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo は、必要に応じてスペルチェックに使用される辞書ファイルを取得します。無効にすると、スペルチェックは動作しません。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "独自の Helium サービスインスタンスを使用する"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "独自の Helium Neo サービスインスタンスを使用する"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "Helium サービスの独自インスタンスをホストし、事前にホストされたサーバーの代わりにブラウザで使用できます。お持ちの場合は、Helium の設定で指定できます。"
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "Helium Neo サービスの独自インスタンスをホストし、事前にホストされたサーバーの代わりにブラウザで使用できます。お持ちの場合は、Helium Neo の設定で指定できます。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1041,8 +1041,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "カスタム検索エンジンです。そのプライバシーは Helium によって検証されていません。"
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "カスタム検索エンジンです。そのプライバシーは Helium Neo によって検証されていません。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1056,18 +1056,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
-    "message": "Helium に切り替える準備はできましたか？"
+    "source": "Ready to switch to Helium Neo?",
+    "message": "Helium Neo に切り替える準備はできましたか？"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "Helium を既定のブラウザにする。"
+    "source": "Make Helium Neo my default browser.",
+    "message": "Helium Neo を既定のブラウザにする。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
-    "message": "今はまだ Helium を試すだけ。"
+    "source": "Just trying Helium Neo for now.",
+    "message": "今はまだ Helium Neo を試すだけ。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
@@ -1106,8 +1106,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "Helium によるフィンガープリントからの保護方法を管理します"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "Helium Neo によるフィンガープリントからの保護方法を管理します"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1116,13 +1116,13 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "フィンガープリント保護が有効な場合、Helium は特定のブラウザ機能にノイズを追加し、サイトによる追跡やプロファイリングを困難にします。各サイトには閲覧セッション中は一貫したランダム情報が表示され、検出される可能性が低くなります。"
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "フィンガープリント保護が有効な場合、Helium Neo は特定のブラウザ機能にノイズを追加し、サイトによる追跡やプロファイリングを困難にします。各サイトには閲覧セッション中は一貫したランダム情報が表示され、検出される可能性が低くなります。"
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
-    "message": "フィンガープリントを完全に防ぐことはできませんが、Helium の分析対策により元のフィンガープリントの復元が困難になります。"
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
+    "message": "フィンガープリントを完全に防ぐことはできませんが、Helium Neo の分析対策により元のフィンガープリントの復元が困難になります。"
   },
   {
     "name": "IDS_SETTINGS_NOISE_CUSTOM_DESCRIPTION",
@@ -1151,8 +1151,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "フィンガープリント保護が有効な場合、Helium は特定のブラウザ機能にノイズを追加し、サイトによる追跡やプロファイリングを困難にします。"
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "フィンガープリント保護が有効な場合、Helium Neo は特定のブラウザ機能にノイズを追加し、サイトによる追跡やプロファイリングを困難にします。"
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1161,8 +1161,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "フィンガープリント保護は Helium の設定で無効になっています。"
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "フィンガープリント保護は Helium Neo の設定で無効になっています。"
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1276,8 +1276,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "Helium のサイトへの接続方法や許可するプライバシー シグナルなどを管理します"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "Helium Neo のサイトへの接続方法や許可するプライバシー シグナルなどを管理します"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1341,23 +1341,23 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "Helium は macOS のキーチェーンにアクセスできませんでした。データを保護するため、ブラウザを終了します。macOS から確認を求められた場合は、Helium の暗号化キーへのアクセスを許可してください。他に起動している Helium をすべて終了してから、もう一度開いてください。"
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "Helium Neo は macOS のキーチェーンにアクセスできませんでした。データを保護するため、ブラウザを終了します。macOS から確認を求められた場合は、Helium Neo の暗号化キーへのアクセスを許可してください。他に起動している Helium Neo をすべて終了してから、もう一度開いてください。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
-    "message": "Helium をお好みに合わせて設定し、他のブラウザからデータをインポートしましょう。使い慣れた環境に整えることも、すぐに閲覧を始めることもできます。"
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "message": "Helium Neo をお好みに合わせて設定し、他のブラウザからデータをインポートしましょう。使い慣れた環境に整えることも、すぐに閲覧を始めることもできます。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "既定の設定を使用すると、Helium サービスが自動的に有効になります。"
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "既定の設定を使用すると、Helium Neo サービスが自動的に有効になります。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
-    "message": "セットアップが完了しました。Helium をお選びいただきありがとうございます。インターネットをもう一度楽しみましょう。"
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
+    "message": "セットアップが完了しました。Helium Neo をお選びいただきありがとうございます。インターネットをもう一度楽しみましょう。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_TITLE",
@@ -1371,13 +1371,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
-    "message": "より優れたプライバシー、速さ、快適さをワンクリックで。リンクを既定で Helium で開くようにしますか？"
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
+    "message": "より優れたプライバシー、速さ、快適さをワンクリックで。リンクを既定で Helium Neo で開くようにしますか？"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "Helium にはパスワードマネージャーが組み込まれていません。ウェブストアからインストールしますか？"
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "Helium Neo にはパスワードマネージャーが組み込まれていません。ウェブストアからインストールしますか？"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_PROTON_PASS",
@@ -1391,8 +1391,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
-    "message": "人気があり、有料でクローズドソースのパスワードマネージャー。データの保存先はヨーロッパまたは米国から選べます。追加の設定をしないと、Helium で正しく動作しない場合があります。"
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
+    "message": "人気があり、有料でクローズドソースのパスワードマネージャー。データの保存先はヨーロッパまたは米国から選べます。追加の設定をしないと、Helium Neo で正しく動作しない場合があります。"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ICLOUD_PASSWORDS",

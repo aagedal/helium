@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "يقوم Helium بتحرير الذاكرة من علامات التبويب غير النشطة. يمنح هذا علامات التبويب النشطة والتطبيقات الأخرى المزيد من موارد الحاسوب ويحافظ على سرعة Helium. تصبح علامات التبويب غير النشطة نشطة تلقائيًا عند العودة إليها."
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "يقوم Helium Neo بتحرير الذاكرة من علامات التبويب غير النشطة. يمنح هذا علامات التبويب النشطة والتطبيقات الأخرى المزيد من موارد الحاسوب ويحافظ على سرعة Helium Neo. تصبح علامات التبويب غير النشطة نشطة تلقائيًا عند العودة إليها."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "يوفر Helium طاقة البطارية عن طريق تقليل النشاط في الخلفية والتأثيرات المرئية، مثل التمرير السلس ومعدلات إطارات الفيديو."
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "يوفر Helium Neo طاقة البطارية عن طريق تقليل النشاط في الخلفية والتأثيرات المرئية، مثل التمرير السلس ومعدلات إطارات الفيديو."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "يقوم Helium بالتحميل المسبق للصفحات مما يجعل التصفح والبحث أسرع."
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "يقوم Helium Neo بالتحميل المسبق للصفحات مما يجعل التصفح والبحث أسرع."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "مستورد من <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>"
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "مستورد من <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>"
   },
   {
     "name": "IDS_EXTENSIONS_IMPORTER_LOCK_TITLE",
@@ -46,18 +46,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "خدمات Helium"
+    "source": "Helium Neo services",
+    "message": "خدمات Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "إدارة خدمات Helium المسموح بها في متصفحك"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "إدارة خدمات Helium Neo المسموح بها في متصفحك"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "تحديثات خدمات Helium:"
+    "source": "Updates to Helium Neo services:",
+    "message": "تحديثات خدمات Helium Neo:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -71,23 +71,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "السماح بالاتصال بخدمات Helium"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "السماح بالاتصال بخدمات Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "عند التفعيل، سيتمكن Helium من الاتصال بخدمات ويب مجهولة الهوية لتوفير وظائف إضافية. عند التعطيل، لن تعمل الميزات الإضافية."
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "عند التفعيل، سيتمكن Helium Neo من الاتصال بخدمات ويب مجهولة الهوية لتوفير وظائف إضافية. عند التعطيل، لن تعمل الميزات الإضافية."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "استخدام نسختك الخاصة من خدمات Helium"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "استخدام نسختك الخاصة من خدمات Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "يمكنك استضافة نسختك الخاصة من خدمات Helium واستخدامها في متصفحك بدلاً من النسخة الافتراضية. يُدعم HTTPS فقط."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "يمكنك استضافة نسختك الخاصة من خدمات Helium Neo واستخدامها في متصفحك بدلاً من النسخة الافتراضية. يُدعم HTTPS فقط."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -96,18 +96,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "عنوان URL مخصص لأصل خدمات Helium"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "عنوان URL مخصص لأصل خدمات Helium Neo"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "تم تحديث خدمات Helium. يرجى مراجعة التغييرات."
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "تم تحديث خدمات Helium Neo. يرجى مراجعة التغييرات."
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "مراجعة تحديثات خدمات Helium"
+    "source": "Review Helium Neo services updates",
+    "message": "مراجعة تحديثات خدمات Helium Neo"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -116,8 +116,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "خدمات Helium غير متاحة حتى يتم إكمال الإعداد لضمان خصوصيتك وموافقتك."
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "خدمات Helium Neo غير متاحة حتى يتم إكمال الإعداد لضمان خصوصيتك وموافقتك."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -156,8 +156,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "عند التفعيل، سيقوم Helium بتوجيه تنزيلات الإضافات وتحديثاتها عبر خادم وكيل لحماية خصوصيتك. عند التعطيل، لن يعمل تنزيل الإضافات وتحديثها."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "عند التفعيل، سيقوم Helium Neo بتوجيه تنزيلات الإضافات وتحديثاتها عبر خادم وكيل لحماية خصوصيتك. عند التعطيل، لن يعمل تنزيل الإضافات وتحديثها."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -166,13 +166,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "سيقوم Helium بجلب قائمة bangs التي تساعدك على تصفح الإنترنت بشكل أسرع، مثل !w أو !gh. عند التعطيل، لن تعمل الـ bangs."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "سيقوم Helium Neo بجلب قائمة bangs التي تساعدك على تصفح الإنترنت بشكل أسرع، مثل !w أو !gh. عند التعطيل، لن تعمل الـ bangs."
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "يرجى التحقق من تفعيل خدمات Helium (بما في ذلك تنزيلات التدقيق الإملائي) والتأكد من أن جدار الحماية لا يحظر التنزيلات من خوادم Helium."
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "يرجى التحقق من تفعيل خدمات Helium Neo (بما في ذلك تنزيلات التدقيق الإملائي) والتأكد من أن جدار الحماية لا يحظر التنزيلات من خوادم Helium Neo."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -181,8 +181,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "سيقوم Helium بجلب ملفات القاموس المستخدمة للتدقيق الإملائي عند الطلب. عند التعطيل، لن يعمل التدقيق الإملائي."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "سيقوم Helium Neo بجلب ملفات القاموس المستخدمة للتدقيق الإملائي عند الطلب. عند التعطيل، لن يعمل التدقيق الإملائي."
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -196,8 +196,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "سيقوم Helium بجلب قوائم تصفية حديثة لـ uBlock Origin. يتم توجيه جميع الطلبات إلى القوائم عبر خادم وكيل لحماية خصوصيتك. عند التعطيل، سيتم تحميل قوائم التصفية الافتراضية من التخزين المحلي، والتي لا يتم تحديثها إلا مع Helium. سيتم طلب قوائم التصفية الاختيارية بدون توجيه عبر وكيل."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "سيقوم Helium Neo بجلب قوائم تصفية حديثة لـ uBlock Origin. يتم توجيه جميع الطلبات إلى القوائم عبر خادم وكيل لحماية خصوصيتك. عند التعطيل، سيتم تحميل قوائم التصفية الافتراضية من التخزين المحلي، والتي لا يتم تحديثها إلا مع Helium Neo. سيتم طلب قوائم التصفية الاختيارية بدون توجيه عبر وكيل."
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -211,8 +211,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "تحديثات المكونات معطلة. راجع خدمات Helium في الإعدادات."
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "تحديثات المكونات معطلة. راجع خدمات Helium Neo في الإعدادات."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -231,8 +231,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "عند الكتابة في شريط العناوين، يرسل Helium ما تكتبه إلى محرك البحث الافتراضي للحصول على اقتراحات. هذا معطل في وضع التصفح المتخفي."
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "عند الكتابة في شريط العناوين، يرسل Helium Neo ما تكتبه إلى محرك البحث الافتراضي للحصول على اقتراحات. هذا معطل في وضع التصفح المتخفي."
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -261,8 +261,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "تنزيلات الإضافات معطلة. فعّل هذه الميزة في إعدادات خدمات Helium وحاول مرة أخرى."
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "تنزيلات الإضافات معطلة. فعّل هذه الميزة في إعدادات خدمات Helium Neo وحاول مرة أخرى."
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -276,13 +276,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "لن يحفظ Helium أي شيء عن تصفحك في وضع التصفح المتخفي، لكن التنزيلات والإشارات المرجعية ستبقى. لن يترك تصفحك أي أثر على هذا الجهاز، ولن يتمكن المستخدمون الآخرون من رؤية نشاطك."
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "لن يحفظ Helium Neo أي شيء عن تصفحك في وضع التصفح المتخفي، لكن التنزيلات والإشارات المرجعية ستبقى. لن يترك تصفحك أي أثر على هذا الجهاز، ولن يتمكن المستخدمون الآخرون من رؤية نشاطك."
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "مكوّن Helium"
+    "source": "Helium Neo component",
+    "message": "مكوّن Helium Neo"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -366,8 +366,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "لا يمكن تعيين Helium كمتصفح افتراضي، لأنه لم يتم العثور على ملف <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> في أي من: ~/.local/share/applications، /usr/share/applications، /usr/local/share/applications."
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "لا يمكن تعيين Helium Neo كمتصفح افتراضي، لأنه لم يتم العثور على ملف <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> في أي من: ~/.local/share/applications، /usr/share/applications، /usr/local/share/applications."
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -426,8 +426,8 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
-    "message": "يحتاج Helium إلى الوصول الكامل إلى القرص لاستيراد إشاراتك المرجعية من Safari."
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
+    "message": "يحتاج Helium Neo إلى الوصول الكامل إلى القرص لاستيراد إشاراتك المرجعية من Safari."
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_LINK",
@@ -681,8 +681,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "سيتحقق Helium تلقائيًا من وجود تحديثات ويثبّتها. يشمل ذلك تحديثات المتصفح والمكونات. نوصي بإبقاء هذا الإعداد مفعّلًا لضمان حصولك على أحدث الميزات وتحديثات الأمان."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "سيتحقق Helium Neo تلقائيًا من وجود تحديثات ويثبّتها. يشمل ذلك تحديثات المتصفح والمكونات. نوصي بإبقاء هذا الإعداد مفعّلًا لضمان حصولك على أحدث الميزات وتحديثات الأمان."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -691,8 +691,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "سيتحقق Helium تلقائيًا من وجود تحديثات للمكونات ويثبّتها. نوصي بإبقاء هذا الإعداد مفعّلًا. على نظام Linux، تتم معالجة تحديثات المتصفح بواسطة مدير الحزم في توزيعتك. يُرجى التحقق من تحديثات حزمة Helium مرة واحدة على الأقل كل أسبوع."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "سيتحقق Helium Neo تلقائيًا من وجود تحديثات للمكونات ويثبّتها. نوصي بإبقاء هذا الإعداد مفعّلًا. على نظام Linux، تتم معالجة تحديثات المتصفح بواسطة مدير الحزم في توزيعتك. يُرجى التحقق من تحديثات حزمة Helium Neo مرة واحدة على الأقل كل أسبوع."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -821,8 +821,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "اختر ما إذا كان بإمكان Helium طلب إرسال تقارير الأعطال أو إرسالها تلقائيًا. سيؤدي تعطيل التقارير إلى حذف جميع التقارير المعلقة."
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "اختر ما إذا كان بإمكان Helium Neo طلب إرسال تقارير الأعطال أو إرسالها تلقائيًا. سيؤدي تعطيل التقارير إلى حذف جميع التقارير المعلقة."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -846,13 +846,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "أُغلق Helium بشكل غير متوقع. يمكن أن يساعدنا تقرير العطل في إصلاح المشكلة التي واجهتها ومنع تكرارها."
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "أُغلق Helium Neo بشكل غير متوقع. يمكن أن يساعدنا تقرير العطل في إصلاح المشكلة التي واجهتها ومنع تكرارها."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "قد يتضمن تقرير العطل بشكل عرضي بعض البيانات الحساسة الموجودة في ذاكرة Helium وقت حدوث العطل."
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "قد يتضمن تقرير العطل بشكل عرضي بعض البيانات الحساسة الموجودة في ذاكرة Helium Neo وقت حدوث العطل."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -871,8 +871,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "الإبلاغ عن الأعطال معطّل في إعدادات Helium أو بموجب سياسة."
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "الإبلاغ عن الأعطال معطّل في إعدادات Helium Neo أو بموجب سياسة."
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -901,8 +901,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "إعداد Helium"
+    "source": "Helium Neo Setup",
+    "message": "إعداد Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -916,18 +916,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "شريك Helium"
+    "source": "Helium Neo Partner",
+    "message": "شريك Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "دفع تكلفة هذه الخدمة سيدعم تطوير Helium."
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "دفع تكلفة هذه الخدمة سيدعم تطوير Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
-    "message": "تعرّف على Helium"
+    "source": "Meet Helium Neo",
+    "message": "تعرّف على Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_TITLE",
@@ -936,8 +936,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "خدمات Helium"
+    "source": "Helium Neo services",
+    "message": "خدمات Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -946,13 +946,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "السماح بالاتصال بخدمات Helium"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "السماح بالاتصال بخدمات Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "توفر خدمات Helium وظائف إضافية، مثل: تنزيل الإضافات، و!bangs الأصلية، وتحديثات قوائم التصفية، وتحديثات المتصفح. عند التعطيل، لن تعمل أي من هذه الميزات، لكن Helium لن يجري أي طلبات ويب."
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "توفر خدمات Helium Neo وظائف إضافية، مثل: تنزيل الإضافات، و!bangs الأصلية، وتحديثات قوائم التصفية، وتحديثات المتصفح. عند التعطيل، لن تعمل أي من هذه الميزات، لكن Helium Neo لن يجري أي طلبات ويب."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -961,8 +961,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "سيجلب Helium قائمة من الـ bangs التي تساعدك على تصفح الإنترنت بشكل أسرع، مثل !w أو !gh. عند التعطيل، لن تعمل الـ bangs."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "سيجلب Helium Neo قائمة من الـ bangs التي تساعدك على تصفح الإنترنت بشكل أسرع، مثل !w أو !gh. عند التعطيل، لن تعمل الـ bangs."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -971,8 +971,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "عند التفعيل، سيوكّل Helium تنزيلات الإضافات وتحديثاتها لحماية خصوصيتك. عند التعطيل، لن يعمل تنزيل الإضافات وتحديثها."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "عند التفعيل، سيوكّل Helium Neo تنزيلات الإضافات وتحديثاتها لحماية خصوصيتك. عند التعطيل، لن يعمل تنزيل الإضافات وتحديثها."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -981,8 +981,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "سيجلب Helium قوائم تصفية حديثة لـ uBlock Origin. تُوكّل جميع الطلبات إلى القوائم لحماية خصوصيتك. عند التعطيل، سيتم تحميل قوائم التصفية الافتراضية من التخزين المحلي، والتي تُحدَّث فقط مع Helium. سيتم طلب قوائم التصفية الاختيارية دون توكيل."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "سيجلب Helium Neo قوائم تصفية حديثة لـ uBlock Origin. تُوكّل جميع الطلبات إلى القوائم لحماية خصوصيتك. عند التعطيل، سيتم تحميل قوائم التصفية الافتراضية من التخزين المحلي، والتي تُحدَّث فقط مع Helium Neo. سيتم طلب قوائم التصفية الاختيارية دون توكيل."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -991,8 +991,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "سيتحقق Helium تلقائيًا من التحديثات ويثبّتها. يشمل ذلك تحديثات المتصفح والمكوّنات. نوصي بإبقاء هذا الإعداد مفعّلاً لضمان حصولك على أحدث الميزات وتحديثات الأمان."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "سيتحقق Helium Neo تلقائيًا من التحديثات ويثبّتها. يشمل ذلك تحديثات المتصفح والمكوّنات. نوصي بإبقاء هذا الإعداد مفعّلاً لضمان حصولك على أحدث الميزات وتحديثات الأمان."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1001,8 +1001,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "سيتحقق Helium تلقائيًا من تحديثات المكوّنات ويثبّتها. نوصي بإبقاء هذا الإعداد مفعّلاً. على Linux، تُدار تحديثات المتصفح بواسطة مدير الحزم في توزيعتك. يُرجى التحقق من تحديثات حزمة Helium مرة واحدة على الأقل كل أسبوع."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "سيتحقق Helium Neo تلقائيًا من تحديثات المكوّنات ويثبّتها. نوصي بإبقاء هذا الإعداد مفعّلاً. على Linux، تُدار تحديثات المتصفح بواسطة مدير الحزم في توزيعتك. يُرجى التحقق من تحديثات حزمة Helium Neo مرة واحدة على الأقل كل أسبوع."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1011,18 +1011,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "سيجلب Helium ملفات القاموس المستخدمة للتدقيق الإملائي عند الطلب. عند التعطيل، لن يعمل التدقيق الإملائي."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "سيجلب Helium Neo ملفات القاموس المستخدمة للتدقيق الإملائي عند الطلب. عند التعطيل، لن يعمل التدقيق الإملائي."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "استخدام نسختك الخاصة من خدمات Helium"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "استخدام نسختك الخاصة من خدمات Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "يمكنك استضافة نسختك الخاصة من خدمات Helium واستخدامها في متصفحك بدلاً من الخادم المُستضاف مسبقًا. إذا كان لديك واحدة، يمكنك تعيينها في إعدادات Helium."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "يمكنك استضافة نسختك الخاصة من خدمات Helium Neo واستخدامها في متصفحك بدلاً من الخادم المُستضاف مسبقًا. إذا كان لديك واحدة، يمكنك تعيينها في إعدادات Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1041,8 +1041,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "محرك بحث مخصص. لم تتحقق Helium من خصوصيته."
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "محرك بحث مخصص. لم تتحقق Helium Neo من خصوصيته."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1056,18 +1056,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
-    "message": "جاهز للتبديل إلى Helium؟"
+    "source": "Ready to switch to Helium Neo?",
+    "message": "جاهز للتبديل إلى Helium Neo؟"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "اجعل Helium متصفحي الافتراضي."
+    "source": "Make Helium Neo my default browser.",
+    "message": "اجعل Helium Neo متصفحي الافتراضي."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
-    "message": "أجرّب Helium في الوقت الحالي فقط."
+    "source": "Just trying Helium Neo for now.",
+    "message": "أجرّب Helium Neo في الوقت الحالي فقط."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
@@ -1106,8 +1106,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "إدارة طريقة حماية Helium لك من البصمات الرقمية"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "إدارة طريقة حماية Helium Neo لك من البصمات الرقمية"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1116,13 +1116,13 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "عند تفعيل الحماية من البصمات الرقمية، يضيف Helium تشويشًا إلى بعض ميزات المتصفح لجعل تتبعك وتحليل بياناتك أصعب على المواقع. ويرى كل موقع معلومات عشوائية ثابتة طوال جلسة التصفح لتقليل احتمالات اكتشافك."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "عند تفعيل الحماية من البصمات الرقمية، يضيف Helium Neo تشويشًا إلى بعض ميزات المتصفح لجعل تتبعك وتحليل بياناتك أصعب على المواقع. ويرى كل موقع معلومات عشوائية ثابتة طوال جلسة التصفح لتقليل احتمالات اكتشافك."
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
-    "message": "لا يمكن منع البصمات الرقمية تمامًا، لكن دفاعات التحليل في Helium تجعل استرجاع البصمة الأصلية أصعب."
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
+    "message": "لا يمكن منع البصمات الرقمية تمامًا، لكن دفاعات التحليل في Helium Neo تجعل استرجاع البصمة الأصلية أصعب."
   },
   {
     "name": "IDS_SETTINGS_NOISE_CUSTOM_DESCRIPTION",
@@ -1151,8 +1151,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "عند تفعيل الحماية من البصمات الرقمية، يضيف Helium تشويشًا إلى بعض ميزات المتصفح لجعل تتبعك وتحليل بياناتك أصعب على المواقع."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "عند تفعيل الحماية من البصمات الرقمية، يضيف Helium Neo تشويشًا إلى بعض ميزات المتصفح لجعل تتبعك وتحليل بياناتك أصعب على المواقع."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1161,8 +1161,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "الحماية من البصمات الرقمية موقوفة في إعدادات Helium."
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "الحماية من البصمات الرقمية موقوفة في إعدادات Helium Neo."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1276,8 +1276,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "إدارة كيفية اتصال Helium بالمواقع وإشارات الخصوصية المسموح بها وغير ذلك"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "إدارة كيفية اتصال Helium Neo بالمواقع وإشارات الخصوصية المسموح بها وغير ذلك"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1341,24 +1341,24 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "تعذّر على Helium الوصول إلى سلسلة مفاتيح macOS. سيُغلق المتصفح لحماية بياناتك. إذا طلب macOS الإذن، يُرجى السماح بالوصول إلى مفتاح تشفير Helium. يُرجى إنهاء أي نسخ أخرى من Helium، ثم إعادة فتحه."
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "تعذّر على Helium Neo الوصول إلى سلسلة مفاتيح macOS. سيُغلق المتصفح لحماية بياناتك. إذا طلب macOS الإذن، يُرجى السماح بالوصول إلى مفتاح تشفير Helium Neo. يُرجى إنهاء أي نسخ أخرى من Helium Neo، ثم إعادة فتحه."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
-    "message": "اضبط Helium ليناسب ذوقك واستورد البيانات من المتصفحات الأخرى. اجعله مساحة تألفها أو انتقل مباشرةً إلى التصفح.",
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "message": "اضبط Helium Neo ليناسب ذوقك واستورد البيانات من المتصفحات الأخرى. اجعله مساحة تألفها أو انتقل مباشرةً إلى التصفح.",
     "feminine": "اضبطي Helium ليناسب ذوقك واستوردي البيانات من المتصفحات الأخرى. اجعليه مساحة تألفينها أو انتقلي مباشرةً إلى التصفح."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "عند استخدام الإعدادات الافتراضية، سيتم تفعيل خدمات Helium تلقائيًا."
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "عند استخدام الإعدادات الافتراضية، سيتم تفعيل خدمات Helium Neo تلقائيًا."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
-    "message": "اكتمل الإعداد، شكرًا لاختيارك Helium. حان الوقت للاستمتاع بالإنترنت مجددًا."
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
+    "message": "اكتمل الإعداد، شكرًا لاختيارك Helium Neo. حان الوقت للاستمتاع بالإنترنت مجددًا."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_TITLE",
@@ -1372,14 +1372,14 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
-    "message": "خصوصية وسرعة وراحة أفضل. كل ذلك بنقرة واحدة. هل ترغب في فتح الروابط في Helium تلقائيًا؟",
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
+    "message": "خصوصية وسرعة وراحة أفضل. كل ذلك بنقرة واحدة. هل ترغب في فتح الروابط في Helium Neo تلقائيًا؟",
     "feminine": "خصوصية وسرعة وراحة أفضل. كل ذلك بنقرة واحدة. هل ترغبين في فتح الروابط في Helium تلقائيًا؟"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "لا يتضمّن Helium مديرًا مدمجًا لكلمات المرور. هل ترغب في تثبيت مدير من المتجر الإلكتروني؟",
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "لا يتضمّن Helium Neo مديرًا مدمجًا لكلمات المرور. هل ترغب في تثبيت مدير من المتجر الإلكتروني؟",
     "feminine": "لا يتضمّن Helium مديرًا مدمجًا لكلمات المرور. هل ترغبين في تثبيت مدير من المتجر الإلكتروني؟"
   },
   {
@@ -1394,8 +1394,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
-    "message": "مدير كلمات مرور شائع ومدفوع ومغلق المصدر. يتيح تخزين البيانات في أوروبا أو الولايات المتحدة. قد لا يعمل بشكل صحيح مع Helium بدون إعدادات إضافية."
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
+    "message": "مدير كلمات مرور شائع ومدفوع ومغلق المصدر. يتيح تخزين البيانات في أوروبا أو الولايات المتحدة. قد لا يعمل بشكل صحيح مع Helium Neo بدون إعدادات إضافية."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ICLOUD_PASSWORDS",

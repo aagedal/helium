@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "Helium белсенді емес қойындылардан жадты босатады. Бұл белсенді қойындылар мен басқа қолданбаларға компьютер ресурстарын көбірек береді және Helium жұмысын жылдам сақтайды. Белсенді емес қойындыларыңыз оларға оралған кезде автоматты түрде қайта белсенді болады."
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "Helium Neo белсенді емес қойындылардан жадты босатады. Бұл белсенді қойындылар мен басқа қолданбаларға компьютер ресурстарын көбірек береді және Helium Neo жұмысын жылдам сақтайды. Белсенді емес қойындыларыңыз оларға оралған кезде автоматты түрде қайта белсенді болады."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "Helium фондық белсенділік пен визуалды әсерлерді, мысалы, тегіс айналдыру мен бейне кадр жиілігін шектеу арқылы батарея қуатын үнемдейді."
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "Helium Neo фондық белсенділік пен визуалды әсерлерді, мысалы, тегіс айналдыру мен бейне кадр жиілігін шектеу арқылы батарея қуатын үнемдейді."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "Helium беттерді алдын ала жүктейді, бұл шолу мен іздеуді жылдамдатады."
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "Helium Neo беттерді алдын ала жүктейді, бұл шолу мен іздеуді жылдамдатады."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "<ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph> браузерінен импортталған"
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "<ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph> браузерінен импортталған"
   },
   {
     "name": "IDS_EXTENSIONS_IMPORTER_LOCK_TITLE",
@@ -46,18 +46,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "Helium қызметтері"
+    "source": "Helium Neo services",
+    "message": "Helium Neo қызметтері"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "Браузеріңізде қандай Helium қызметтеріне рұқсат етілгенін басқарыңыз"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "Браузеріңізде қандай Helium Neo қызметтеріне рұқсат етілгенін басқарыңыз"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "Helium қызметтерінің жаңартулары:"
+    "source": "Updates to Helium Neo services:",
+    "message": "Helium Neo қызметтерінің жаңартулары:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -71,23 +71,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Helium қызметтеріне қосылуға рұқсат беру"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Helium Neo қызметтеріне қосылуға рұқсат беру"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "Қосылған кезде Helium қосымша мүмкіндіктер қамтамасыз ету үшін анонимді веб-қызметтерге қосыла алады. Өшірілген кезде қосымша мүмкіндіктер жұмыс істемейді."
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "Қосылған кезде Helium Neo қосымша мүмкіндіктер қамтамасыз ету үшін анонимді веб-қызметтерге қосыла алады. Өшірілген кезде қосымша мүмкіндіктер жұмыс істемейді."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "Helium қызметтерінің өз данасын пайдалану"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Helium Neo қызметтерінің өз данасын пайдалану"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "Helium қызметтерінің өз данасын орналастырып, оны браузеріңізде әдепкінің орнына пайдалана аласыз. Тек HTTPS."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "Helium Neo қызметтерінің өз данасын орналастырып, оны браузеріңізде әдепкінің орнына пайдалана аласыз. Тек HTTPS."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -96,18 +96,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "Helium қызметтері үшін теңшелген бастапқы URL"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "Helium Neo қызметтері үшін теңшелген бастапқы URL"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "Helium қызметтері жаңартылды. Өзгерістерді қарап шығыңыз."
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "Helium Neo қызметтері жаңартылды. Өзгерістерді қарап шығыңыз."
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "Helium қызметтерінің жаңартуларын қарау"
+    "source": "Review Helium Neo services updates",
+    "message": "Helium Neo қызметтерінің жаңартуларын қарау"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -116,8 +116,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "Helium қызметтері құпиялылығыңызды сақтау және келісіміңізді алу үшін орнату аяқталғанша қол жетімді емес."
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "Helium Neo қызметтері құпиялылығыңызды сақтау және келісіміңізді алу үшін орнату аяқталғанша қол жетімді емес."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -156,8 +156,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Қосылған кезде Helium құпиялылығыңызды қорғау үшін кеңейтімдерді жүктеу мен жаңартуды прокси арқылы жүргізеді. Өшірілген кезде кеңейтімдерді жүктеу мен жаңарту жұмыс істемейді."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Қосылған кезде Helium Neo құпиялылығыңызды қорғау үшін кеңейтімдерді жүктеу мен жаңартуды прокси арқылы жүргізеді. Өшірілген кезде кеңейтімдерді жүктеу мен жаңарту жұмыс істемейді."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -166,13 +166,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium интернетті жылдамырақ шолуға көмектесетін bang-тар тізімін жүктейді, мысалы !w немесе !gh. Өшірілген кезде bang-тар жұмыс істемейді."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo интернетті жылдамырақ шолуға көмектесетін bang-тар тізімін жүктейді, мысалы !w немесе !gh. Өшірілген кезде bang-тар жұмыс істемейді."
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "Helium қызметтерінің қосулы екенін (оның ішінде емле тексеру сөздіктерін жүктеу) тексеріңіз және брандмауэрдің Helium серверлерінен жүктеуді бұғаттамағанына көз жеткізіңіз."
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "Helium Neo қызметтерінің қосулы екенін (оның ішінде емле тексеру сөздіктерін жүктеу) тексеріңіз және брандмауэрдің Helium Neo серверлерінен жүктеуді бұғаттамағанына көз жеткізіңіз."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -181,8 +181,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium сұралған кезде емле тексеру үшін пайдаланылатын сөздік файлдарын жүктейді. Өшірілген кезде емле тексеру жұмыс істемейді."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo сұралған кезде емле тексеру үшін пайдаланылатын сөздік файлдарын жүктейді. Өшірілген кезде емле тексеру жұмыс істемейді."
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -196,8 +196,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium uBlock Origin үшін жаңа сүзгі тізімдерін жүктейді. Құпиялылығыңызды қорғау үшін тізімдерге барлық сұраулар прокси арқылы жіберіледі. Өшірілген кезде әдепкі сүзгі тізімдері жергілікті жадтан жүктеледі, олар тек Helium жаңартуларымен бірге жаңартылады. Қосымша сүзгі тізімдері прокси арқылы емес, тікелей сұралады."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo uBlock Origin үшін жаңа сүзгі тізімдерін жүктейді. Құпиялылығыңызды қорғау үшін тізімдерге барлық сұраулар прокси арқылы жіберіледі. Өшірілген кезде әдепкі сүзгі тізімдері жергілікті жадтан жүктеледі, олар тек Helium Neo жаңартуларымен бірге жаңартылады. Қосымша сүзгі тізімдері прокси арқылы емес, тікелей сұралады."
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -211,8 +211,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "Компонент жаңартулары өшірілген. Параметрлердегі Helium қызметтерін қараңыз."
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "Компонент жаңартулары өшірілген. Параметрлердегі Helium Neo қызметтерін қараңыз."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -231,8 +231,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "Мекенжай жолағына теру кезінде Helium ұсыныстар алу үшін теріп жатқаныңызды әдепкі іздеу жүйесіне жібереді. Бұл Инкогнито режимінде өшірілген."
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "Мекенжай жолағына теру кезінде Helium Neo ұсыныстар алу үшін теріп жатқаныңызды әдепкі іздеу жүйесіне жібереді. Бұл Инкогнито режимінде өшірілген."
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -261,8 +261,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "Кеңейтімдерді жүктеу өшірілген. Helium қызметтерінің параметрлерінде бұл мүмкіндікті қосып, қайталап көріңіз."
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "Кеңейтімдерді жүктеу өшірілген. Helium Neo қызметтерінің параметрлерінде бұл мүмкіндікті қосып, қайталап көріңіз."
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -276,13 +276,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "Helium Инкогнито режимінде шолу туралы ештеңе сақтамайды, бірақ жүктеулер мен бетбелгілер сақталады. Шолуыңыз бұл құрылғыда ешқандай із қалдырмайды және басқа пайдаланушылар сіздің белсенділігіңізді көре алмайды."
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "Helium Neo Инкогнито режимінде шолу туралы ештеңе сақтамайды, бірақ жүктеулер мен бетбелгілер сақталады. Шолуыңыз бұл құрылғыда ешқандай із қалдырмайды және басқа пайдаланушылар сіздің белсенділігіңізді көре алмайды."
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "Helium компоненті"
+    "source": "Helium Neo component",
+    "message": "Helium Neo компоненті"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -366,8 +366,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "Helium әдепкі браузер ретінде орнатылмайды, себебі келесі жолдардың ешқайсысында <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> файлы табылмады: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "Helium Neo әдепкі браузер ретінде орнатылмайды, себебі келесі жолдардың ешқайсысында <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> файлы табылмады: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -426,8 +426,8 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
-    "message": "Safari-ден бетбелгілеріңізді импорттау үшін Helium қолданбасына дискіге толық қатынас қажет."
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
+    "message": "Safari-ден бетбелгілеріңізді импорттау үшін Helium Neo қолданбасына дискіге толық қатынас қажет."
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_LINK",
@@ -681,8 +681,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium жаңартуларды автоматты түрде тексеріп, орнатады. Бұған браузер мен компонент жаңартулары кіреді. Ең жаңа мүмкіндіктер мен қауіпсіздік жаңартуларын алып тұруыңыз үшін бұл параметрді қосулы қалдыруды ұсынамыз."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo жаңартуларды автоматты түрде тексеріп, орнатады. Бұған браузер мен компонент жаңартулары кіреді. Ең жаңа мүмкіндіктер мен қауіпсіздік жаңартуларын алып тұруыңыз үшін бұл параметрді қосулы қалдыруды ұсынамыз."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -691,8 +691,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium компонент жаңартуларын автоматты түрде тексеріп, орнатады. Бұл параметрді қосулы қалдыруды ұсынамыз. Linux жүйесінде браузер жаңартуларын дистрибутивіңіздің пакет менеджері өңдейді. Helium пакетінің жаңартуларын кемінде апта сайын тексеріңіз."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo компонент жаңартуларын автоматты түрде тексеріп, орнатады. Бұл параметрді қосулы қалдыруды ұсынамыз. Linux жүйесінде браузер жаңартуларын дистрибутивіңіздің пакет менеджері өңдейді. Helium Neo пакетінің жаңартуларын кемінде апта сайын тексеріңіз."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -821,8 +821,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "Helium ақаулық туралы есептерді жіберуді сұрай ала ма немесе оларды автоматты түрде жібере ме, соны таңдаңыз. Есептерді өшіру барлық күтудегі есептерді жояды."
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "Helium Neo ақаулық туралы есептерді жіберуді сұрай ала ма немесе оларды автоматты түрде жібере ме, соны таңдаңыз. Есептерді өшіру барлық күтудегі есептерді жояды."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -846,13 +846,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "Helium күтпеген жерден жабылды. Ақаулық туралы есеп сіз тап болған мәселені түзетуге және оның қайта туындауын болдырмауға көмектесе алады."
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "Helium Neo күтпеген жерден жабылды. Ақаулық туралы есеп сіз тап болған мәселені түзетуге және оның қайта туындауын болдырмауға көмектесе алады."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "Ақаулық туралы есепке ақаулық кезінде Helium жадында болған кейбір құпия деректер кездейсоқ енуі мүмкін."
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "Ақаулық туралы есепке ақаулық кезінде Helium Neo жадында болған кейбір құпия деректер кездейсоқ енуі мүмкін."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -871,8 +871,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "Ақаулық туралы есеп беру Helium параметрлерінде немесе саясат бойынша өшірілген."
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "Ақаулық туралы есеп беру Helium Neo параметрлерінде немесе саясат бойынша өшірілген."
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -901,8 +901,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "Helium орнату"
+    "source": "Helium Neo Setup",
+    "message": "Helium Neo орнату"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -916,18 +916,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "Helium серіктесі"
+    "source": "Helium Neo Partner",
+    "message": "Helium Neo серіктесі"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "Бұл қызметке ақы төлеу Helium дамуын қолдайды."
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "Бұл қызметке ақы төлеу Helium Neo дамуын қолдайды."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
-    "message": "Helium-мен танысыңыз"
+    "source": "Meet Helium Neo",
+    "message": "Helium Neo-мен танысыңыз"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_TITLE",
@@ -936,8 +936,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "Helium қызметтері"
+    "source": "Helium Neo services",
+    "message": "Helium Neo қызметтері"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -946,13 +946,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Helium қызметтеріне қосылуға рұқсат ету"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Helium Neo қызметтеріне қосылуға рұқсат ету"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "Helium қызметтері қосымша функцияларды қамтамасыз етеді, мысалы: кеңейтімдерді жүктеп алу, кірістірілген !bang-тар, сүзгі тізімін жаңарту және браузер жаңартулары. Өшірілгенде бұл мүмкіндіктердің ешқайсысы жұмыс істемейді, бірақ Helium ешқандай веб-сұрау жасамайды."
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "Helium Neo қызметтері қосымша функцияларды қамтамасыз етеді, мысалы: кеңейтімдерді жүктеп алу, кірістірілген !bang-тар, сүзгі тізімін жаңарту және браузер жаңартулары. Өшірілгенде бұл мүмкіндіктердің ешқайсысы жұмыс істемейді, бірақ Helium Neo ешқандай веб-сұрау жасамайды."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -961,8 +961,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium интернетті жылдамырақ шолуға көмектесетін bang-тар тізімін алады, мысалы !w немесе !gh. Өшірілгенде bang-тар жұмыс істемейді."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo интернетті жылдамырақ шолуға көмектесетін bang-тар тізімін алады, мысалы !w немесе !gh. Өшірілгенде bang-тар жұмыс істемейді."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -971,8 +971,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Қосылғанда Helium құпиялығыңызды қорғау үшін кеңейтімдерді жүктеп алу мен жаңартуларды проксилейді. Өшірілгенде кеңейтімдерді жүктеп алу және жаңарту жұмыс істемейді."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Қосылғанда Helium Neo құпиялығыңызды қорғау үшін кеңейтімдерді жүктеп алу мен жаңартуларды проксилейді. Өшірілгенде кеңейтімдерді жүктеп алу және жаңарту жұмыс істемейді."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -981,8 +981,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium uBlock Origin үшін жаңа сүзгі тізімдерін алады. Тізімдерге барлық сұраулар құпиялығыңызды қорғау үшін проксиленеді. Өшірілгенде әдепкі сүзгі тізімдері жергілікті жадтан жүктеледі, олар тек Helium-мен бірге жаңартылады. Қосымша сүзгі тізімдері проксисіз сұралады."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo uBlock Origin үшін жаңа сүзгі тізімдерін алады. Тізімдерге барлық сұраулар құпиялығыңызды қорғау үшін проксиленеді. Өшірілгенде әдепкі сүзгі тізімдері жергілікті жадтан жүктеледі, олар тек Helium Neo-мен бірге жаңартылады. Қосымша сүзгі тізімдері проксисіз сұралады."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -991,8 +991,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium жаңартуларды автоматты түрде тексеріп, оларды орнатады. Бұған браузер мен компонент жаңартулары кіреді. Соңғы мүмкіндіктер мен қауіпсіздік жаңартуларын алу үшін бұл параметрді қосулы қалдыруды ұсынамыз."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo жаңартуларды автоматты түрде тексеріп, оларды орнатады. Бұған браузер мен компонент жаңартулары кіреді. Соңғы мүмкіндіктер мен қауіпсіздік жаңартуларын алу үшін бұл параметрді қосулы қалдыруды ұсынамыз."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1001,8 +1001,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium компонент жаңартуларын автоматты түрде тексеріп, оларды орнатады. Бұл параметрді қосулы қалдыруды ұсынамыз. Linux жүйесінде браузер жаңартуларын дистрибутивіңіздің бума менеджері өңдейді. Helium бумасының жаңартуларын кемінде апта сайын тексеріп тұрыңыз."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo компонент жаңартуларын автоматты түрде тексеріп, оларды орнатады. Бұл параметрді қосулы қалдыруды ұсынамыз. Linux жүйесінде браузер жаңартуларын дистрибутивіңіздің бума менеджері өңдейді. Helium Neo бумасының жаңартуларын кемінде апта сайын тексеріп тұрыңыз."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1011,18 +1011,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium сұралғанда емлені тексеру үшін пайдаланылатын сөздік файлдарын алады. Өшірілгенде емлені тексеру жұмыс істемейді."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo сұралғанда емлені тексеру үшін пайдаланылатын сөздік файлдарын алады. Өшірілгенде емлені тексеру жұмыс істемейді."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "Helium қызметтерінің өз данасын пайдалану"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Helium Neo қызметтерінің өз данасын пайдалану"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "Helium қызметтерінің өз данасын орналастырып, оны браузеріңізде алдын ала орналастырылған сервердің орнына пайдалана аласыз. Егер сізде бар болса, оны Helium параметрлерінде орната аласыз."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "Helium Neo қызметтерінің өз данасын орналастырып, оны браузеріңізде алдын ала орналастырылған сервердің орнына пайдалана аласыз. Егер сізде бар болса, оны Helium Neo параметрлерінде орната аласыз."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1041,8 +1041,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "Реттелетін іздеу механизмі. Оның құпиялығын Helium тексермеген."
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "Реттелетін іздеу механизмі. Оның құпиялығын Helium Neo тексермеген."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1056,18 +1056,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
-    "message": "Helium-ге ауысуға дайынсыз ба?"
+    "source": "Ready to switch to Helium Neo?",
+    "message": "Helium Neo-ге ауысуға дайынсыз ба?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "Helium-ді әдепкі браузерім ету."
+    "source": "Make Helium Neo my default browser.",
+    "message": "Helium Neo-ді әдепкі браузерім ету."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
-    "message": "Әзірге Helium-ді жай ғана сынап көру."
+    "source": "Just trying Helium Neo for now.",
+    "message": "Әзірге Helium Neo-ді жай ғана сынап көру."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
@@ -1106,8 +1106,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "Helium сізді саусақ ізін алудан қалай қорғайтынын басқарыңыз"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "Helium Neo сізді саусақ ізін алудан қалай қорғайтынын басқарыңыз"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1116,13 +1116,13 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "Саусақ ізінен қорғау қосулы кезде Helium сайттарға сізді бақылау мен профильдеуді қиындату үшін кейбір браузер функцияларына шу қосады. Анықталу мүмкіндігін азайту үшін әр сайт шолу сеансы барысында біркелкі кездейсоқтандырылған ақпаратты көреді."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "Саусақ ізінен қорғау қосулы кезде Helium Neo сайттарға сізді бақылау мен профильдеуді қиындату үшін кейбір браузер функцияларына шу қосады. Анықталу мүмкіндігін азайту үшін әр сайт шолу сеансы барысында біркелкі кездейсоқтандырылған ақпаратты көреді."
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
-    "message": "Саусақ ізін алуды толығымен болдырмау мүмкін емес, бірақ Helium-нің талдауға қарсы қорғанысы бастапқы саусақ ізін қалпына келтіруді қиындатады."
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
+    "message": "Саусақ ізін алуды толығымен болдырмау мүмкін емес, бірақ Helium Neo-нің талдауға қарсы қорғанысы бастапқы саусақ ізін қалпына келтіруді қиындатады."
   },
   {
     "name": "IDS_SETTINGS_NOISE_CUSTOM_DESCRIPTION",
@@ -1151,8 +1151,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "Саусақ ізінен қорғау қосулы кезде Helium сайттарға сізді бақылау мен профильдеуді қиындату үшін кейбір браузер функцияларына шу қосады."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "Саусақ ізінен қорғау қосулы кезде Helium Neo сайттарға сізді бақылау мен профильдеуді қиындату үшін кейбір браузер функцияларына шу қосады."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1161,8 +1161,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "Саусақ ізінен қорғау Helium параметрлерінде өшірілген."
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "Саусақ ізінен қорғау Helium Neo параметрлерінде өшірілген."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1276,8 +1276,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "Helium браузерінің сайттарға қосылуын, рұқсат етілген құпиялық сигналдарын және басқа параметрлерді басқару"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "Helium Neo браузерінің сайттарға қосылуын, рұқсат етілген құпиялық сигналдарын және басқа параметрлерді басқару"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1341,23 +1341,23 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "Helium macOS Keychain қызметіне кіре алмады. Деректеріңізді қорғау үшін браузер жабылады. macOS сұрау көрсетсе, Helium шифрлау кілтіне қол жеткізуге рұқсат беріңіз. Helium браузерінің басқа ашық көшірмелерін жауып, оны қайта ашыңыз."
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "Helium Neo macOS Keychain қызметіне кіре алмады. Деректеріңізді қорғау үшін браузер жабылады. macOS сұрау көрсетсе, Helium Neo шифрлау кілтіне қол жеткізуге рұқсат беріңіз. Helium Neo браузерінің басқа ашық көшірмелерін жауып, оны қайта ашыңыз."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
-    "message": "Helium браузерін талғамыңызға сай баптап, басқа браузерлерден деректерді импорттаңыз. Оны өзіңізге ыңғайлы етіңіз немесе бірден шолуды бастаңыз."
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "message": "Helium Neo браузерін талғамыңызға сай баптап, басқа браузерлерден деректерді импорттаңыз. Оны өзіңізге ыңғайлы етіңіз немесе бірден шолуды бастаңыз."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "Әдепкі параметрлерді пайдалансаңыз, Helium қызметтері автоматты түрде қосылады."
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "Әдепкі параметрлерді пайдалансаңыз, Helium Neo қызметтері автоматты түрде қосылады."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
-    "message": "Орнату аяқталды, Helium таңдағаныңызға рақмет. Интернетті қайтадан рақаттана пайдаланатын кез келді."
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
+    "message": "Орнату аяқталды, Helium Neo таңдағаныңызға рақмет. Интернетті қайтадан рақаттана пайдаланатын кез келді."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_TITLE",
@@ -1371,13 +1371,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
-    "message": "Жақсырақ құпиялық, жылдамдық және жайлылық. Бәрі бір рет басу арқылы. Сілтемелердің әдепкіде Helium браузерінде ашылғанын қалайсыз ба?"
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
+    "message": "Жақсырақ құпиялық, жылдамдық және жайлылық. Бәрі бір рет басу арқылы. Сілтемелердің әдепкіде Helium Neo браузерінде ашылғанын қалайсыз ба?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "Helium браузерінде кірістірілген құпия сөз менеджері жоқ. Оны Веб-дүкеннен орнатқыңыз келе ме?"
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "Helium Neo браузерінде кірістірілген құпия сөз менеджері жоқ. Оны Веб-дүкеннен орнатқыңыз келе ме?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_PROTON_PASS",
@@ -1391,8 +1391,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
-    "message": "Танымал, ақылы және бастапқы коды жабық құпия сөз менеджері. Деректерді Еуропада немесе АҚШ-та сақтауды ұсынады. Қосымша баптаусыз Helium браузерінде дұрыс жұмыс істемеуі мүмкін."
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
+    "message": "Танымал, ақылы және бастапқы коды жабық құпия сөз менеджері. Деректерді Еуропада немесе АҚШ-та сақтауды ұсынады. Қосымша баптаусыз Helium Neo браузерінде дұрыс жұмыс істемеуі мүмкін."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ICLOUD_PASSWORDS",
