@@ -70,6 +70,10 @@ def main():
         subprocess.run([renderer, '-w', '1024', '-h', '1024',
                         str(BRANDING / 'macos/AppIcon.icon/Assets/logo.svg'),
                         '-o', str(foreground)], check=True)
+        # Icon Composer's SVG importer changes stroked arcs into filled shapes
+        # and uses the SVG's intrinsic size. Supply a full-resolution raster of
+        # the same vector artwork for predictable modern macOS rendering.
+        shutil.copy2(foreground, BRANDING / 'macos/AppIcon.icon/Assets/logo.png')
         glyph = Image.open(foreground).convert('RGBA')
         glyph.resize((22, 22), Image.Resampling.LANCZOS).save(
             BRANDING / 'product_logo_22_mono.png')

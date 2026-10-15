@@ -1,0 +1,713 @@
+--- a/chrome/app/generated_resources.grd
++++ b/chrome/app/generated_resources.grd
+@@ -288,6 +288,7 @@
+       <message name="IDS_HELIUM_CREATE_FOUR_PANE_SPLIT" desc="Tab context menu action creating a grid with this tab and three new tabs.">Create Four-Way Split</message>
+       <message name="IDS_HELIUM_EXPAND_FOUR_PANE_SPLIT" desc="Tab context menu action adding new tabs to fill an existing split to four panes.">Expand to Four-Way Split</message>
+       <message name="IDS_HELIUM_TAB_VIEW" desc="Tab menu submenu for individual tab preview and refresh settings.">Tab view</message>
++      <message name="IDS_HELIUM_MOBILE_PREVIEW_FULL_HEIGHT" desc="Toggle mobile emulation with the full pane height.">Mobile preview (402 wide, full height)</message>
+       <message name="IDS_HELIUM_MOBILE_PREVIEW" desc="Toggle clean mobile device emulation for this tab.">Mobile preview (402 × 874)</message>
+       <message name="IDS_HELIUM_CREATE_PREVIEW_WORKSPACE" desc="Create a pinned tab group containing desktop and mobile copies of this page.">Create desktop/mobile workspace</message>
+       <message name="IDS_HELIUM_PREVIEW_WORKSPACE_TITLE" desc="Default name for a desktop and mobile preview tab group.">Desktop + mobile</message>
+--- a/chrome/browser/ui/browser_commands.cc
++++ b/chrome/browser/ui/browser_commands.cc
+@@ -747,15 +747,14 @@
+ 
+   std::vector<tabs::TabInterface*> tabs_to_reload;
+ 
+-  // When using split view, both tabs composing the split view are considered
+-  // selected by the `selection_model` and `selection_model().size()` returns 2;
+-  // even though visually, both tabs are represented by a single UI tab in the
+-  // tab strip. To detect whether the user has selected multiple UI tabs,
+-  // compare the number of model selected tabs wither either 2 or 1 depending on
+-  // whether the active tab is split.
+-  bool multiple_ui_tabs_selected =
+-      active_tab && tab_strip_model->selection_model().size() >
+-                        (active_tab->IsSplit() ? 2 : 1);
++  // Every pane in the active split is selected in the model. Only selection
++  // outside that split represents additional UI tabs chosen by the user.
++  const bool multiple_ui_tabs_selected = std::ranges::any_of(
++      tab_strip_model->selection_model().selected_tabs(),
++      [active_tab](const tabs::TabInterface* tab) {
++        return tab != active_tab && (!active_tab || !active_tab->GetSplit() ||
++                                     tab->GetSplit() != active_tab->GetSplit());
++      });
+ 
+   if (multiple_ui_tabs_selected) {
+     // Reloading a tab may change the selection (see crbug.com/339061099), so
+--- a/chrome/browser/ui/browser_commands_browsertest.cc
++++ b/chrome/browser/ui/browser_commands_browsertest.cc
+@@ -155,6 +155,34 @@
+   EXPECT_EQ(kTabCount, load_sum);
+ }
+ 
++IN_PROC_BROWSER_TEST_F(BrowserCommandsTest,
++                       ReloadOnlyActivePaneInMultiPaneSplit) {
++  auto* model = browser()->tab_strip_model();
++  for (int count = 2; count <= 6; ++count) {
++    model->CreateOrUpdatePaneSplit(0, count, split_tabs::SplitTabVisualData());
++    for (int active = 0; active < count; ++active) {
++      model->ActivateTabAt(active);
++      ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), GURL(kUrl)));
++      std::vector<ReloadObserver> observers(count);
++      for (int i = 0; i < count; ++i) {
++        auto* contents = model->GetWebContentsAt(i);
++        contents->Stop();
++        observers[i].SetWebContents(contents);
++      }
++      EXPECT_TRUE(chrome::ExecuteCommand(browser(), IDC_RELOAD));
++      for (int i = 0; i < count; ++i) {
++        EXPECT_EQ(i == active ? 1 : 0, observers[i].load_count());
++        model->GetWebContentsAt(i)->Stop();
++      }
++      EXPECT_TRUE(
++          chrome::ExecuteCommand(browser(), IDC_RELOAD_BYPASSING_CACHE));
++      for (int i = 0; i < count; ++i) {
++        EXPECT_EQ(i == active ? 2 : 0, observers[i].load_count());
++      }
++    }
++  }
++}
++
+ IN_PROC_BROWSER_TEST_F(BrowserCommandsTest, ReloadSelectedTabsWithinSplitView) {
+   // Add 5 tabs.
+   constexpr int kTabCount = 5;
+--- a/chrome/browser/ui/startup/BUILD.gn
++++ b/chrome/browser/ui/startup/BUILD.gn
+@@ -27,7 +27,10 @@
+     "startup_tab.h",
+   ]
+ 
+-  public_deps = [ "//url" ]
++  public_deps = [
++    "//components/split_tabs",
++    "//url",
++  ]
+ }
+ 
+ source_set("startup") {
+@@ -217,6 +220,7 @@
+     ]
+     deps += [
+       ":startup_tab",
++      "//chrome/browser/ui/tabs:pane_settings",
+       "//apps",
+       "//base:i18n",
+       "//build:branding_buildflags",
+--- a/chrome/browser/ui/startup/startup_browser_creator_impl.cc
++++ b/chrome/browser/ui/startup/startup_browser_creator_impl.cc
+@@ -8,6 +8,7 @@
+ 
+ #include <algorithm>
+ #include <iterator>
++#include <map>
+ #include <memory>
+ #include <utility>
+ #include <vector>
+@@ -53,6 +54,7 @@
+ #include "chrome/browser/ui/startup/startup_tab.h"
+ #include "chrome/browser/ui/startup/startup_tab_provider.h"
+ #include "chrome/browser/ui/startup/startup_types.h"
++#include "chrome/browser/ui/tabs/pane_settings.h"
+ #include "chrome/browser/ui/tabs/shared_tab_group_version_upgrade_modal.h"
+ #include "chrome/browser/ui/tabs/tab_enums.h"
+ #include "chrome/browser/ui/tabs/tab_strip_model.h"
+@@ -71,6 +73,7 @@
+ #include "components/sessions/core/serialized_navigation_entry.h"
+ #include "components/sessions/core/serialized_user_agent_override.h"
+ #include "components/signin/public/base/signin_switches.h"
++#include "components/split_tabs/split_tab_id.h"
+ #include "components/tab_groups/tab_group_id.h"
+ #include "content/public/browser/child_process_security_policy.h"
+ #include "content/public/browser/dom_storage_context.h"
+@@ -220,12 +223,13 @@
+   return workspace_browser;
+ }
+ 
+-void AddDeferredPinnedStartupTab(BrowserWindowInterface* browser,
+-                                 const GURL& url) {
++content::WebContents* AddDeferredPinnedStartupTab(
++    BrowserWindowInterface* browser,
++    const GURL& url) {
+   sessions::SerializedNavigationEntry navigation;
+   navigation.set_index(0);
+   navigation.set_virtual_url(url);
+-  chrome::AddRestoredTab(
++  return chrome::AddRestoredTab(
+       browser, base::span_from_ref(navigation),
+       browser->tab_strip_model()->IndexOfFirstNonPinnedTab(),
+       /*selected_navigation=*/0, /*extension_app_id=*/std::string(),
+@@ -387,6 +391,20 @@
+   }
+   CHECK(profile_);
+ 
++  std::map<std::string, std::vector<content::WebContents*>> pinned_splits;
++  std::map<std::string, split_tabs::SplitTabVisualData> pinned_visuals;
++  const auto restore_pane = [&](const StartupTab& tab,
++                                content::WebContents* contents) {
++    if (!contents || tab.type != StartupTab::Type::kPinned) {
++      return;
++    }
++    tabs::PaneSettings::RestoreFromExtraData(contents, tab.pane_extra_data);
++    if (!tab.pinned_split_id.empty() && tab.pinned_split_visual_data) {
++      pinned_splits[tab.pinned_split_id].push_back(contents);
++      pinned_visuals.insert_or_assign(tab.pinned_split_id,
++                                      *tab.pinned_split_visual_data);
++    }
++  };
+   bool first_tab = true;
+   bool process_headless_commands = headless::ShouldProcessHeadlessCommands();
+   custom_handlers::ProtocolHandlerRegistry* registry =
+@@ -456,7 +474,7 @@
+     // Pinned tabs from the startup-tab provider do not pass through the session
+     // restore tab loader, so add background ones without loading them.
+     if (!first_tab && tab.type == StartupTab::Type::kPinned) {
+-      AddDeferredPinnedStartupTab(browser, tab.url);
++      restore_pane(tab, AddDeferredPinnedStartupTab(browser, tab.url));
+       continue;
+     }
+ 
+@@ -487,7 +505,24 @@
+ #endif  // BUILDFLAG(ENABLE_RLZ)
+ 
+     Navigate(&params);
++    restore_pane(tab, params.navigated_or_inserted_contents);
+     first_tab = false;
++  }
++  for (const auto& [id, panes] : pinned_splits) {
++    if (panes.size() < 2 || panes.size() > split_tabs::kMaxSplitPanes) {
++      continue;
++    }
++    auto* model = browser->GetTabStripModel();
++    std::vector<int> indices;
++    for (auto* pane : panes) {
++      indices.push_back(model->GetIndexOfWebContents(pane));
++    }
++    std::ranges::sort(indices);
++    if (indices.front() == TabStripModel::kNoTab) {
++      continue;
++    }
++    model->RestoreSplit(split_tabs::SplitTabId::GenerateNew(), indices,
++                        pinned_visuals.at(id));
+   }
+   if (!browser->GetTabStripModel()->GetActiveWebContents() &&
+       !process_headless_commands) {
+--- a/chrome/browser/ui/startup/startup_tab.h
++++ b/chrome/browser/ui/startup/startup_tab.h
+@@ -5,7 +5,12 @@
+ #ifndef CHROME_BROWSER_UI_STARTUP_STARTUP_TAB_H_
+ #define CHROME_BROWSER_UI_STARTUP_STARTUP_TAB_H_
+ 
++#include <map>
++#include <optional>
++#include <string>
+ #include <vector>
++
++#include "components/split_tabs/split_tab_visual_data.h"
+ 
+ #include "url/gurl.h"
+ 
+@@ -28,6 +33,11 @@
+ 
+   Type type = Type::kNormal;
+ 
++  // Local pinned-tab state. Empty for ordinary and legacy startup entries.
++  std::string pinned_split_id;
++  std::optional<split_tabs::SplitTabVisualData> pinned_split_visual_data;
++  std::map<std::string, std::string> pane_extra_data;
++
+   // True if this tab was launched from an untrusted external custom protocol
+   // (e.g., google-chrome://) that was stripped on startup.
+   bool is_untrusted_launch = false;
+--- a/chrome/browser/ui/tabs/BUILD.gn
++++ b/chrome/browser/ui/tabs/BUILD.gn
+@@ -537,6 +537,7 @@
+     }
+ 
+     deps = [
++      ":pane_settings",
+       ":tab_group",
+       ":tab_model",
+       ":tab_strip",
+@@ -791,6 +792,7 @@
+     ]
+ 
+     deps = [
++      ":pane_settings",
+       ":tab_enums",
+       ":tab_list_bridge",
+       ":tab_menu",
+--- a/chrome/browser/ui/tabs/pane_settings.cc
++++ b/chrome/browser/ui/tabs/pane_settings.cc
+@@ -45,7 +45,9 @@
+ void PaneSettings::PopulateExtraData(content::WebContents* contents,
+                                      std::map<std::string, std::string>* data) {
+   if (auto* settings = FromWebContents(contents)) {
+-    (*data)[kMobileKey] = settings->mobile_enabled() ? "1" : "0";
++    (*data)[kMobileKey] = settings->mobile_enabled()
++                              ? (settings->mobile_full_height() ? "2" : "1")
++                              : "0";
+     (*data)[kRefreshKey] = base::NumberToString(settings->refresh_seconds());
+   }
+ }
+@@ -58,7 +60,8 @@
+   }
+   auto* settings = GetOrCreate(contents);
+   if (auto it = data.find(kMobileKey); it != data.end()) {
+-    settings->SetMobileEnabled(it->second == "1");
++    settings->SetMobileEnabled(it->second == "1" || it->second == "2",
++                               it->second == "2");
+   }
+   int seconds = 0;
+   if (auto it = data.find(kRefreshKey);
+@@ -68,11 +71,13 @@
+   }
+ }
+ 
+-void PaneSettings::SetMobileEnabled(bool enabled) {
+-  if (mobile_enabled_ == enabled) {
++void PaneSettings::SetMobileEnabled(bool enabled, bool full_height) {
++  full_height = enabled && full_height;
++  if (mobile_enabled_ == enabled && mobile_full_height_ == full_height) {
+     return;
+   }
+   mobile_enabled_ = enabled;
++  mobile_full_height_ = full_height;
+   if (enabled) {
+     ApplyMobileEmulation();
+   } else {
+@@ -121,8 +126,9 @@
+   if (!service) {
+     return;
+   }
+-  service->AddTabExtraData(helper->window_id(), helper->session_id(),
+-                           kMobileKey, mobile_enabled_ ? "1" : "0");
++  service->AddTabExtraData(
++      helper->window_id(), helper->session_id(), kMobileKey,
++      mobile_enabled_ ? (mobile_full_height_ ? "2" : "1") : "0");
+   service->AddTabExtraData(helper->window_id(), helper->session_id(),
+                            kRefreshKey, base::NumberToString(refresh_seconds_));
+ }
+@@ -132,11 +138,20 @@
+   return changed_callbacks_.Add(std::move(callback));
+ }
+ 
+-void PaneSettings::SetPreviewScale(double scale) {
+-  if (scale <= 0 || scale == preview_scale_) {
+-    return;
+-  }
+-  preview_scale_ = scale;
++void PaneSettings::SetPreviewBounds(int width, int height) {
++  const auto fitted = FitMobilePreview(width, height, mobile_full_height_);
++  if (fitted.scale <= 0) {
++    return;
++  }
++  const int css_height =
++      mobile_full_height_
++          ? std::max(1, static_cast<int>(std::round(height / fitted.scale)))
++          : kMobilePreviewHeight;
++  if (fitted.scale == preview_scale_ && css_height == preview_height_) {
++    return;
++  }
++  preview_scale_ = fitted.scale;
++  preview_height_ = css_height;
+   ApplyMobileEmulation(/*metrics_only=*/true);
+ }
+ 
+@@ -159,9 +174,11 @@
+   }
+   base::DictValue metrics;
+   metrics.Set("width", kMobilePreviewWidth);
+-  metrics.Set("height", kMobilePreviewHeight);
++  metrics.Set("height",
++              mobile_full_height_ ? preview_height_ : kMobilePreviewHeight);
+   metrics.Set("screenWidth", kMobilePreviewWidth);
+-  metrics.Set("screenHeight", kMobilePreviewHeight);
++  metrics.Set("screenHeight",
++              mobile_full_height_ ? preview_height_ : kMobilePreviewHeight);
+   metrics.Set("deviceScaleFactor", kMobilePreviewDeviceScaleFactor);
+   metrics.Set("mobile", true);
+   metrics.Set("scale", preview_scale_);
+--- a/chrome/browser/ui/tabs/pane_settings.h
++++ b/chrome/browser/ui/tabs/pane_settings.h
+@@ -37,10 +37,11 @@
+       const std::map<std::string, std::string>& data);
+ 
+   bool mobile_enabled() const { return mobile_enabled_; }
++  bool mobile_full_height() const { return mobile_full_height_; }
+   int refresh_seconds() const { return refresh_seconds_; }
+-  void SetMobileEnabled(bool enabled);
++  void SetMobileEnabled(bool enabled, bool full_height = false);
+   void SetRefreshSeconds(int seconds);
+-  void SetPreviewScale(double scale);
++  void SetPreviewBounds(int width, int height);
+   base::CallbackListSubscription RegisterChanged(
+       base::RepeatingClosure callback);
+ 
+@@ -62,6 +63,8 @@
+   void Detach();
+ 
+   bool mobile_enabled_ = false;
++  bool mobile_full_height_ = false;
++  int preview_height_ = kMobilePreviewHeight;
+   int refresh_seconds_ = 0;
+   double preview_scale_ = 1.0;
+   int next_command_id_ = 0;
+--- a/chrome/browser/ui/tabs/pane_settings_geometry.h
++++ b/chrome/browser/ui/tabs/pane_settings_geometry.h
+@@ -29,9 +29,17 @@
+ };
+ 
+ // Fit the entire fixed CSS viewport, without stretching or upscaling it.
+-inline MobilePreviewBounds FitMobilePreview(int width, int height) {
++inline MobilePreviewBounds FitMobilePreview(int width,
++                                            int height,
++                                            bool full_height = false) {
+   if (width <= 0 || height <= 0) {
+     return {0, 0, 0, 0, 0};
++  }
++  if (full_height) {
++    const double scale =
++        std::min(1.0, static_cast<double>(width) / kMobilePreviewWidth);
++    const int fitted_width = std::min(width, kMobilePreviewWidth);
++    return {(width - fitted_width) / 2, 0, fitted_width, height, scale};
+   }
+   const double scale =
+       std::min({1.0, static_cast<double>(width) / kMobilePreviewWidth,
+--- a/chrome/browser/ui/tabs/pane_settings_menu_model.cc
++++ b/chrome/browser/ui/tabs/pane_settings_menu_model.cc
+@@ -39,6 +39,9 @@
+     : ui::SimpleMenuModel(this), model_(model), tab_(tab->GetWeakPtr()) {
+   AddCheckItem(kMobileCommandId,
+                l10n_util::GetStringUTF16(IDS_HELIUM_MOBILE_PREVIEW));
++  AddCheckItem(
++      kMobileFullHeightCommandId,
++      l10n_util::GetStringUTF16(IDS_HELIUM_MOBILE_PREVIEW_FULL_HEIGHT));
+   AddItemWithStringId(kWorkspaceCommandId, IDS_HELIUM_CREATE_PREVIEW_WORKSPACE);
+   AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
+   refresh_menu_ = std::make_unique<ui::SimpleMenuModel>(this);
+@@ -64,7 +67,12 @@
+   }
+   auto* settings = PaneSettings::FromWebContents(tab_->GetContents());
+   if (command_id == kMobileCommandId) {
+-    return settings && settings->mobile_enabled();
++    return settings && settings->mobile_enabled() &&
++           !settings->mobile_full_height();
++  }
++  if (command_id == kMobileFullHeightCommandId) {
++    return settings && settings->mobile_enabled() &&
++           settings->mobile_full_height();
+   }
+   const int seconds =
+       (command_id - kRefreshFirstCommandId) * kAutoRefreshStepSeconds;
+@@ -86,7 +94,9 @@
+   }
+   // Off always remains available, even after navigating to a browser page.
+   if (command_id == kRefreshFirstCommandId ||
+-      (command_id == kMobileCommandId && IsCommandIdChecked(command_id))) {
++      ((command_id == kMobileCommandId ||
++        command_id == kMobileFullHeightCommandId) &&
++       IsCommandIdChecked(command_id))) {
+     return true;
+   }
+   return tab_->GetContents()->GetVisibleURL().SchemeIsHTTPOrHTTPS();
+@@ -101,8 +111,10 @@
+     return;
+   }
+   auto* settings = PaneSettings::GetOrCreate(tab_->GetContents());
+-  if (command_id == kMobileCommandId) {
+-    settings->SetMobileEnabled(!settings->mobile_enabled());
++  if (command_id == kMobileCommandId ||
++      command_id == kMobileFullHeightCommandId) {
++    settings->SetMobileEnabled(!IsCommandIdChecked(command_id),
++                               command_id == kMobileFullHeightCommandId);
+   } else {
+     const int seconds =
+         (command_id - kRefreshFirstCommandId) * kAutoRefreshStepSeconds;
+--- a/chrome/browser/ui/tabs/pane_settings_menu_model.h
++++ b/chrome/browser/ui/tabs/pane_settings_menu_model.h
+@@ -21,6 +21,7 @@
+   // Separate from Chromium's tab context command enum and other submenus.
+   static constexpr int kParentCommandId = 2000;
+   static constexpr int kMobileCommandId = 2001;
++  static constexpr int kMobileFullHeightCommandId = 2004;
+   static constexpr int kWorkspaceCommandId = 2002;
+   static constexpr int kRefreshParentCommandId = 2003;
+   static constexpr int kRefreshFirstCommandId = 2010;
+--- a/chrome/browser/ui/tabs/pane_settings_unittest.cc
++++ b/chrome/browser/ui/tabs/pane_settings_unittest.cc
+@@ -163,4 +163,24 @@
+     EXPECT_EQ(settings->refresh_seconds(), seconds);
+   }
+ }
++TEST_F(PaneSettingsTest, MobileModesAndRefreshRoundTrip) {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  for (const auto* mode : {"0", "1", "2"}) {
++    PaneSettings::RestoreFromExtraData(web_contents(),
++                                       {{"helium.mobile_preview", mode},
++                                        {"helium.auto_refresh_seconds", "45"}});
++    EXPECT_EQ(settings->mobile_enabled(), std::string(mode) != "0");
++    EXPECT_EQ(settings->mobile_full_height(), std::string(mode) == "2");
++    EXPECT_EQ(settings->refresh_seconds(), 45);
++    std::map<std::string, std::string> data;
++    PaneSettings::PopulateExtraData(web_contents(), &data);
++    EXPECT_EQ(data["helium.mobile_preview"], mode);
++    EXPECT_EQ(data["helium.auto_refresh_seconds"], "45");
++  }
++  settings->SetMobileEnabled(true, true);
++  settings->SetMobileEnabled(true);
++  EXPECT_TRUE(settings->mobile_enabled());
++  EXPECT_FALSE(settings->mobile_full_height());
++}
++
+ }  // namespace tabs
+--- a/chrome/browser/ui/tabs/pinned_tab_codec.cc
++++ b/chrome/browser/ui/tabs/pinned_tab_codec.cc
+@@ -6,17 +6,20 @@
+ 
+ #include <stddef.h>
+ 
++#include <cmath>
+ #include <utility>
+ 
+ #include "base/values.h"
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
+ #include "chrome/browser/ui/browser_window/public/browser_window_interface_iterator.h"
++#include "chrome/browser/ui/tabs/pane_settings.h"
+ #include "chrome/browser/ui/tabs/tab_strip_model.h"
+ #include "chrome/common/pref_names.h"
+ #include "components/pref_registry/pref_registry_syncable.h"
+ #include "components/prefs/pref_service.h"
+ #include "components/prefs/scoped_user_pref_update.h"
++#include "components/tabs/public/split_tab_data.h"
+ #include "content/public/browser/navigation_controller.h"
+ #include "content/public/browser/navigation_entry.h"
+ #include "content/public/browser/web_contents.h"
+@@ -29,9 +32,28 @@
+ const char kURL[] = "url";
+ 
+ // Returns a base::DictValue representing the supplied StartupTab.
+-base::DictValue EncodeTab(const GURL& url) {
++base::DictValue EncodeTab(const StartupTab& tab) {
+   base::DictValue dict;
+-  dict.Set(kURL, url.spec());
++  dict.Set(kURL, tab.url.spec());
++  base::DictValue extra;
++  for (const auto& [key, value] : tab.pane_extra_data) {
++    extra.Set(key, value);
++  }
++  dict.Set("pane_settings", std::move(extra));
++  if (!tab.pinned_split_id.empty() && tab.pinned_split_visual_data) {
++    const auto& visual = *tab.pinned_split_visual_data;
++    base::DictValue split;
++    split.Set("id", tab.pinned_split_id);
++    split.Set("layout", static_cast<int>(visual.split_layout()));
++    split.Set("arrangement", static_cast<int>(visual.arrangement()));
++    split.Set("ratio", visual.split_ratio());
++    base::ListValue weights;
++    for (double weight : visual.pane_weights()) {
++      weights.Append(weight);
++    }
++    split.Set("weights", std::move(weights));
++    dict.Set("split", std::move(split));
++  }
+   return dict;
+ }
+ 
+@@ -48,7 +70,15 @@
+     NavigationEntry* entry =
+         web_contents->GetController().GetLastCommittedEntry();
+     if (entry) {
+-      serialized_tabs.Append(EncodeTab(entry->GetURL()));
++      StartupTab startup(entry->GetURL(), StartupTab::Type::kPinned);
++      tabs::PaneSettings::PopulateExtraData(web_contents,
++                                            &startup.pane_extra_data);
++      if (auto id = tab->GetSplit()) {
++        startup.pinned_split_id = id->ToString();
++        startup.pinned_split_visual_data =
++            *tab_model->GetSplitData(*id)->visual_data();
++      }
++      serialized_tabs.Append(EncodeTab(startup));
+     }
+   }
+ }
+@@ -57,9 +87,47 @@
+ // on success.
+ std::optional<StartupTab> DecodeTab(const base::DictValue& value) {
+   const std::string* const url_string = value.FindString(kURL);
+-  return url_string ? std::make_optional(StartupTab(GURL(*url_string),
+-                                                    StartupTab::Type::kPinned))
+-                    : std::nullopt;
++  if (!url_string) {
++    return std::nullopt;
++  }
++  StartupTab tab(GURL(*url_string), StartupTab::Type::kPinned);
++  if (const auto* extra = value.FindDict("pane_settings")) {
++    for (const auto [key, setting] : *extra) {
++      if (setting.is_string()) {
++        tab.pane_extra_data[key] = setting.GetString();
++      }
++    }
++  }
++  if (const auto* split = value.FindDict("split")) {
++    const auto* id = split->FindString("id");
++    const auto layout = split->FindInt("layout");
++    const auto arrangement = split->FindInt("arrangement");
++    const auto ratio = split->FindDouble("ratio");
++    const auto* weights = split->FindList("weights");
++    if (id && !id->empty() && layout && *layout >= 0 && *layout <= 1 &&
++        arrangement && *arrangement >= 0 && *arrangement <= 4 && ratio &&
++        std::isfinite(*ratio) && *ratio > 0 && *ratio < 1 && weights &&
++        weights->size() == split_tabs::kMaxSplitPanes) {
++      std::array<double, split_tabs::kMaxSplitPanes> sizes;
++      for (size_t i = 0; i < sizes.size(); ++i) {
++        if (!(*weights)[i].is_double() && !(*weights)[i].is_int()) {
++          return tab;
++        }
++        sizes[i] = (*weights)[i].GetDouble();
++        if (!std::isfinite(sizes[i]) || sizes[i] < 0.001 || sizes[i] > 1000) {
++          return tab;
++        }
++      }
++      split_tabs::SplitTabVisualData visual(
++          static_cast<split_tabs::SplitTabLayout>(*layout), *ratio);
++      visual.set_arrangement(
++          static_cast<split_tabs::SplitTabArrangement>(*arrangement));
++      visual.set_pane_weights(sizes);
++      tab.pinned_split_id = *id;
++      tab.pinned_split_visual_data = visual;
++    }
++  }
++  return tab;
+ }
+ 
+ }  // namespace
+@@ -101,7 +169,7 @@
+   base::ListValue& values = update.Get();
+   values.clear();
+   for (const auto& tab : tabs) {
+-    values.Append(EncodeTab(tab.url));
++    values.Append(EncodeTab(tab));
+   }
+ }
+ 
+--- a/chrome/browser/ui/tabs/pinned_tab_codec_browsertest.cc
++++ b/chrome/browser/ui/tabs/pinned_tab_codec_browsertest.cc
+@@ -7,14 +7,20 @@
+ #include <string>
+ #include <vector>
+ 
++#include "base/command_line.h"
++#include "chrome/browser/ui/startup/startup_browser_creator_impl.h"
++#include "chrome/browser/ui/startup/startup_types.h"
++
+ #include "chrome/browser/ui/browser_tabstrip.h"
+ #include "chrome/browser/ui/startup/startup_tab.h"
++#include "chrome/browser/ui/tabs/pane_settings.h"
+ #include "chrome/browser/ui/tabs/pinned_tab_test_utils.h"
+ #include "chrome/browser/ui/tabs/tab_enums.h"
+ #include "chrome/browser/ui/tabs/tab_strip_model.h"
+ #include "chrome/test/base/in_process_browser_test.h"
+ #include "chrome/test/base/testing_profile.h"
+ #include "chrome/test/base/ui_test_utils.h"
++#include "components/tabs/public/split_tab_data.h"
+ #include "content/public/test/browser_test.h"
+ #include "testing/gtest/include/gtest/gtest.h"
+ #include "ui/base/page_transition_types.h"
+@@ -76,3 +82,70 @@
+       PinnedTabCodec::ReadPinnedTabs(browser()->GetProfile()));
+   EXPECT_EQ("https://www.9oo91e.qjz9zk/:pinned", result);
+ }
++
++IN_PROC_BROWSER_TEST_F(PinnedTabCodecBrowserTest,
++                       SplitAndPaneSettingsRoundTrip) {
++  auto* model = browser()->tab_strip_model();
++  model->CreateOrUpdatePaneSplit(0, 6, split_tabs::SplitTabVisualData());
++  const auto id = *model->GetTabAtIndex(0)->GetSplit();
++  auto visual = *model->GetSplitData(id)->visual_data();
++  visual.set_split_layout(split_tabs::SplitTabLayout::kStacked);
++  visual.set_arrangement(split_tabs::SplitTabArrangement::kLeadingStacked);
++  visual.set_split_ratio(0.37);
++  visual.set_pane_weights({1, 2, 3, 4, 5, 6});
++  model->CreateOrUpdatePaneSplit(0, 6, visual);
++  model->SetTabPinned(0, true);
++  for (int i = 0; i < 6; ++i) {
++    auto* settings =
++        tabs::PaneSettings::GetOrCreate(model->GetWebContentsAt(i));
++    settings->SetRefreshSeconds(i * 15);
++  }
++  PinnedTabCodec::WritePinnedTabs(browser()->GetProfile());
++  auto saved = PinnedTabCodec::ReadPinnedTabs(browser()->GetProfile());
++  ASSERT_EQ(6u, saved.size());
++  saved[1].pane_extra_data["helium.mobile_preview"] = "2";
++  // Exercise the StartupTabs overload too, preserving all metadata.
++  PinnedTabCodec::WritePinnedTabs(browser()->GetProfile(), saved);
++  saved = PinnedTabCodec::ReadPinnedTabs(browser()->GetProfile());
++  ASSERT_EQ(6u, saved.size());
++  for (int i = 0; i < 6; ++i) {
++    EXPECT_EQ(saved[i].pinned_split_id, saved[0].pinned_split_id);
++    ASSERT_TRUE(saved[i].pinned_split_visual_data);
++    EXPECT_EQ(saved[i].pinned_split_visual_data->split_ratio(), 0.37);
++    EXPECT_EQ(saved[i].pinned_split_visual_data->arrangement(),
++              split_tabs::SplitTabArrangement::kLeadingStacked);
++    EXPECT_EQ(saved[i].pinned_split_visual_data->pane_weights(),
++              visual.pane_weights());
++    EXPECT_EQ(saved[i].pane_extra_data["helium.auto_refresh_seconds"],
++              std::to_string(i * 15));
++  }
++  EXPECT_EQ(saved[1].pane_extra_data["helium.mobile_preview"], "2");
++
++  // Exercise the actual non-session startup path, including deferred panes.
++  saved[1].url = GURL("https://example.test/mobile");
++  auto* restored_browser = CreateBrowser(browser()->GetProfile());
++  base::CommandLine command_line(base::CommandLine::NO_PROGRAM);
++  StartupBrowserCreatorImpl creator(base::FilePath(), command_line,
++                                    chrome::startup::IsFirstRun::kNo);
++  creator.OpenTabsInBrowser(restored_browser,
++                            chrome::startup::IsProcessStartup::kNo, saved);
++  auto* restored_model = restored_browser->tab_strip_model();
++  const auto restored_id = restored_model->GetTabAtIndex(0)->GetSplit();
++  ASSERT_TRUE(restored_id);
++  auto* data = restored_model->GetSplitData(*restored_id);
++  EXPECT_EQ(data->ListTabs().size(), 6u);
++  EXPECT_EQ(data->visual_data()->split_ratio(), visual.split_ratio());
++  EXPECT_EQ(data->visual_data()->split_layout(), visual.split_layout());
++  EXPECT_EQ(data->visual_data()->arrangement(), visual.arrangement());
++  EXPECT_EQ(data->visual_data()->pane_weights(), visual.pane_weights());
++  for (int i = 0; i < 6; ++i) {
++    EXPECT_TRUE(restored_model->GetTabAtIndex(i)->IsPinned());
++    EXPECT_EQ(restored_model->GetTabAtIndex(i)->GetSplit(), restored_id);
++    auto* restored_settings = tabs::PaneSettings::FromWebContents(
++        restored_model->GetWebContentsAt(i));
++    ASSERT_TRUE(restored_settings);
++    EXPECT_EQ(restored_settings->refresh_seconds(), i * 15);
++    EXPECT_EQ(restored_settings->mobile_enabled(), i == 1);
++    EXPECT_EQ(restored_settings->mobile_full_height(), i == 1);
++  }
++}
+--- a/chrome/browser/ui/views/frame/contents_container_view.cc
++++ b/chrome/browser/ui/views/frame/contents_container_view.cc
+@@ -395,9 +395,8 @@
+   if (contents) {
+     auto* settings = tabs::PaneSettings::FromWebContents(contents);
+     if (settings && settings->mobile_enabled()) {
+-      const auto fitted = tabs::FitMobilePreview(contents_view_->width(),
+-                                                 contents_view_->height());
+-      settings->SetPreviewScale(fitted.scale);
++      settings->SetPreviewBounds(contents_view_->width(),
++                                 contents_view_->height());
+     }
+   }
+ 
+@@ -605,8 +604,9 @@
+   if (auto* contents = contents_view_->web_contents()) {
+     auto* settings = tabs::PaneSettings::FromWebContents(contents);
+     if (settings && settings->mobile_enabled()) {
+-      const auto fitted = tabs::FitMobilePreview(contents_view_bounds.width(),
+-                                                 contents_view_bounds.height());
++      const auto fitted = tabs::FitMobilePreview(
++          contents_view_bounds.width(), contents_view_bounds.height(),
++          settings->mobile_full_height());
+       contents_view_bounds = gfx::Rect(contents_view_bounds.x() + fitted.x,
+                                        contents_view_bounds.y() + fitted.y,
+                                        fitted.width, fitted.height);

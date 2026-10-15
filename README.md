@@ -1,47 +1,95 @@
 # Helium Neo
 
-This is a private fork of Helium. Changes and pull requests stay in
-[aagedal/helium](https://github.com/aagedal/helium).
-
-Helium Neo uses its own macOS app identifier, profile directory, and Keychain
-entry so it can coexist with the normal Helium release. The upstream links below
-refer to Helium; they do not distribute Helium Neo.
-#### Changes include:
-- Resizable tab splits with up to six panes
-- Automatic refresh per tab
-- Mobile view per tab without dev tools visible
-
 <div align="center">
     <img src="resources/branding/app_icon/raw.png"
         title="Helium Neo" alt="Helium Neo orbital logo" width="120" />
-    <h1>Helium Neo</h1>
-    <p>
-        The browser built around privacy, consent, and comfort.
-    </p>
-    <a href="https://helium.computer/">
-        helium.computer
-    </a>
+    <p>A private Helium fork with flexible split workspaces and per-tab previews.</p>
 </div>
 
-## Downloads
-> [!NOTE]
-> Helium is in beta, so unexpected issues may occur.
-> Please report them if they haven't already been reported.
+Helium Neo builds on [Helium](https://helium.computer/) and keeps this fork's
+changes and pull requests in [aagedal/helium](https://github.com/aagedal/helium).
+It retains Helium's privacy-focused foundation and adds the features below.
 
-The easiest way to download Helium is [helium.computer](https://helium.computer/).
-It'll pick a compatible binary for your platform automatically.
+## What this fork changes
 
-The same releases can also be downloaded from source on GitHub:
+### Split workspaces
 
-- [Latest macOS release](https://github.com/imputnet/helium-macos/releases/latest)
-- [Latest Linux release](https://github.com/imputnet/helium-linux/releases/latest)
-- [Latest Windows release](https://github.com/imputnet/helium-windows/releases/latest)
+- **Two to six panes in one tab**, with columns, rows, grids, and mixed layouts.
+  Right-click a tab and use **Split Layout** to choose a preset. Existing pages
+  are retained, and additional panes open new-tab pages.
+- **Resizable boundaries throughout the split**, including the inner dividers
+  of grids and mixed layouts. Drag a divider or focus it and use arrow keys.
+- **Reload the focused pane** with Command-R, including bypass-cache reload.
+  Explicitly selecting additional tab-strip tabs retains multiple-tab reload.
+- **Pinned splits return across sessions** with their pages, layout, divider
+  sizes, and each pane's mobile mode and auto-refresh interval. This works with
+  new-tab startup as well as last-session restore.
 
-Helium supports automatic updates on macOS and Windows.
+### Per-tab rendering and refresh
 
-## Helium repos
-All Helium packaging, tooling, services, and components are open source
-and published on GitHub.
+Right-click a tab and open **Tab view**. Each setting belongs to that individual
+page, including when it is part of a split.
+
+- **Mobile preview (402 × 874)** provides a fixed portrait CSS viewport with
+  3× device density and touch emulation, scaled to fit the pane.
+- **Mobile preview (402 wide, full height)** keeps the mobile width and uses
+  the entire pane height, with no fixed portrait-height cap. Narrow panes scale
+  the preview down to fit.
+- **Auto-refresh** can be turned off or set from 15 to 180 seconds in 15-second
+  steps. It skips loading, discarded, crashed, and POST pages, and pending
+  navigations.
+- **Create desktop/mobile workspace** makes desktop and mobile copies in a
+  pinned saved tab group, with a side-by-side split. The original page is kept.
+
+Mobile previews run without opening a DevTools window. They use Chromium's
+mobile viewport and touch emulation; the rendering engine and browser user agent
+remain Chromium's. Per-tab settings are restored locally and are not synced
+between devices.
+
+### Startup and identity
+
+- Background session and pinned tabs load when needed, reducing startup work.
+- The app uses the **Helium Neo** name and violet orbital icon, including a
+  macOS icon asset that preserves the orbital artwork in the Dock.
+- Separate macOS bundle, profile, and Keychain identities allow Helium Neo to
+  coexist with the normal Helium release. Existing Helium profiles are not
+  migrated. The local development launcher uses its own development profile.
+
+Split layouts remain experimental. Geometry and viewport helpers have standalone
+sanitizer checks; the full Chromium browser regressions require an unpruned test
+build. See [developer notes and validation](devutils/README.md).
+
+## Builds and downloads
+
+This repository contains the fork's patches, resources, and build utilities.
+Installable Apple Silicon betas are published on the
+[Helium Neo releases page](https://github.com/aagedal/helium/releases). Download
+the signed DMG and drag **Helium Neo** to Applications. These standalone beta
+packages include their runtime libraries. Automatic updates are disabled;
+install subsequent betas manually.
+
+The [official Helium downloads](https://helium.computer/) distribute upstream
+Helium and do not include Helium Neo's custom features.
+
+For the prepared local Apple Silicon development build:
+
+```sh
+~/Developer/helium/build/build-local.sh
+~/Developer/helium/build/run-local.sh
+```
+
+The launcher opens `Helium Neo.app` using a separate development profile. This
+component build depends on libraries beside the app in its build output folder;
+keep that folder intact. Chromium and Sparkle automatic updates are disabled in
+the local development build.
+
+Read [AGENTS.md](AGENTS.md) before modifying the shared build cache and
+[devutils/README.md](devutils/README.md) for feature details, resource generation,
+and validation commands.
+
+## Upstream Helium repositories
+
+These links describe the upstream project and its packaging, services, and tools.
 
 ### Platform packaging and tooling
 - [Helium for macOS](https://github.com/imputnet/helium-macos)
@@ -79,18 +127,16 @@ source for [Terms of Use](https://helium.computer/terms) and
 [Privacy Policy](https://helium.computer/privacy) documents, along with their
 full change history.
 
-## Development
-macOS and Linux are our primary development platforms, so they're the
-recommended development environment for community contributions.
+## Development and contributions
 
-[> See development docs in macOS repo](https://github.com/imputnet/helium-macos/blob/main/docs/building.md#development-build-and-environment)
+The [upstream macOS development guide](https://github.com/imputnet/helium-macos/blob/main/docs/building.md#development-build-and-environment)
+describes the packaging toolchain. Use this private fork as the source of custom
+patches and preserve the prepared local cache described above.
 
-Linux packaging includes a similar development script, so the same guide
-can be applied there too.
-
-## Contributing
-Before contributing to Helium, please read the guidelines in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+Changes and pull requests for Helium Neo must target
+[aagedal/helium](https://github.com/aagedal/helium). Do not send AI-assisted
+contributions from this fork to the official Helium repositories. Upstream's
+[contribution guidelines](CONTRIBUTING.md) describe its separate policies.
 
 ## Credits
 

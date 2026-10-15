@@ -296,3 +296,50 @@ restart reproduced all saved split visual data exactly. The older four-pane
 session restored its original 556 × 457 diagnostic pane; the new five-pane
 session retained its 291 × 457 diagnostic pane. No normal browser profile was
 used for these checks.
+
+## Pinned split and mobile view persistence
+
+`helium/ui/pinned-split-pane-state.patch` fixes reload selection for every split
+size (two through six panes). Command-R and bypass-cache reload affect the active
+pane when a single split is selected. Explicitly selecting additional tab-strip
+tabs retains Chromium's multiple-tab reload behavior.
+
+Pinned-tab startup now saves and restores split membership, orientation,
+arrangement, main ratio, all inner divider weights, and each tab's mobile mode
+and auto-refresh interval. This also works when startup opens a new-tab page
+rather than restoring the last session. Legacy URL-only pinned entries still
+open as ordinary pinned tabs. These settings remain local to the profile.
+
+**Tab view → Mobile preview (402 wide, full height)** is an additional mobile
+mode. It keeps a 402 CSS-pixel width and 3× device density, uses the entire pane
+height, and scales down only when the pane is narrower than 402 pixels. Its CSS
+height follows the available height without the portrait preset's 874-pixel cap.
+The fixed **Mobile preview (402 × 874)** remains available. Selecting either mode
+replaces the other; selecting the checked mode returns to desktop rendering.
+
+The preview harness checks both modes, including tall and narrow panes. Chromium
+regressions cover normal/bypass reload for every active pane and split capacity,
+mobile/refresh setting round trips, and pinned split startup reconstruction with
+custom sizes and per-tab settings. Full regression execution still requires the
+unpruned Chromium test dependencies described above.
+
+The modern macOS icon uses a 1024-pixel transparent raster of the vector
+foreground inside Icon Composer. Apple's SVG importer filled the stroked orbit
+and reduced its size, producing the oval seen in the Dock. The generator now
+supplies `AppIcon.icon/Assets/logo.png` from `Assets/logo.svg`; both the modern
+asset catalog and classic ICNS retain the orbital design. To verify the actual
+modern rendering, use Icon Composer's bundled `ictool --export-image`, rather
+than inspecting only the fallback PNG or ICNS.
+
+Validation for these changes: the persistent Apple Silicon component build
+passed, patch lint and reverse-application checks passed, and both standalone
+sanitizer harnesses passed against the repository patches and prepared source.
+The reload browser test, pinned-startup browser test, and pane-settings unit-test
+sources compiled independently with Chromium's generated commands. Full browser
+regressions were not executed. Native UI automation failed with
+`Sky Computer Use native pipe closed before response`, so keyboard/restart UI
+checks remain unverified. A seeded-profile smoke attempt was inconclusive because
+Chromium's protected preferences discarded the injected pinned-tab entries.
+Apple's Icon Composer renderer reproduced the old filled oval and verified the
+corrected orbital foreground; the built app's asset catalog matches the new
+checked-in catalog.
