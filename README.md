@@ -75,7 +75,8 @@ bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
 post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky
-and TikTok using visible links and the post container overlapping your selection. One clear match fills the field;
+TikTok and Reddit using visible links and the post container overlapping your
+selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
 heuristics, not verified attribution. Posting account and publication date can
@@ -108,6 +109,13 @@ when adjacent posts are preloaded. A capture including an unsupported comment or
 a caption link to another post requires source review. Relative
 dates and dates without a year stay as displayed. Captions and comment dates do
 not supply publication dates. Shortened share links are not resolved.
+
+Reddit's current layout keeps posts, comments and nested replies separate. Each
+item needs an observed permalink and matching item IDs. Author profile links
+must agree with that item's author, and its credit-row timestamp must match its
+reported creation time. Capturing multiple items, crossposts or a reference link requires
+source review. Deleted authors and missing dates stay blank. Shortened share
+links are not resolved; Old Reddit layouts are not yet supported.
 
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image

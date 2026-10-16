@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Copyright 2026 The Helium Authors.
+You can use, redistribute, and/or modify this source code under
+ the terms of the GPL-3.0 license that can be found in the LICENSE file. -->
+<meta charset="utf-8">
+<title>Reddit source capture fixture</title>
+<style>
+body { margin: 28px; color: #202124; background: #f5f5f5; font: 16px system-ui; }
+shreddit-post, shreddit-comment { display: block; margin-top: 24px; padding: 20px; width: 560px; background: #fff; border: 1px solid #bbb; }
+[slot="credit-bar"], [slot="commentMeta"] { margin-bottom: 20px; }
+a { color: #202124; font-weight: 600; }
+time { margin-left: 12px; color: #555; }
+#media { height: 200px; display: grid; place-items: center; background: #dce7ed; font-size: 28px; }
+[slot="comment"] { padding: 20px; background: #faf2d4; }
+</style>
+<h1>Local Reddit attribution fixture</h1>
+<p>This is controlled test content, not a Reddit post. Capture the blue post body or the separate comment.</p>
+<shreddit-post id="t3_abc123" author="Reporter" created-timestamp="2026-10-16T10:11:12.000000+0000"
+    permalink="https://www.reddit.com/r/news/comments/abc123/fixture_post/?utm_source=share">
+  <div slot="credit-bar"><a href="https://www.reddit.com/user/Reporter/">u/Reporter</a>
+    <faceplate-timeago ts="2026-10-16T10:11:12Z"><time datetime="2026-10-16T10:11:12Z">2h ago</time></faceplate-timeago></div>
+  <div id="media" slot="text-body">Post crop target</div>
+</shreddit-post>
+<shreddit-comment thingid="t1_def456" postid="t3_abc123" author="Reader" created="2026-10-16T11:22:33.000000+0000"
+    permalink="https://www.reddit.com/r/news/comments/abc123/comment/def456/">
+  <details role="article" open>
+    <summary><span slot="commentMeta"><a href="https://www.reddit.com/user/Reader/">Reader</a>
+      <a href="https://www.reddit.com/r/news/comments/abc123/comment/def456/"><faceplate-timeago ts="2026-10-16T11:22:33Z"><time datetime="2026-10-16T11:22:33Z">1h ago</time></faceplate-timeago></a></span></summary>
+    <div slot="comment">Separate comment crop target</div>
+  </details>
+</shreddit-comment>
+<p>Expected post: u/Reporter, 2026-10-16T10:11:12Z. Expected comment: u/Reader, 2026-10-16T11:22:33Z. A crop containing both requires review.</p>

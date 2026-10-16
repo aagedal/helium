@@ -1007,7 +1007,7 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,856 @@
+@@ -0,0 +1,956 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1039,6 +1039,15 @@
 +        // Use the observed account path; strip photo/video suffixes and tracking.
 +        path = path.slice(0, path.indexOf('/status/') + 8) + match[1];
 +        platform = 'twitter_x';
++      } else if (['reddit.com','old.reddit.com','new.reddit.com'].includes(host)) {
++        // The title slug is not identity. Keep comment IDs distinct from posts,
++        // including legacy /title/comment-id and current /comment/comment-id.
++        match = path.match(/^\/(r\/[A-Za-z0-9_]+\/)?comments\/([a-z0-9]+)(?:\/([^/]+)(?:\/([a-z0-9]+))?)?\/?$/i);
++        if (!match || /\.(?:json|rss)$/i.test(match[3] || '') ||
++            (match[3] === 'comment' && !match[4])) return null;
++        path = '/' + (match[1] || '') + 'comments/' + match[2] + '/' +
++            (match[4] ? 'comment/' + match[4] + '/' : '');
++        platform = 'reddit';
 +      } else if (host === 'tiktok.com') {
 +        match = path.match(/^\/@([A-Za-z0-9_.]+)\/(video|photo)\/(\d+)\/?$/);
 +        if (!match) return null;
@@ -1093,6 +1102,7 @@
 +        }
 +      } else return null;
 +      const targetHost = platform === 'twitter_x' ? 'x.com' :
++          platform === 'reddit' ? 'www.reddit.com' :
 +          platform === 'tiktok' ? 'www.tiktok.com' :
 +          platform === 'bluesky' ? 'bsky.app' :
 +          platform === 'threads' ? 'www.threads.com' :
@@ -1134,7 +1144,8 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
-+  const postSelector = 'article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
++  const redditSelector = 'shreddit-post,shreddit-comment';
++  const postSelector = redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1170,6 +1181,8 @@
 +    }
 +  }
 +  const postFor = element => {
++    const reddit = element?.closest(redditSelector);
++    if (reddit) return reddit;  // Ignore a comment's internal article wrapper.
 +    for (let node = element; node; node = node.parentElement) {
 +      if (metaPosts.has(node) || node.matches(postSelector)) return node;
 +    }
@@ -1187,6 +1200,25 @@
 +    // own ID before using page metadata; never derive a date from this ID.
 +    return ids.size === 1 && ids.has(id);
 +  };
++  const redditIdentity = raw => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'reddit') return null;
++    const parts = new URL(parsed.url).pathname.match(/\/comments\/([a-z0-9]+)\/(?:comment\/([a-z0-9]+)\/)?$/i);
++    return parts ? {post:parts[1].toLowerCase(), comment:parts[2]?.toLowerCase()} : null;
++  };
++  const redditPostMatches = (post, raw) => {
++    const id = redditIdentity(raw);
++    if (!id || !post?.matches(redditSelector)) return false;
++    const own = redditIdentity(post.getAttribute('permalink'));
++    if (!own || own.post !== id.post || own.comment !== id.comment) return false;
++    return post.matches('shreddit-comment')
++        ? !!id.comment && post.getAttribute('thingid')?.toLowerCase() === 't1_' + id.comment &&
++            post.getAttribute('postid')?.toLowerCase() === 't3_' + id.post
++        : !id.comment && post.id.toLowerCase() === 't3_' + id.post;
++  };
++  const redditSelectedChild = post => [...post.querySelectorAll(redditSelector)].some(child =>
++      visible(child) && exposed(child, child.getBoundingClientRect()) &&
++      area(intersection(child.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
 +  const fullTimestamp = value => /\d{4}/.test(value) && /\d[:.]\d{2}/.test(value);
 +  const compactTimestamp = value => /^(?:\d+\s*[a-zæøå]{1,3}|yesterday|today|i går|i dag)$/i.test(value);
 +  const selectorFor = element => {
@@ -1201,6 +1233,7 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'reddit' && !redditPostMatches(post, parsed.url)) return {};
 +    if (parsed.platform === 'tiktok' &&
 +        post.matches('article[data-e2e="recommend-list-item-container"]') &&
 +        !tiktokPostMatches(post, parsed.url)) return {};
@@ -1225,12 +1258,21 @@
 +      if (!profileVisible && !(parsed.platform === 'tiktok' && visible(link, false, true))) continue;
 +      // A URL's account name alone is not an observed posting account. Require
 +      // a matching profile link in the post, or a scoped author/header link.
-+      if (!expectedHandle && !link.closest('header,h2,h3,[data-testid="User-Name"],[data-testid="account"]')) continue;
++      if (parsed.platform !== 'reddit' && !expectedHandle &&
++          !link.closest('header,h2,h3,[data-testid="User-Name"],[data-testid="account"]')) continue;
 +      try {
 +        const u = new URL(link.href), host = u.hostname.replace(/^(www|mobile|m|mbasic)\./, '');
 +        if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password || u.port) continue;
 +        let match, account, profileUrl;
-+        if (parsed.platform === 'truth_social' && host === 'truthsocial.com') {
++        if (parsed.platform === 'reddit' && ['reddit.com','old.reddit.com','new.reddit.com'].includes(host)) {
++          match = u.pathname.match(/^\/(?:user|u)\/([A-Za-z0-9_-]+)\/?$/);
++          const credit = link.closest('[slot="credit-bar"],[slot="commentMeta"]');
++          const author = post.getAttribute('author') || '';
++          if (match && credit && owns(credit) &&
++              match[1].toLowerCase() === author.toLowerCase()) {
++            account = 'u/' + match[1]; profileUrl = 'https://www.reddit.com/user/' + match[1] + '/';
++          }
++        } else if (parsed.platform === 'truth_social' && host === 'truthsocial.com') {
 +          match = u.pathname.match(/^\/@([A-Za-z0-9_.-]+)\/?$/);
 +          if (match) { account = '@' + match[1]; profileUrl = 'https://truthsocial.com/@' + match[1]; }
 +        } else if (parsed.platform === 'twitter_x' && ['x.com','twitter.com'].includes(host)) {
@@ -1284,6 +1326,17 @@
 +    // posts. Keep the site's text/attributes verbatim; never date-parse relative
 +    // labels or guess a timezone that the page did not provide.
 +    let dateNode = anchor?.querySelector('time,abbr[data-utime]');
++    if (parsed.platform === 'reddit') {
++      // Only the selected item's credit row reports its publication time.
++      // Edited labels, body timestamps, nested replies and quotes do not count.
++      const row = post.matches('shreddit-comment') ? '[slot="commentMeta"]' : '[slot="credit-bar"]';
++      const created = post.getAttribute(post.matches('shreddit-comment') ? 'created' : 'created-timestamp');
++      const createdTime = Date.parse(created || '');
++      const times = [...post.querySelectorAll(row + ' faceplate-timeago time')]
++          .filter(node => owns(node) && visible(node, false) && Number.isFinite(createdTime) &&
++              Date.parse(node.getAttribute('datetime') || node.parentElement.getAttribute('ts') || '') === createdTime);
++      dateNode = times.length === 1 ? times[0] : null;
++    }
 +    if (!owns(dateNode)) dateNode = null;
 +    // X's public web view may render a plain permalink label such as "17h"
 +    // in its timestamp row, without a <time> or exact datetime attribute.
@@ -1327,7 +1380,7 @@
 +      dateNode = post.querySelector(':scope > div:last-child > span');
 +      if (!owns(dateNode)) dateNode = null;
 +    }
-+    if (!dateNode && parsed.platform !== 'tiktok') {
++    if (!dateNode && !['tiktok','reddit'].includes(parsed.platform)) {
 +      const times = [...post.querySelectorAll('time,abbr[data-utime]')].filter(owns);
 +      if (times.length === 1) dateNode = times[0];
 +    }
@@ -1348,7 +1401,7 @@
 +        if (aria) details.publication_date_aria_label = aria;
 +        if (epochUtc) details.publication_datetime_from_epoch_utc = epochUtc;
 +        const hoverNode = dateNode;
-+        if (parsed.platform !== 'tiktok' &&
++        if (!['tiktok','reddit'].includes(parsed.platform) &&
 +            !(parsed.platform === 'bluesky' && fullTimestamp(displayed)) &&
 +            !machine && !epochUtc && !fullTimestamp(tooltip) && !fullTimestamp(aria) &&
 +            normalize(parsed.url) && visible(hoverNode) &&
@@ -1389,6 +1442,12 @@
 +      post = null;
 +      anchor = null;
 +    }
++    if (post?.matches(redditSelector) && parsed.platform !== 'reddit') {
++      if (evidence !== 'link_in_selection') return;
++      post = null;
++      anchor = null;
++      evidence = 'reddit_reference_link';
++    }
 +    const tiktokTextLink = parsed.platform === 'tiktok' &&
 +        anchor?.closest('[data-e2e="video-desc"],[data-e2e="browse-video-desc"],[data-e2e^="comment-"]');
 +    if (parsed.platform === 'tiktok' && anchor &&
@@ -1404,8 +1463,17 @@
 +        anchor = null;  // Caption text cannot supply a publication timestamp.
 +      }
 +    }
++    if (parsed.platform === 'reddit' && post?.matches(redditSelector) && redditSelectedChild(post)) return;
++    if (parsed.platform === 'reddit' && !redditPostMatches(post, raw)) {
++      // Body links and crosspost references never borrow the enclosing author
++      // or date. Preserve directly selected references for explicit review.
++      if (evidence !== 'link_in_selection') return;
++      post = null;
++      anchor = null;
++      evidence = 'referenced_post_link';
++    }
 +    const details = siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook','bluesky','tiktok'].includes(parsed.platform)) {
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1479,6 +1547,7 @@
 +      const address = normalize(location.href);
 +      const pageSourceAllowed = raw => {
 +        const platform = normalize(raw)?.platform;
++        if (platform === 'reddit') return false;  // Require the item's own ID/permalink.
 +        if (platform === 'tiktok') return false;  // Matched per item below.
 +        return platform !== 'bluesky' ||
 +            post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])');
@@ -1515,6 +1584,12 @@
 +    for (const [raw, evidence] of tiktokPageSources) {
 +      if (tiktokPostMatches(post, raw)) add(raw, evidence, post);
 +    }
++  }
++  // Reddit's detail view need not expose a clickable post timestamp. Use
++  // only the item's observed permalink, with matching post/comment IDs.
++  for (const post of overlapping) {
++    const raw = post.getAttribute('permalink');
++    if (redditPostMatches(post, raw)) add(raw, 'reddit_item_permalink', post);
 +  }
 +  const list = [...candidates.values()];
 +  const ownContentSelected = post => {
@@ -1611,8 +1686,17 @@
 +          contexts.some(parent => parent?.contains(post)));
 +  const unattributedTikTokReference = list.some((candidate, i) =>
 +      candidate.platform === 'tiktok' && candidate.evidence === 'referenced_post_link' && !contexts[i]);
++  const unattributedRedditItem = list.some(c => c.platform === 'reddit') &&
++      (list.some((c, i) => c.platform === 'reddit' && !contexts[i]) ||
++       overlapping.some(post => post.matches(redditSelector) && !contexts.includes(post) && !redditSelectedChild(post)));
++  // Current Reddit crossposts embed another post's media inside the reposter's
++  // container, without an independent author/ID scope. Require explicit review.
++  const redditCrosspost = overlapping.some(post =>
++      post.matches('shreddit-post[is-crosspost],shreddit-post[post-type="crosspost"]') &&
++      !redditSelectedChild(post));
++  const redditReference = list.some(c => c.evidence === 'reddit_reference_link');
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -1701,6 +1785,22 @@
 +  if (!url.is_valid() || !url.SchemeIs("https") || url.has_username() ||
 +      url.has_password() || url.has_port() || raw.size() > 2048)
 +    return false;
++  if (url.host() == "www.reddit.com") {
++    const auto parts = base::SplitStringPiece(
++        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    const size_t start = parts.size() > 2 && parts[1] == "r" ? 3 : 1;
++    const auto id = [](std::string_view value) {
++      return !value.empty() && base::ContainsOnlyChars(
++          value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
++    };
++    return !url.has_query() && !url.has_ref() && parts[0].empty() &&
++           (start == 1 || (!parts[2].empty() && base::ContainsOnlyChars(
++               parts[2], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))) &&
++           (parts.size() == start + 3 || parts.size() == start + 5) &&
++           parts[start] == "comments" && id(parts[start + 1]) && parts.back().empty() &&
++           (parts.size() == start + 3 ||
++            (parts[start + 2] == "comment" && id(parts[start + 3])));
++  }
 +  if (url.host() == "www.tiktok.com") {
 +    const auto parts = base::SplitStringPiece(
 +        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
@@ -1901,7 +2001,7 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,275 @@
+@@ -0,0 +1,295 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1931,10 +2031,30 @@
 +                   "https://bsky.app/profile/reporter.bsky.social/post/3l6oveex3ii2l",
 +                   "https://bsky.app/profile/did:plc:abc123/post/3l6oveex3ii2l",
 +                   "https://www.tiktok.com/@reporter/video/123",
-+                   "https://www.tiktok.com/@reporter/photo/456"}) {
++                   "https://www.tiktok.com/@reporter/photo/456",
++                   "https://www.reddit.com/r/news/comments/abc123/",
++                   "https://www.reddit.com/r/news/comments/abc123/comment/def456/",
++                   "https://www.reddit.com/comments/abc123/"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsRedditNonPostSuggestions) {
++  for (const char* url : {
++           "https://www.reddit.com/r/news/",
++           "https://www.reddit.com/user/reporter/",
++           "https://www.reddit.com/r/news/s/sharecode/",
++           "https://www.reddit.com/r/news/comments//",
++           "https://www.reddit.com/r/news/comments/abc/title/",
++           "https://www.reddit.com/r/news/comments/abc/comment/",
++           "https://www.reddit.com/r/news/comments/abc/?context=3",
++           "https://www.reddit.com/r/news/comments/abc/#comment",
++           "https://old.reddit.com/r/news/comments/abc/",
++           "https://www.reddit.com/r/news/comments/abc/comment/bad!id/"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
 +  }
 +}
 +
@@ -3434,7 +3554,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,457 @@
+@@ -0,0 +1,459 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -3733,6 +3853,8 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.DomainIs("reddit.com"))
++      return "Reddit";
 +    if (url.DomainIs("tiktok.com"))
 +      return "TikTok";
 +    if (url.DomainIs("bsky.app"))
@@ -3942,7 +4064,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,488 @@
+@@ -0,0 +1,489 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4283,7 +4405,8 @@
 +           {"https://www.threads.com/@source/post/ABC_12", "Threads"},
 +           {"https://www.threads.net/@source/post/ABC_12", "Threads"},
 +           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"},
-+           {"https://www.tiktok.com/@source/video/123", "TikTok"}}) {
++           {"https://www.tiktok.com/@source/video/123", "TikTok"},
++           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");

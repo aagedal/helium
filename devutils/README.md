@@ -815,3 +815,43 @@ For reproducible native capture/export checks, run the fixture server and open
 `@reporter` with the displayed date. Comment crops require source review. The
 stale-metadata and overlay variants should leave the source blank. This is
 controlled local content, not an authenticated live TikTok capture.
+
+
+Reddit source extraction supports the observed current `shreddit-post` and
+`shreddit-comment` layouts. Post permalinks must agree with `t3_` IDs; comment
+permalinks must agree with both their `t1_` comment ID and `t3_` parent post ID.
+Current and legacy explicit comment paths normalize to a distinct comment URL;
+title slugs and tracking parameters are removed while the original URL remains
+in provenance. Native validation accepts only these normalized post/comment
+paths. Share-code links and `redd.it` links are not resolved.
+
+Author links must be visible in the item's own credit row and agree with its
+reported author. Subreddit links, body mentions, deleted authors and nested
+reply authors do not supply the selected item's account. Publication times must
+be visible in its own credit row and agree with its reported creation time;
+missing evidence or duplicate matching timestamps leave the date blank. Edited
+timestamps cannot substitute for creation times. The observed datetime, tooltip
+and displayed relative label remain separate; no hover or external API is used.
+A crop confined to a nested reply excludes its ancestors. Captures spanning
+multiple items, unsupported items, directly selected references or crossposts
+require review. Current crossposts embed the original's media inside the
+reposter's container without a separate author/ID scope, so they never autofill
+as a unique source. Page address/canonical/Open Graph URLs cannot establish
+Reddit item ownership.
+
+Validation: 178 production-script browser fixtures, 11 native source tests and
+nine native export tests passed. Both GN header dependency checks, patch lint,
+patch-file checks and the strict no-fuzz reverse/apply round trip for the four
+changed Chromium files passed. The persistent macOS development app rebuilt
+successfully. Live public Reddit checks covered a feed post, expanded post,
+comment, nested reply with its own date and a crosspost media crop requiring
+review. Old Reddit redirected to login and its layout is not supported by this
+addition; authenticated and additional locale layouts remain unverified.
+
+Native capture-dialog QA used `http://127.0.0.1:8234/reddit-capture` (or the port
+given to `screenshot_source_server.py`). Post and comment crops showed distinct
+permalinks, accounts and dates; a full-page capture left all three fields blank
+and offered a source chooser. A saved post PNG was inspected with ExifTool and
+its embedded source record verified the reviewed fields, original tracked URL,
+relative date, Reddit credit and separate capture time. This page is controlled
+local test content, not a live Reddit capture.

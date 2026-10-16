@@ -168,6 +168,78 @@ window.runScreenshotSourceTests = () => {
     bskyPost.replace('feedItem-by-', 'postThreadItem-by-').replace('3l6oveex3ii2l','3reply'),
     bskyUrl.replace('3l6oveex3ii2l','3reply'), {publication_date_text:bskyDate});
   bskyCanonical.remove();
+  const rdUrl = 'https://www.reddit.com/r/news/comments/abc123/';
+  const rdComment = rdUrl + 'comment/def456/';
+  const rdProfile = 'https://www.reddit.com/user/Reporter/';
+  const rdPost = `<shreddit-post id="t3_abc123" author="Reporter" created-timestamp="2026-10-16T10:11:12.000000+0000" permalink="${rdUrl}a_title/?utm_source=share"
+      style="display:block;position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div slot="credit-bar"><a href="${rdProfile}">u/Reporter</a><faceplate-timeago ts="2026-10-16T10:11:12Z"><time datetime="2026-10-16T10:11:12Z">2h ago</time></faceplate-timeago></div>
+    <h2><a href="${rdUrl}a_title/">A news post</a></h2>
+    <div id="crop" class="body" slot="text-body">Post body</div></shreddit-post>`;
+  const rdReply = `<shreddit-comment thingid="t1_def456" postid="t3_abc123" author="Reader" created="2026-10-16T11:22:33.000000+0000" permalink="${rdComment}"
+      style="display:block;position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <details role="article" open><summary><div slot="commentMeta"><a href="https://www.reddit.com/user/Reader/">Reader</a>
+      <a href="${rdComment}"><faceplate-timeago><time datetime="2026-10-16T11:22:33Z">1h ago</time></faceplate-timeago></a></div></summary>
+    <div id="crop" class="body" slot="comment">Comment body</div></details></shreddit-comment>`;
+  detailsCheck('Reddit feed body keeps its own author and datetime',rdPost,rdUrl,
+    {posting_account:'u/Reporter',account_profile_url:rdProfile,publication_date_text:'2026-10-16T10:11:12Z'});
+  detailsCheck('Reddit comment internal article wrapper retains comment ownership',rdReply,rdComment,
+    {posting_account:'u/Reader',publication_date_text:'2026-10-16T11:22:33Z'});
+  check('Reddit legacy comment URL retains comment identity',post('https://old.reddit.com/r/news/comments/abc123/title/def456/?context=3'), 'ambiguous','',
+    ()=>{const r=document.querySelector('header a').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  detailsCheck('Reddit comment legacy permalink normalizes to its own comment',
+    rdReply.replaceAll(rdComment,'https://old.reddit.com/r/news/comments/abc123/title/def456/'),rdComment,
+    {posting_account:'u/Reader',publication_date_text:'2026-10-16T11:22:33Z'});
+  detailsCheck('Reddit profile mentions cannot replace a missing author link',rdPost.replace(`<a href="${rdProfile}">u/Reporter</a>`,'')
+      .replace('Post body',`Post body <a href="${rdProfile}">u/Reporter</a>`),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit mismatched credit profile leaves author blank',rdPost.replace(rdProfile,rdProfile.replace('Reporter','Other')),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit subreddit link never becomes author',rdPost.replace(rdProfile,'https://www.reddit.com/r/Reporter/'),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit deleted author stays absent',rdPost.replace('author="Reporter"','author="[deleted]"')
+      .replace(`<a href="${rdProfile}">u/Reporter</a>`,'<span>[deleted]</span>'),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit body time cannot supply a missing publication date',rdPost.replace('<time datetime="2026-10-16T10:11:12Z">2h ago</time>','')
+      .replace('Post body','Post body <time datetime="2020-01-01T00:00:00Z">Old event</time>'),rdUrl,{publication_date_text:undefined});
+  detailsCheck('Reddit relative date remains exactly displayed',rdPost.replace(' datetime="2026-10-16T10:11:12Z"',''),rdUrl,
+    {publication_date_text:'2h ago',publication_date_hover_target:undefined});
+  detailsCheck('Reddit multiple credit timestamps do not choose one',rdPost.replace('</faceplate-timeago>',
+    '</faceplate-timeago><faceplate-timeago ts="2026-10-16T10:11:12Z"><time>Duplicate time</time></faceplate-timeago>'),rdUrl,{publication_date_text:undefined});
+  detailsCheck('Reddit edited timestamp cannot replace publication time',rdPost.replace('datetime="2026-10-16T10:11:12Z"','datetime="2026-10-16T11:00:00Z"'),rdUrl,
+    {publication_date_text:undefined});
+  detailsCheck('Reddit missing creation evidence leaves date unset',rdPost.replace('created-timestamp="2026-10-16T10:11:12.000000+0000"',''),rdUrl,
+    {publication_date_text:undefined});
+  check('Reddit stale item ID cannot bind a permalink',rdPost.replace('id="t3_abc123"','id="t3_zzz"'),'none','');
+  check('Reddit comment missing post ID cannot inherit a page source',rdReply.replace('postid="t3_abc123"',''),'none','');
+  check('Reddit comment missing permalink cannot become the post',rdReply.replace(`permalink="${rdComment}"`,'').replace(`href="${rdComment}"`,'href="https://example.com/"'),'none','');
+  const rdReference = rdPost.replace('Post body',`Post body <a href="${rdUrl.replace('abc123','xyz789')}">Another post</a>`);
+  check('Reddit directly captured reference requires review',rdReference,'ambiguous','');
+  detailsCheck('Reddit off-crop body references cannot compete with the selected post',rdReference,rdUrl,
+    {posting_account:'u/Reporter'},()=>({x:40,y:130,width:250,height:25,view_width:innerWidth,view_height:innerHeight}));
+  check('Reddit two selected posts remain ambiguous',rdPost+rdPost.replaceAll('abc123','xyz789').replace('top:20px','top:340px').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  for (const url of ['https://www.reddit.com/r/news/s/sharecode/','https://redd.it/abc123','https://www.reddit.com/user/Reporter/',
+      'https://www.reddit.com/r/news/','https://www.reddit.com.attacker.test/r/news/comments/abc123/',
+      'https://user@www.reddit.com/r/news/comments/abc123/','https://www.reddit.com:8443/r/news/comments/abc123/',
+      rdUrl+'title/def456/extra',rdUrl+'comment/',rdUrl+'title.json']) {
+    check('Reddit rejects unsupported source '+url,post(url),'none','');
+  }
+  const rdNested = rdReply.replace('height:300px','height:390px').replace('id="crop"','id="parent-body"')
+    .replace('</details>',rdReply.replace('left:20px;top:20px;width:400px;height:300px','left:25px;top:160px;width:350px;height:180px')
+      .replaceAll('def456','ghi789').replaceAll('Reader','NestedReader')+'</details>');
+  detailsCheck('Reddit isolated nested reply keeps its own date and account',rdNested,rdUrl+'comment/ghi789/',
+    {posting_account:'u/NestedReader',publication_date_text:'2026-10-16T11:22:33Z'});
+  check('Reddit full thread with two comments requires review',rdNested,'ambiguous','',()=>
+    ({x:20,y:20,width:400,height:390,view_width:innerWidth,view_height:innerHeight}));
+  check('Reddit body links to other social platforms require review',
+    rdPost.replace('Post body','Post body <a href="https://x.com/reporter/status/123">Referenced tweet</a>'),'ambiguous','');
+  detailsCheck('Reddit off-crop references to another platform cannot claim the crop',
+    rdPost.replace('Post body','Post body <a href="https://x.com/reporter/status/123">Referenced tweet</a>'),rdUrl,
+    {posting_account:'u/Reporter'},()=>({x:40,y:130,width:250,height:25,view_width:innerWidth,view_height:innerHeight}));
+  check('Reddit crosspost media without an exposed original link requires review',rdPost.replace('<shreddit-post ', '<shreddit-post is-crosspost '),'ambiguous','');
+  check('Reddit crosspost type without the boolean attribute requires review',rdPost.replace('<shreddit-post ', '<shreddit-post post-type="crosspost" '),'ambiguous','');
+  detailsCheck('Reddit hidden credit time cannot supply publication date',rdPost.replace('<faceplate-timeago ', '<faceplate-timeago hidden '),rdUrl,
+    {publication_date_text:undefined});
+  const rdCanonical=document.createElement('link');rdCanonical.rel='canonical';rdCanonical.href=rdUrl;document.head.append(rdCanonical);
+  check('Reddit page canonical cannot label an unrelated article',post('https://example.com/'),'none','');
+  rdCanonical.remove();
   const ttUrl = 'https://www.tiktok.com/@reporter/video/6718335390845095173';
   const ttProfile = 'https://www.tiktok.com/@reporter';
   const ttPost = `<article data-e2e="recommend-list-item-container" style="height:260px">
