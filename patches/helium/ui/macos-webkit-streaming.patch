@@ -75,7 +75,7 @@
 +#endif  // CHROME_BROWSER_HELIUM_WEBKIT_STREAMING_MAC_H_
 --- /dev/null
 +++ b/chrome/browser/helium_webkit_streaming_mac.mm
-@@ -0,0 +1,290 @@
+@@ -0,0 +1,297 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -89,6 +89,7 @@
 +
 +#include "base/command_line.h"
 +#include "base/hash/sha1.h"
++#include "base/logging.h"
 +#include "base/strings/sys_string_conversions.h"
 +#include "chrome/browser/profiles/profile.h"
 +#include "content/public/browser/navigation_handle.h"
@@ -270,6 +271,7 @@
 +}
 +- (void)webView:(WKWebView*)webView
 +    didFinishNavigation:(WKNavigation*)navigation {
++  VLOG(1) << "WebKit streaming navigation finished";
 +  _address.stringValue = webView.URL.absoluteString ?: @"";
 +  self.window.title =
 +      [NSString stringWithFormat:@"%@ — Helium Streaming (WebKit)",
@@ -280,17 +282,20 @@
 +- (void)webView:(WKWebView*)webView
 +    didFailProvisionalNavigation:(WKNavigation*)navigation
 +                       withError:(NSError*)error {
++  VLOG(1) << "WebKit streaming navigation failed, code=" << error.code;
 +  _status.stringValue = error.localizedDescription;
 +}
 +- (void)webView:(WKWebView*)webView
 +    didFailNavigation:(WKNavigation*)navigation
 +            withError:(NSError*)error {
++  VLOG(1) << "WebKit streaming navigation failed, code=" << error.code;
 +  _status.stringValue = error.localizedDescription;
 +}
 +- (void)webViewWebContentProcessDidTerminate:(WKWebView*)webView {
 +  _status.stringValue = @"WebKit stopped. Reload to retry.";
 +}
 +- (void)windowWillClose:(NSNotification*)notification {
++  VLOG(1) << "WebKit streaming window closed";
 +  [_webView stopLoading];
 +  _webView.navigationDelegate = nil;
 +  _webView.UIDelegate = nil;
@@ -327,6 +332,8 @@
 +  }
 +  [controller showWindow:nil];
 +  [controller.window makeKeyAndOrderFront:nil];
++  VLOG(1) << "WebKit streaming window opened: "
++          << (url.DomainIs("netflix.com") ? "Netflix" : "TV 2 Play");
 +  return true;
 +}
 +

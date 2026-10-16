@@ -19,20 +19,23 @@ of Chromium content blocking are accepted for this experiment.
 
 The standalone playback result does not establish integrated playback, maximum
 resolution, extended playback stability, or private browsing support. The native
-window patch has not been linked or run inside Helium.
+window patch now compiles and links inside Helium. On macOS 27.0.1, lifecycle
+diagnostics confirmed that top-level navigations opened native windows for both
+services and that both pages finished loading. Signed-in integrated playback
+remains a separate acceptance test.
 
 ## 1. Build the Helium-owned streaming window
 
-- [ ] Wait until the shared Chromium build cache is idle. Do not interrupt the
+- [x] Wait until the shared Chromium build cache is idle. Do not interrupt the
   build already using it or modify its source/output directories concurrently.
-- [ ] Inspect `~/Developer/helium/build/fork-revision.txt`, the snapshot diff, and
+- [x] Inspect `~/Developer/helium/build/fork-revision.txt`, the snapshot diff, and
   the prepared source again; they may have changed since the patch was drafted.
-- [ ] Reconcile this branch's `macos-webkit-streaming.patch` with that source.
+- [x] Reconcile this branch's `macos-webkit-streaming.patch` with that source.
   Apply only the intended changes and preserve unrelated work and compiled output.
-- [ ] Build using `~/Developer/helium/build/build-local.sh` and existing GN args.
+- [x] Build using `~/Developer/helium/build/build-local.sh` and existing GN args.
   Resolve compiler, GN dependency, framework-linking, and application lifecycle
   issues before treating the integration as working.
-- [ ] Launch with the persistent `run-local.sh --helium-webkit-streaming`, or
+- [x] Launch with the persistent `run-local.sh --helium-webkit-streaming`, or
   enable `chrome://flags/#helium-webkit-streaming` and restart.
 
 The patch currently routes user/browser-initiated top-level HTTPS navigations for
@@ -43,6 +46,17 @@ with a persistent WebKit data store scoped to the profile. The initiating
 Chromium tab stays on its previous page, or may remain blank if newly created.
 
 ## 2. Validate the integrated window
+
+Current smoke result: browser-started Netflix and TV 2 Play navigations both
+opened a Helium-owned WebKit window and completed page loading. Verification used
+`--enable-logging=stderr --vmodule=helium_webkit_streaming_mac=1`; these optional
+logs record lifecycle events and numeric error codes only, not page URLs or
+account data. A flag-disabled run produced Chromium Netflix history entries and no native
+window-open events; the enabled run produced two native-window events and no
+Chromium Netflix history entries. The smoke run used separate `/tmp` Chromium
+profiles. The UI tool
+could not reliably distinguish concurrent Helium instances, so interactive
+lifecycle and account-playback tests remain unchecked below.
 
 - [ ] Confirm both services load from typed URLs, clicked links, and redirects.
   Test exact domain boundaries and ensure unrelated sites and embedded frames

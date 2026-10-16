@@ -59,9 +59,11 @@ inside the Chromium process have not been separately verified.
 ## Helium-owned window integration
 
 The branch also contains a patch adding the macOS-only
-`helium-webkit-streaming` experimental flag. It has passed syntax checks against
-the prepared Chromium headers/build flags, but has not yet been applied to the
-shared cache, linked, or tested inside Helium: another build was using that cache.
+`helium-webkit-streaming` experimental flag. It has been applied to the prepared
+source and built successfully with the persistent local build command. On macOS
+27.0.1, runtime diagnostics confirmed that Netflix and TV 2 Play opened native
+windows and completed page loading inside Helium. Signed-in playback in these
+integrated windows still requires confirmation separately from the standalone app.
 On macOS 14+, enabling it routes top-level HTTPS Netflix and `play.tv2.no`
 navigations to a Helium-owned WebKit window. Enable it at
 `chrome://flags/#helium-webkit-streaming` and restart, or start Helium with
@@ -75,3 +77,8 @@ on Chromium. Streaming windows are separate from Chromium tabs; the initiating
 tab remains at its previous page (a new tab may stay blank). There is no session
 restore, Chromium history, extension support, or integration with Chromium's
 clear-browsing-data controls for these WebKit windows yet.
+
+For local lifecycle diagnostics, add
+`--enable-logging=stderr --vmodule=helium_webkit_streaming_mac=1` to the launcher.
+The optional messages report window opening/closing and navigation completion or
+numeric failure codes without collecting page URLs, cookies, or license data.
