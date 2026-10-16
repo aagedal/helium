@@ -1007,7 +1007,7 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,689 @@
+@@ -0,0 +1,757 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1037,6 +1037,13 @@
 +        // Use the observed account path; strip photo/video suffixes and tracking.
 +        path = path.slice(0, path.indexOf('/status/') + 8) + match[1];
 +        platform = 'twitter_x';
++      } else if (host === 'bsky.app') {
++        // Preserve the observed handle or DID. Never resolve identity aliases
++        // or manufacture a permalink for an unlinked quoted post.
++        match = path.match(/^\/profile\/([A-Za-z0-9.:-]+)\/post\/([A-Za-z0-9_-]+)\/?$/);
++        if (!match) return null;
++        path = '/profile/' + match[1] + '/post/' + match[2];
++        platform = 'bluesky';
 +      } else if (host === 'truthsocial.com') {
 +        match = path.match(/^\/@([A-Za-z0-9_.-]+)\/(?:posts\/)?(\d+)\/?$/);
 +        if (!match) return null;
@@ -1079,6 +1086,7 @@
 +        }
 +      } else return null;
 +      const targetHost = platform === 'twitter_x' ? 'x.com' :
++          platform === 'bluesky' ? 'bsky.app' :
 +          platform === 'threads' ? 'www.threads.com' :
 +          platform === 'instagram' ? 'www.instagram.com' :
 +          platform === 'truth_social' ? 'truthsocial.com' : 'www.facebook.com';
@@ -1118,7 +1126,7 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
-+  const postSelector = 'article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus';
++  const postSelector = 'article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1140,6 +1148,17 @@
 +        });
 +        if (media) { metaPosts.add(node); break; }
 +      }
++    }
++  }
++  // Bluesky quote cards and its quotes list omit post test IDs. A timestamp
++  // scoped to a link container still establishes ownership, even when the card
++  // exposes no URL. Such a card must never inherit its enclosing post's date.
++  {
++    for (const stamp of [...document.querySelectorAll('[data-tooltip]')].slice(0, 10000)) {
++      const root = stamp.closest('div[role="link"]');
++      if (root && (location.hostname === 'bsky.app' ||
++          stamp.closest('[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"]') ||
++          normalize(stamp.closest('a[href]')?.href)?.platform === 'bluesky')) metaPosts.add(root);
 +    }
 +  }
 +  const postFor = element => {
@@ -1167,6 +1186,7 @@
 +    const postUrl = new URL(parsed.url);
 +    const handleMatch = parsed.platform === 'twitter_x'
 +        ? postUrl.pathname.match(/^\/(?!i\/)([^/]+)\/status\//)
++        : parsed.platform === 'bluesky' ? postUrl.pathname.match(/^\/profile\/([^/]+)\/post\//)
 +        : parsed.platform === 'threads' ? postUrl.pathname.match(/^\/@([^/]+)\/post\//)
 +        : parsed.platform === 'truth_social' ? postUrl.pathname.match(/^\/@([^/]+)\/posts\//) : null;
 +    const expectedHandle = handleMatch ? handleMatch[1].toLowerCase() : parsed.account_hint?.toLowerCase();
@@ -1188,6 +1208,12 @@
 +          if (match && !['home','explore','search','notifications','messages','settings','i'].includes(match[1].toLowerCase())) {
 +            account = '@' + match[1]; profileUrl = 'https://x.com/' + match[1];
 +          }
++        } else if (parsed.platform === 'bluesky' && host === 'bsky.app') {
++          match = u.pathname.match(/^\/profile\/([A-Za-z0-9.:-]+)\/?$/);
++          if (match && !link.closest('[data-testid="postText"],[data-word-wrap]')) {
++            account = match[1].startsWith('did:') ? match[1] : '@' + match[1];
++            profileUrl = 'https://bsky.app/profile/' + match[1];
++          }
 +        } else if (parsed.platform === 'threads' && ['threads.com','threads.net'].includes(host)) {
 +          match = u.pathname.match(/^\/@([A-Za-z0-9_.]+)\/?$/);
 +          if (match) { account = '@' + match[1]; profileUrl = 'https://www.threads.com/@' + match[1]; }
@@ -1204,9 +1230,9 @@
 +            account = text(link); profileUrl = 'https://www.facebook.com/profile.php?id=' + u.searchParams.get('id');
 +          }
 +        }
-+        if (!account || !profileUrl || (expectedHandle && account.slice(1).toLowerCase() !== expectedHandle)) continue;
++        if (!account || !profileUrl || (expectedHandle && (account.startsWith('@') ? account.slice(1) : account).toLowerCase() !== expectedHandle)) continue;
 +        const key = profileUrl.toLowerCase(), display = text(link);
-+        if (!profiles.has(key) || display) profiles.set(key, {account, profile_url:profileUrl, display_name:display});
++        if (!profiles.has(key) || (display && (parsed.platform !== 'bluesky' || !display.startsWith('@')))) profiles.set(key, {account, profile_url:profileUrl, display_name:display});
 +      } catch { /* Not a usable profile link. */ }
 +    }
 +    const accounts = [...profiles.values()];
@@ -1226,6 +1252,21 @@
 +    // in its timestamp row, without a <time> or exact datetime attribute.
 +    if (!dateNode && parsed.platform === 'twitter_x' && owns(anchor) &&
 +        anchor.closest('.x-middot-group') && anchor.hasAttribute('data-base-ui-tooltip-trigger')) dateNode = anchor;
++    if (!dateNode && parsed.platform === 'bluesky' && owns(anchor) &&
++        (fullTimestamp(anchor.getAttribute('data-tooltip') || '') ||
++         fullTimestamp(anchor.getAttribute('aria-label') || ''))) dateNode = anchor;
++    if (!dateNode && parsed.platform === 'bluesky' && !anchor &&
++        post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])')) {
++      // The expanded post has a plain date row immediately before engagement
++      // counts. Require that structure, a single leaf date and its own scope.
++      const rows = [...post.querySelectorAll(':scope > div > div')].filter(row =>
++          row.nextElementSibling?.querySelector('[data-testid$="Count-expanded"]'));
++      const dates = rows.flatMap(row => [...row.querySelectorAll(
++          ':scope > [dir="auto"],:scope > div > [dir="auto"]')]).filter(node =>
++          owns(node) && node.matches('div[dir="auto"]') && !node.children.length &&
++          fullTimestamp(text(node)) && visible(node, false));
++      if (dates.length === 1) dateNode = dates[0];
++    }
 +    if (!dateNode && parsed.platform === 'facebook' && owns(anchor) &&
 +        !anchor.querySelector('img,video') &&
 +        (compactTimestamp(text(anchor)) ||
@@ -1246,7 +1287,8 @@
 +    if (dateNode) {
 +      const displayed = text(dateNode), machine = (dateNode.getAttribute('datetime') || '').slice(0, 256);
 +      const tooltip = (dateNode.getAttribute('title') || anchor?.getAttribute('title') ||
-+          dateNode.parentElement?.getAttribute('title') || dateNode.getAttribute('data-tooltip-content') || '').slice(0, 256);
++          dateNode.parentElement?.getAttribute('title') || dateNode.getAttribute('data-tooltip-content') ||
++          (parsed.platform === 'bluesky' ? dateNode.getAttribute('data-tooltip') : '') || '').slice(0, 256);
 +      const aria = (dateNode.getAttribute('aria-label') || anchor?.getAttribute('aria-label') || '').slice(0, 256);
 +      const epoch = (dateNode.getAttribute('data-utime') || '').slice(0, 64);
 +      const seconds = /^\d{9,10}$/.test(epoch) ? Number(epoch) : 0;
@@ -1259,7 +1301,8 @@
 +        if (aria) details.publication_date_aria_label = aria;
 +        if (epochUtc) details.publication_datetime_from_epoch_utc = epochUtc;
 +        const hoverNode = dateNode;
-+        if (!machine && !epochUtc && !fullTimestamp(tooltip) && !fullTimestamp(aria) &&
++        if (!(parsed.platform === 'bluesky' && fullTimestamp(displayed)) &&
++            !machine && !epochUtc && !fullTimestamp(tooltip) && !fullTimestamp(aria) &&
 +            normalize(parsed.url) && visible(hoverNode) &&
 +            exposed(post, post.getBoundingClientRect())) {
 +          const r = hoverNode.getBoundingClientRect();
@@ -1278,7 +1321,8 @@
 +        if (tooltip) details.publication_date_tooltip = tooltip;
 +        if (epoch) details.publication_epoch_attribute = epoch;
 +        details.date_evidence = dateNode.matches('time') ? 'time_element_in_post' :
-+            epoch ? 'timestamp_element_in_post' : dateNode.matches('a') ? 'post_permalink_timestamp_text' : 'truth_social_detail_footer';
++            epoch ? 'timestamp_element_in_post' : dateNode.matches('a') ? 'post_permalink_timestamp_text' :
++            parsed.platform === 'bluesky' ? 'bluesky_detail_footer' : 'truth_social_detail_footer';
 +      }
 +    }
 +    return details;
@@ -1292,8 +1336,12 @@
 +  const add = (raw, evidence, post = null, anchor = null) => {
 +    const parsed = normalize(raw);
 +    if (!parsed) return;
++    if (parsed.platform === 'bluesky' && anchor?.closest('[data-testid="postText"],[data-word-wrap]')) {
++      post = null;
++      anchor = null;
++    }
 +    const details = siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook'].includes(parsed.platform)) {
++    if (post && ['twitter_x','threads','facebook','bluesky'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1365,14 +1413,27 @@
 +    const post = topPosts[0], rect = intersection(post.getBoundingClientRect(), viewport);
 +    if (area(intersection(rect, selected)) >= 0.5 * area(selected) && exposed(post, rect)) {
 +      const address = normalize(location.href);
-+      if (address) add(location.href, 'post_page_address', post);
++      const pageSourceAllowed = raw => normalize(raw)?.platform !== 'bluesky' ||
++          post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])');
++      if (address) {
++        if (pageSourceAllowed(location.href)) add(location.href, 'post_page_address', post);
++      }
 +      else {
 +        const canonical = document.querySelector('link[rel="canonical"]');
-+        if (canonical) add(canonical.href, 'post_page_canonical', post);
++        if (canonical && pageSourceAllowed(canonical.href)) add(canonical.href, 'post_page_canonical', post);
 +        const og = document.querySelector('meta[property="og:url"]');
-+        if (og) add(og.content, 'post_page_metadata', post);
++        if (og && pageSourceAllowed(og.content)) add(og.content, 'post_page_metadata', post);
 +      }
 +    }
++  }
++  // Replies remain separate posts even while the expanded page is visible.
++  // Only the unique expanded thread item can use this page's exact post URL.
++  const address = normalize(location.href);
++  if (address?.platform === 'bluesky') {
++    const expanded = visiblePosts.filter(post =>
++        post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])'));
++    if (expanded.length === 1 && overlapping.includes(expanded[0]))
++      add(location.href, 'post_page_address', expanded[0]);
 +  }
 +  const list = [...candidates.values()];
 +  const ownContentSelected = post => {
@@ -1387,7 +1448,7 @@
 +    return posts?.size === 1 ? [...posts][0] : null;
 +  });
 +  let preferred = null, selectionReason = '', unlinkedEnclosingPost = false;
-+  if (!truncated && list.length && list.every(c => ['twitter_x','threads'].includes(c.platform)) &&
++  if (!truncated && list.length && list.every(c => ['twitter_x','threads','bluesky'].includes(c.platform)) &&
 +      contexts.every(Boolean) && new Set(contexts).size === list.length) {
 +    // A crop contained within a quote belongs to that quote. Otherwise prefer
 +    // an enclosing post only when its own header/comment is visibly selected.
@@ -1455,8 +1516,15 @@
 +      }
 +    }
 +  }
++  // A crop inside an unlinked Bluesky quote has no attributable source. Keep
++  // an enclosing candidate available for review without filling it as primary.
++  const unlinkedBlueskyQuote = list.some(c => c.platform === 'bluesky') &&
++      overlapping.some(post => metaPosts.has(post) && !contexts.includes(post) &&
++          contexts.some(parent => parent?.contains(post)) &&
++          area(intersection(post.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  if (unlinkedBlueskyQuote) preferred = null;
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -1547,7 +1615,7 @@
 +    return false;
 +  return url.host() == "x.com" || url.host() == "www.instagram.com" ||
 +         url.host() == "www.facebook.com" || url.host() == "truthsocial.com" ||
-+         url.host() == "www.threads.com";
++         url.host() == "www.threads.com" || url.host() == "bsky.app";
 +}
 +
 +}  // namespace
@@ -1734,7 +1802,7 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,250 @@
+@@ -0,0 +1,254 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1760,7 +1828,9 @@
 +                   "https://www.instagram.com/p/ABC_12/",
 +                   "https://www.facebook.com/reporter/posts/pfbid123",
 +                   "https://truthsocial.com/@reporter/posts/123",
-+                   "https://www.threads.com/@reporter/post/ABC_12"}) {
++                   "https://www.threads.com/@reporter/post/ABC_12",
++                   "https://bsky.app/profile/reporter.bsky.social/post/3l6oveex3ii2l",
++                   "https://bsky.app/profile/did:plc:abc123/post/3l6oveex3ii2l"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
@@ -1773,7 +1843,9 @@
 +        "http://x.com/reporter/status/1", "https://x.com:8443/a",
 +        "https://password@x.com/reporter/status/1",
 +        "https://truthsocial.com.attacker.example/@reporter/posts/123",
-+        "https://attacker@truthsocial.com/@reporter/posts/123"}) {
++        "https://attacker@truthsocial.com/@reporter/posts/123",
++        "https://bsky.app.attacker.test/profile/a/post/123",
++        "https://user@bsky.app/profile/a/post/123"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unavailable");
 +    EXPECT_FALSE(result.FindString("suggested_permalink"));
@@ -3242,7 +3314,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,453 @@
+@@ -0,0 +1,455 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -3541,6 +3613,8 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.DomainIs("bsky.app"))
++      return "Bluesky";
 +    if (url.DomainIs("truthsocial.com"))
 +      return "Truth Social";
 +    return {};
@@ -3746,7 +3820,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,486 @@
+@@ -0,0 +1,487 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4085,7 +4159,8 @@
 +           {"https://www.facebook.com/source/posts/123", "Facebook"},
 +           {"https://truthsocial.com/@source/posts/123", "Truth Social"},
 +           {"https://www.threads.com/@source/post/ABC_12", "Threads"},
-+           {"https://www.threads.net/@source/post/ABC_12", "Threads"}}) {
++           {"https://www.threads.net/@source/post/ABC_12", "Threads"},
++           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");

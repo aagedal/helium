@@ -753,3 +753,24 @@ browser-test source compilation passed. Native UI checks verified the expanded
 three-pane pinned icon row, per-pane selection, the collapsed icon stack, and
 expanding back to a row. Full browser-test execution remains unavailable in the
 pruned cache.
+
+
+Bluesky source extraction adds matching profile/permalink attribution, feed and
+reply timestamp accessibility labels, and the expanded thread item's scoped date
+footer. DID paths remain as observed; they are not resolved to guessed handles.
+Reposter links and body mentions cannot establish the posting account. An
+unlinked quote gets separate DOM ownership; a crop confined to it cannot autofill
+the enclosing source. The expanded page URL is never assigned to a lone reply.
+Linked quotes use the existing enclosing/quoted source relationships.
+
+Validation for this addition: 105 production-script browser fixtures, nine native
+source tests and nine native export tests, plus patch parsing, lint and a strict no-fuzz patch reverse/apply round trip
+for all four changed Chromium files. The complete patch round trip against the
+shared cache still encounters existing differences in screenshot_captured_bubble.h
+and the JPEG XL encoder, outside these changes. Public
+Bluesky pages were checked for an original feed post, a repost, an expanded quote
+post, a crop inside its unlinked quote, and a thread reply with its own date.
+The focused native targets were rebuilt in the persistent macOS cache. The full
+app rebuild was stopped after it scheduled a broad dependency rebuild; native
+capture-dialog and saved-image QA for Bluesky remain to be completed. No external
+API requests or identity resolution were added to the capture flow.

@@ -74,7 +74,7 @@ The review dialog records the page URL, title, capture times in UTC, selection
 bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
-post permalink for Twitter/X, Instagram, Facebook, Threads and Truth Social using
+post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social and Bluesky using
 visible links and the post container overlapping your selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
@@ -94,6 +94,12 @@ original. Both links remain available in the source chooser, and the embedded
 record preserves their relationship and separate source details. Facebook photo
 posts prefer the enclosing post's permalink, account and date; attached photo
 links remain available as secondary sources, including for a photo-only crop.
+
+Bluesky feed posts, reposts and thread replies use their own observed permalink,
+matching profile link and timestamp. Expanded posts use their scoped date footer;
+the displayed time is preserved without assuming a timezone. A crop confined to
+a quoted post with no exposed permalink stays ambiguous instead of filling the
+enclosing post's source. Linked quotes keep their separate source details.
 
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image

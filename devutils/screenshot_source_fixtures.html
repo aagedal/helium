@@ -109,6 +109,65 @@ window.runScreenshotSourceTests = () => {
   detailsCheck('X timestamp title belongs to its containing permalink',
     detailedPost('https://x.com/reporter/status/123', 'https://x.com/reporter', '<time>9m</time>').replace('<a href="https://x.com/reporter/status/123">', '<a href="https://x.com/reporter/status/123" title="11:57 PM · Oct 15, 2026">'),
     'https://x.com/reporter/status/123', {publication_date_text:'11:57 PM · Oct 15, 2026',publication_date_displayed:'9m'});
+  const bskyUrl = 'https://bsky.app/profile/reporter.bsky.social/post/3l6oveex3ii2l';
+  const bskyProfile = 'https://bsky.app/profile/reporter.bsky.social';
+  const bskyDate = 'October 17, 2024 at 9:06 AM';
+  const bskyPost = `<div data-testid="feedItem-by-reporter.bsky.social" role="link" style="position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <a href="${bskyProfile}">Reporter</a><a href="${bskyProfile}">@reporter.bsky.social</a>
+    <a href="${bskyUrl}?ref_src=share" aria-label="${bskyDate}" data-tooltip="${bskyDate}">· Oct 17, 2024</a>
+    <div id="crop" class="body" data-testid="postText" dir="auto">Post text</div></div>`;
+  detailsCheck('Bluesky feed crop retains scoped author, display name and accessible date',
+    bskyPost, bskyUrl, {posting_account:'@reporter.bsky.social',account_display_name:'Reporter',
+      publication_date_text:bskyDate,publication_date_displayed:'· Oct 17, 2024',publication_date_tooltip:bskyDate});
+  detailsCheck('Bluesky repost credits original author, not reposter',
+    bskyPost.replace('<a href=', '<a href="https://bsky.app/profile/reposter.example">Reposted by Someone</a><a href='),
+    bskyUrl, {posting_account:'@reporter.bsky.social'});
+  detailsCheck('Bluesky DID profile remains an observed identity without inventing a handle',
+    bskyPost.replaceAll('reporter.bsky.social','did:plc:abc123'),
+    bskyUrl.replace('reporter.bsky.social','did:plc:abc123'), {posting_account:'did:plc:abc123'});
+  detailsCheck('Bluesky missing author link does not infer account from post URL',
+    bskyPost.replaceAll(`href="${bskyProfile}"`, 'href="https://example.com"'),
+    bskyUrl, {posting_account:undefined,publication_date_text:bskyDate});
+  detailsCheck('Bluesky body mention cannot establish posting account',
+    bskyPost.replaceAll(`href="${bskyProfile}"`, 'href="https://example.com"').replace('Post text', `<a href="${bskyProfile}">@reporter.bsky.social</a>`),
+    bskyUrl, {posting_account:undefined});
+  check('Bluesky lookalike domain is rejected', post(bskyUrl.replace('bsky.app/','bsky.app.attacker.test/')), 'none', '');
+  check('Bluesky engagement subpage is not normalized into a post', post(bskyUrl+'/liked-by'), 'none', '');
+  check('Bluesky profile is not a post', post(bskyProfile), 'none', '');
+  check('Bluesky credentials and nonstandard ports are rejected', post(bskyUrl.replace('https://','https://user@')) + post(bskyUrl.replace('bsky.app/','bsky.app:8443/')), 'none', '');
+  check('Two Bluesky posts stay ambiguous', bskyPost + bskyPost.replace('top:20px','top:340px').replace('3l6oveex3ii2l','3other').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  const bskyQuote = bskyPost.replace('data-testid="feedItem-by-', 'id="bsky-outer" data-testid="feedItem-by-').replace('Post text', 'Enclosing post').replace('</div></div>', `</div>
+    <div id="quote" role="link" aria-label="Post by source.example" style="position:absolute;left:15px;top:160px;width:360px;height:100px;background:white">
+      <div data-tooltip="October 16, 2024 at 8:00 AM">1d</div><div id="quote-body" dir="auto">Unlinked quoted text</div>
+    </div></div>`);
+  check('Bluesky unlinked quote-only crop never adopts enclosing source', bskyQuote, 'ambiguous','',()=>crop('quote'));
+  detailsCheck('Bluesky full unlinked quote keeps enclosing date separate', bskyQuote, bskyUrl,
+    {publication_date_text:bskyDate,posting_account:'@reporter.bsky.social'},()=>crop('bsky-outer'));
+  const linkedBskyQuote = quotePost.replaceAll('https://x.com/reporter/status/123',bskyUrl)
+    .replaceAll('https://x.com/reporter',bskyProfile).replaceAll('@reporter','@reporter.bsky.social')
+    .replaceAll('https://x.com/quoted/status/456','https://bsky.app/profile/source.example/post/3quoted')
+    .replaceAll('https://x.com/quoted','https://bsky.app/profile/source.example');
+  quoteCheck('Bluesky linked quotes keep separate author and date', linkedBskyQuote, 'outer', 'preferred',bskyUrl,'@reporter.bsky.social','2026-10-15T22:57:00Z');
+  quoteCheck('Bluesky linked quote-only crop prefers quoted source', linkedBskyQuote,'quote','preferred',
+    'https://bsky.app/profile/source.example/post/3quoted','@source.example','2026-10-15T14:00:00Z');
+  const bskyCanonical = document.createElement('link');
+  bskyCanonical.rel = 'canonical'; bskyCanonical.href = bskyUrl;
+  document.head.append(bskyCanonical);
+  const bskyDetail = `<div data-testid="postThreadItem-by-reporter.bsky.social" style="position:absolute;left:20px;top:20px;width:400px;height:300px">
+    <div><a href="${bskyProfile}">Reporter</a></div><div>
+      <div id="crop" class="body" style="top:40px" data-word-wrap="1" dir="auto">Body mentions 2026 and 12:00 without being a date</div>
+      <div style="position:absolute;top:150px"><div><div dir="auto">9:06 AM · Oct 17, 2024</div><button>Everybody can reply</button></div></div>
+      <div style="position:absolute;top:200px"><div data-testid="likeCount-expanded">42 likes</div></div>
+    </div></div>`;
+  detailsCheck('Bluesky expanded date is scoped to its footer, not body text', bskyDetail, bskyUrl,
+    {posting_account:'@reporter.bsky.social',publication_date_text:'9:06 AM · Oct 17, 2024',date_evidence:'bluesky_detail_footer'});
+  detailsCheck('Bluesky absent date structure leaves date blank', bskyDetail.replace('data-testid="likeCount-expanded"',''),
+    bskyUrl, {publication_date_text:undefined});
+  detailsCheck('Bluesky canonical page URL cannot be assigned to a lone reply',
+    bskyPost.replace('feedItem-by-', 'postThreadItem-by-').replace('3l6oveex3ii2l','3reply'),
+    bskyUrl.replace('3l6oveex3ii2l','3reply'), {publication_date_text:bskyDate});
+  bskyCanonical.remove();
   const trigger = '<a href="https://x.com/reporter/status/123" data-base-ui-tooltip-trigger data-popup-open>9m</a>';
   const portal = '<div data-base-ui-portal><div data-open data-base-ui-focusable class="bg-(--x-tooltip-bg)">11:57 PM · Oct 15, 2026</div></div>';
   const tooltipCheck = (name, html, expected) => {
