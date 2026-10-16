@@ -168,6 +168,78 @@ window.runScreenshotSourceTests = () => {
     bskyPost.replace('feedItem-by-', 'postThreadItem-by-').replace('3l6oveex3ii2l','3reply'),
     bskyUrl.replace('3l6oveex3ii2l','3reply'), {publication_date_text:bskyDate});
   bskyCanonical.remove();
+  const liUrl = 'https://www.linkedin.com/feed/update/urn:li:activity:7080179061443977217/';
+  const liObserved = 'https://www.linkedin.com/posts/example_topic-activity-7080179061443977217-ABcd?utm_source=share';
+  const liProfile = 'https://www.linkedin.com/company/example';
+  const liCanonical = document.createElement('link');liCanonical.rel='canonical';liCanonical.href=liObserved;document.head.append(liCanonical);
+  const liPost = `<article data-activity-urn="urn:li:activity:7080179061443977217" data-featured-activity-urn="urn:li:activity:7080179061443977217"
+      data-attributed-urn="urn:li:share:7080179060747685888" style="width:400px;height:300px">
+    <div data-test-id="main-feed-activity-card__entity-lockup"><a href="${liProfile}?trk=public_post_feed-actor-name" data-tracking-control-name="public_post_feed-actor-name">Example Company</a><time>3y</time></div>
+    <div id="crop" class="body" data-test-id="main-feed-activity-card__commentary">Post body</div></article>`;
+  detailsCheck('LinkedIn public company post retains its own observed author and relative date',liPost,liUrl,
+    {posting_account:'Example Company',account_profile_url:liProfile,publication_date_text:'3y',date_evidence:'linkedin_public_actor_time'});
+  results[results.length-1].passed &&= results[results.length-1].actual.candidates[0].original_url === liObserved;
+  detailsCheck('LinkedIn localized person profile uses observed display name, not a guessed handle',
+    liPost.replace(liProfile,'https://ie.linkedin.com/in/reporter').replace('Example Company','Reporter'),liUrl,
+    {posting_account:'Reporter',account_profile_url:'https://www.linkedin.com/in/reporter'});
+  detailsCheck('LinkedIn edited publication label remains displayed',liPost.replace('3y','11mo Edited'),liUrl,
+    {publication_date_text:'11mo Edited',publication_date_hover_target:undefined});
+  detailsCheck('LinkedIn explicit machine timestamp remains site reported',liPost.replace('<time>','<time datetime="2026-10-16T10:11:12Z">'),liUrl,
+    {publication_date_text:'2026-10-16T10:11:12Z',publication_date_displayed:'3y',publication_datetime_attribute:'2026-10-16T10:11:12Z'});
+  detailsCheck('LinkedIn ID is never decoded into an unobserved date',liPost.replace('<time>3y</time>',''),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn body and comment dates cannot replace missing author-row date',liPost.replace('<time>3y</time>','')
+    .replace('Post body','Post body <time datetime="2000-01-01T00:00:00Z">Jan 1, 2000</time>'),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn conflicting date elements leave publication date unset',liPost.replace('</time>','</time><time>2h</time>'),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn hidden date cannot supply publication time',liPost.replace('<time>','<time hidden>'),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn profile mentions cannot establish a missing author',liPost.replace('data-tracking-control-name="public_post_feed-actor-name"','')
+    .replace('Post body',`Post body <a href="${liProfile}" data-tracking-control-name="public_post_feed-actor-name">Example Company</a>`),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn hidden actor name cannot establish account',liPost.replace('data-tracking-control-name="public_post_feed-actor-name"','hidden data-tracking-control-name="public_post_feed-actor-name"'),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn multiple actor profiles leave account blank',liPost.replace('<time>',`<a href="https://www.linkedin.com/in/other" data-tracking-control-name="public_post_feed-actor-name">Other</a><time>`),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn profile lookalike host is rejected',liPost.replace(liProfile,liProfile.replace('linkedin.com','linkedin.com.attacker.test')),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn encoded profile separator is rejected',liPost.replace(liProfile,'https://www.linkedin.com/in/bad%2Fname'),liUrl,{posting_account:undefined});
+  check('LinkedIn stale canonical cannot bind a different activity',liPost.replaceAll('activity:7080179061443977217','activity:999'),'none','');
+  check('LinkedIn missing activity ID cannot use page metadata',liPost.replace('data-activity-urn="urn:li:activity:7080179061443977217"',''),'none','');
+  check('LinkedIn attributed share ID cannot establish an activity permalink',liPost.replaceAll('activity:7080179061443977217','share:7080179060747685888'),'none','');
+  check('LinkedIn differing featured activity does not inherit reposter attribution',liPost.replace('data-featured-activity-urn="urn:li:activity:7080179061443977217"','data-featured-activity-urn="urn:li:activity:999"'),'none','');
+  const liComment = `<section class="comment" id="li-comment" style="position:absolute;left:15px;top:150px;width:350px;height:90px;background:#faf2d4">
+    <div class="comment__header"><a class="comment__author" href="https://www.linkedin.com/in/reader">Reader</a><span class="comment__duration-since">1h</span></div>
+    <p id="li-comment-body" style="margin:10px">Separate comment</p></section>`;
+  const liWithComment = liPost.replace('</article>',liComment+'</article>');
+  check('LinkedIn comment-only crop cannot inherit post permalink or author',liWithComment,'none','',()=>crop('li-comment-body'));
+  check('LinkedIn comment crop with margins cannot inherit enclosing source',liWithComment,'ambiguous','',
+    ()=>({x:25,y:160,width:380,height:110,view_width:innerWidth,view_height:innerHeight}));
+  check('LinkedIn full post with unsupported comment requires review',liWithComment,'ambiguous','',()=>{
+    const r=document.querySelector('article').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  detailsCheck('LinkedIn post body crop excludes an off-crop comment',liWithComment,liUrl,{posting_account:'Example Company'});
+  const liOther='https://www.linkedin.com/feed/update/urn:li:activity:999/';
+  check('LinkedIn selected body reference stays reviewable without borrowed attribution',liPost.replace('Post body',`Post body <a href="${liOther}">Another post</a>`),'ambiguous','');
+  detailsCheck('LinkedIn off-crop reference cannot replace selected post source',liPost.replace('Post body',`Post body <a href="${liOther}">Another post</a>`),liUrl,
+    {posting_account:'Example Company'},()=>({x:40,y:130,width:250,height:20,view_width:innerWidth,view_height:innerHeight}));
+  check('LinkedIn cross-platform references require review',liPost.replace('Post body','Post body <a href="https://x.com/reporter/status/123">A tweet</a>'),'ambiguous','');
+  check('LinkedIn covering modal cannot inherit post source',liPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Sign in</div>','none','');
+  for (const url of ['https://www.linkedin.com/in/reporter','https://www.linkedin.com/company/example',
+      'https://lnkd.in/sharecode','https://www.linkedin.com/pulse/an-article','https://www.linkedin.com/feed/update/urn:li:share:123/',
+      'https://www.linkedin.com/feed/update/urn:li:ugcPost:123/',liUrl.replace('/feed/','/%66eed/'),
+      liUrl.replace('/update/','%2Fupdate/'),liUrl+'comments/',liUrl+'?commentUrn=urn%3Ali%3Acomment%3A123',
+      liUrl+'?replyUrn=123',liUrl+'?commentId=123',liUrl+'#comment',liUrl.replace('7080179061443977217','abc'),
+      liUrl.replace('linkedin.com','linkedin.com.attacker.test'),liUrl.replace('https://','https://user@'),liUrl.replace('linkedin.com','linkedin.com:8443')]) {
+    liCanonical.href=url;check('LinkedIn rejects unsupported source '+url,liPost,'none','');
+  }
+  for (const url of [liUrl,liObserved,'https://www.linkedin.com/feed/update/urn%3Ali%3Aactivity%3A7080179061443977217',
+      liObserved.replace('www.linkedin.com','de.linkedin.com')]) {
+    liCanonical.href=url;detailsCheck('LinkedIn explicit permalink form preserves activity identity '+url,liPost,liUrl,{posting_account:'Example Company'});
+  }
+  liCanonical.href=liObserved;
+  check('LinkedIn two selected posts cannot autofill its only discoverable permalink',liPost+liPost.replaceAll('7080179061443977217','999').replace('width:400px;height:300px','width:400px;height:300px;top:340px').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  liCanonical.remove();
+  check('LinkedIn activity URN alone never manufactures a permalink',liPost,'none','');
+  document.head.append(liCanonical);
+  const liUnlinkedQuote=liPost.replace('</article>','<article id="li-quote" style="position:absolute;left:10px;top:145px;width:360px;height:120px;background:white"><p>Unlinked nested post</p></article></article>');
+  check('LinkedIn unlinked nested post crop cannot inherit the enclosing source',liUnlinkedQuote,'none','',()=>crop('li-quote'));
+  check('LinkedIn full post including unlinked nested content requires review',liUnlinkedQuote,'ambiguous','',()=>{
+    const r=document.querySelector('article').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  liCanonical.remove();
   const ytUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
   const ytOther = 'https://www.youtube.com/watch?v=otherId1234';
   const ytComment = ytUrl+'&lc=UgABC_123.reply-2';

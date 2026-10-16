@@ -75,7 +75,7 @@ bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
 post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky
-TikTok, Reddit and YouTube using visible links and the post container overlapping your
+TikTok, Reddit, YouTube and LinkedIn using visible links and the post container overlapping your
 selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
@@ -126,6 +126,15 @@ multiple sources, reference links, recommendations or known active ads require
 review. Channel names and profile URLs stay as observed, without resolving
 channel IDs into guessed handles. Playlists and playback times remain in the
 original observed URL, separate from the normalized video permalink.
+
+LinkedIn support currently targets public activity cards. An explicit post URL
+must match the card's own activity ID; the author's linked display name and the
+header's date label provide attribution. Relative labels and “Edited” markers
+stay as shown. Comments without exposed permalinks need manual attribution, and
+captures including both a post and comments require review. Share IDs, profile
+slugs and numeric activity IDs are not used to guess authors, URLs or dates.
+Authenticated layouts, articles and shortened `lnkd.in` links are not supported
+by this addition. Live capture verification remains limited by sign-in overlays.
 
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image

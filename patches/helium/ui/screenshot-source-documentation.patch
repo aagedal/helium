@@ -1007,7 +1007,7 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,1115 @@
+@@ -0,0 +1,1209 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1041,6 +1041,16 @@
 +        // Use the observed account path; strip photo/video suffixes and tracking.
 +        path = path.slice(0, path.indexOf('/status/') + 8) + match[1];
 +        platform = 'twitter_x';
++      } else if (host === 'linkedin.com' || /^[a-z]{2}\.linkedin\.com$/.test(host)) {
++        if ([...u.searchParams.keys()].some(key => /comment|reply/i.test(key)) || u.hash) return null;
++        const feed = path.match(/^\/feed\/update\/([^/]+)\/?$/);
++        match = (feed && decodeURIComponent(feed[1]).match(/^urn:li:activity:(\d+)$/)) ||
++            path.match(/^\/posts\/[A-Za-z0-9_-]+-activity-(\d+)-[A-Za-z0-9_-]+\/?$/);
++        if (!match) return null;
++        // Only explicit activity permalinks establish a URL. Share/UGC URNs
++        // are different identities; do not build a link from a container ID.
++        path = '/feed/update/urn:li:activity:' + match[1] + '/';
++        platform = 'linkedin';
 +      } else if (host === 'youtube.com' || host === 'youtu.be') {
 +        const video = host === 'youtu.be' ? u.pathname.match(/^\/([A-Za-z0-9_-]{11})\/?$/)?.[1] :
 +            path === '/watch' && u.searchParams.getAll('v').length === 1 ? u.searchParams.get('v') :
@@ -1115,6 +1125,7 @@
 +        }
 +      } else return null;
 +      const targetHost = platform === 'twitter_x' ? 'x.com' :
++          platform === 'linkedin' ? 'www.linkedin.com' :
 +          platform === 'youtube' ? 'www.youtube.com' :
 +          platform === 'reddit' ? 'www.reddit.com' :
 +          platform === 'tiktok' ? 'www.tiktok.com' :
@@ -1158,12 +1169,13 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
++  const linkedinSelector = 'article[data-activity-urn],section.comment';
 +  const youtubeCommentSelector = 'ytd-comment-view-model,ytd-comment-renderer';
 +  const youtubeSelector = 'ytd-watch-flexy,ytd-reel-video-renderer,' + youtubeCommentSelector +
 +      ',ytd-compact-video-renderer,ytd-video-renderer,ytd-rich-grid-media,yt-lockup-view-model,' +
 +      '.ytp-suggestion-set,.ytp-autonav-endscreen-link-container,ytd-live-chat-frame';
 +  const redditSelector = 'shreddit-post,shreddit-comment';
-+  const postSelector = youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
++  const postSelector = linkedinSelector + ',' + youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1330,6 +1342,57 @@
 +    }
 +    return details;
 +  };
++  const linkedinMatches = (post, raw) => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'linkedin' || !post?.matches('article[data-activity-urn]')) return false;
++    const urn = 'urn:li:activity:' + new URL(parsed.url).pathname.split(':').pop().replace(/\/$/, '');
++    const featured = post.getAttribute('data-featured-activity-urn');
++    return post.getAttribute('data-activity-urn') === urn && (!featured || featured === urn);
++  };
++  const linkedinSelectedChild = post => [...post.querySelectorAll('article,section.comment')].some(child =>
++      visible(child) && exposed(child, child.getBoundingClientRect()) &&
++      area(intersection(child.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const linkedinDetails = (post, parsed) => {
++    if (!linkedinMatches(post, parsed.url)) return {};
++    const owns = node => postFor(node) === post;
++    const headers = [...post.querySelectorAll('[data-test-id="main-feed-activity-card__entity-lockup"]')]
++        .filter(owns);
++    if (headers.length !== 1) return {};
++    const header = headers[0], details = {}, profiles = new Map();
++    for (const link of header.querySelectorAll('a[href][data-tracking-control-name$="feed-actor-name"]')) {
++      if (!owns(link) || !visible(link, false) || !text(link)) continue;
++      try {
++        const u = new URL(link.href), host = u.hostname.replace(/^www\./, '');
++        if (!['http:','https:'].includes(u.protocol) || u.username || u.password || u.port ||
++            !(host === 'linkedin.com' || /^[a-z]{2}\.linkedin\.com$/.test(host))) continue;
++        const path = u.pathname.replace(/\/$/, '');
++        if (!/^\/(?:in|company|school)\/[A-Za-z0-9_%.-]+$/.test(path) ||
++            /[\s\u0000-\u001f/?#]/.test(decodeURIComponent(path.split('/').pop()))) continue;
++        const profile = 'https://www.linkedin.com' + path, name = text(link);
++        profiles.set(profile.toLowerCase() + '\n' + name,
++            {account:name, display_name:name, profile_url:profile});
++      } catch { /* No usable observed author profile. */ }
++    }
++    const accounts = [...profiles.values()];
++    if (accounts.length) details.account_candidates = accounts.slice(0, 8);
++    if (accounts.length === 1) {
++      details.posting_account = accounts[0].account;
++      details.account_display_name = accounts[0].display_name;
++      details.account_profile_url = accounts[0].profile_url;
++      details.account_evidence = 'linkedin_public_actor_name_link';
++    }
++    const times = [...header.querySelectorAll('time')].filter(node => owns(node) && visible(node, false));
++    if (times.length === 1) {
++      const date = times[0], displayed = text(date), machine = (date.getAttribute('datetime') || '').slice(0, 256);
++      if (machine || displayed) {
++        details.publication_date_text = machine || displayed;
++        details.publication_date_displayed = displayed;
++        if (machine) details.publication_datetime_attribute = machine;
++        details.date_evidence = 'linkedin_public_actor_time';
++      }
++    }
++    return details;
++  };
 +  const fullTimestamp = value => /\d{4}/.test(value) && /\d[:.]\d{2}/.test(value);
 +  const compactTimestamp = value => /^(?:\d+\s*[a-zæøå]{1,3}|yesterday|today|i går|i dag)$/i.test(value);
 +  const selectorFor = element => {
@@ -1344,6 +1407,7 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'linkedin') return linkedinDetails(post, parsed);
 +    if (parsed.platform === 'youtube') return youtubeDetails(post, parsed);
 +    if (parsed.platform === 'reddit' && !redditPostMatches(post, parsed.url)) return {};
 +    if (parsed.platform === 'tiktok' &&
@@ -1551,6 +1615,15 @@
 +    const parsed = normalize(raw);
 +    if (!parsed) return;
 +    parsed.original_url = new URL(observedRaw, document.baseURI).href;
++    if (parsed.platform === 'linkedin' || post?.matches(linkedinSelector)) {
++      if (post?.matches('article[data-activity-urn]') && linkedinSelectedChild(post)) return;
++      if (parsed.platform !== 'linkedin' || !linkedinMatches(post, raw)) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'linkedin_reference_link';
++      }
++    }
 +    if (parsed.platform === 'youtube' || post?.matches(youtubeSelector)) {
 +      const own = parsed.platform === 'youtube' && youtubeMatches(post, raw) && youtubeVideoSelected(post);
 +      if (!own) {
@@ -1596,7 +1669,7 @@
 +    }
 +    const details = post?.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
 +        post.querySelector('.ad-showing,.ad-interrupting') ? {} : siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube'].includes(parsed.platform)) {
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube','linkedin'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1670,6 +1743,7 @@
 +      const address = normalize(location.href);
 +      const pageSourceAllowed = raw => {
 +        const platform = normalize(raw)?.platform;
++        if (platform === 'linkedin') return false;  // Match the card's own activity URN below.
 +        if (platform === 'youtube') return false;  // Match explicit video/comment ownership below.
 +        if (platform === 'reddit') return false;  // Require the item's own ID/permalink.
 +        if (platform === 'tiktok') return false;  // Matched per item below.
@@ -1727,6 +1801,14 @@
 +      const u = new URL(parsed.url);
 +      u.searchParams.delete('lc');
 +      if (youtubeMatches(post, u.href)) add(u.href, 'youtube_video_identity', post, null, raw);
++    }
++  }
++  const linkedinPageSources = [location.href,
++      document.querySelector('link[rel="canonical"]')?.href,
++      document.querySelector('meta[property="og:url"]')?.content];
++  for (const post of overlapping) {
++    for (const raw of linkedinPageSources) {
++      if (linkedinMatches(post, raw)) add(raw, 'linkedin_activity_permalink', post);
 +    }
 +  }
 +  const list = [...candidates.values()];
@@ -1839,8 +1921,11 @@
 +      overlapping.some(post => post.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
 +          [...post.querySelectorAll('.ad-showing,.ad-interrupting')].some(e => visible(e) &&
 +              exposed(e, e.getBoundingClientRect())));
++  const linkedinReview = list.some(c => c.evidence === 'linkedin_reference_link') ||
++      (list.some(c => c.platform === 'linkedin') && overlapping.some(post =>
++          !contexts.includes(post) && contexts.some(parent => parent?.contains(post))));
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || linkedinReview || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -1929,6 +2014,15 @@
 +  if (!url.is_valid() || !url.SchemeIs("https") || url.has_username() ||
 +      url.has_password() || url.has_port() || raw.size() > 2048)
 +    return false;
++  if (url.host() == "www.linkedin.com") {
++    constexpr std::string_view prefix = "/feed/update/urn:li:activity:";
++    const std::string_view path = url.path();
++    if (url.has_query() || url.has_ref() || !path.starts_with(prefix) ||
++        !path.ends_with('/') || path.size() <= prefix.size() + 1)
++      return false;
++    return base::ContainsOnlyChars(
++        path.substr(prefix.size(), path.size() - prefix.size() - 1), "0123456789");
++  }
 +  if (url.host() == "www.youtube.com") {
 +    const auto parts = base::SplitStringPiece(
 +        url.query(), "&", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
@@ -2160,7 +2254,7 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,316 @@
+@@ -0,0 +1,336 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -2195,10 +2289,30 @@
 +                   "https://www.reddit.com/r/news/comments/abc123/comment/def456/",
 +                   "https://www.reddit.com/comments/abc123/",
 +                   "https://www.youtube.com/watch?v=jNQXAC9IVRw",
-+                   "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=UgABC_123.reply-2"}) {
++                   "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=UgABC_123.reply-2",
++                   "https://www.linkedin.com/feed/update/urn:li:activity:7080179061443977217/"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsLinkedInNonActivitySuggestions) {
++  for (const char* url : {
++           "https://www.linkedin.com/in/reporter",
++           "https://www.linkedin.com/company/example",
++           "https://www.linkedin.com/posts/example-activity-123-ABcd",
++           "https://www.linkedin.com/feed/update/urn:li:share:123/",
++           "https://www.linkedin.com/feed/update/urn:li:ugcPost:123/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:abc/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123/comments/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123/?commentUrn=456",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123/#comment",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123",
++           "https://www.linkedin.com.attacker.test/feed/update/urn:li:activity:123/"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
 +  }
 +}
 +
@@ -3734,7 +3848,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,461 @@
+@@ -0,0 +1,463 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4033,6 +4147,8 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.DomainIs("linkedin.com"))
++      return "LinkedIn";
 +    if (url.DomainIs("youtube.com") || url.DomainIs("youtu.be"))
 +      return "YouTube";
 +    if (url.DomainIs("reddit.com"))
@@ -4246,7 +4362,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,490 @@
+@@ -0,0 +1,491 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4589,7 +4705,8 @@
 +           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"},
 +           {"https://www.tiktok.com/@source/video/123", "TikTok"},
 +           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"},
-+           {"https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube"}}) {
++           {"https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube"},
++           {"https://www.linkedin.com/feed/update/urn:li:activity:123/", "LinkedIn"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");

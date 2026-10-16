@@ -903,3 +903,52 @@ ExifTool inspection of the saved comment PNG verified its full `lc` URL,
 `@reader`, the unchanged relative edited label, reviewed-field origins, original
 tracking URL, YouTube credit and separate capture timestamp. This is controlled
 local test content, not a live YouTube capture.
+
+
+LinkedIn source extraction targets the observed public
+`article[data-activity-urn]` activity cards. Explicit `/posts/...-activity-ID-code`
+and `/feed/update/urn:li:activity:ID/` permalinks, including encoded URN colons and
+localized two-letter LinkedIn hosts, normalize to the activity URL. The original
+observed URL retains tracking. Comment/reply query parameters, fragments,
+profiles, articles, shortened `lnkd.in` links and share/UGC-post URNs are not
+normalized into an activity. Native validation accepts only the normalized HTTPS
+activity path with a numeric ID and no query/fragment.
+
+Page address/canonical/Open Graph sources must match the card's own activity URN.
+A different featured activity prevents attribution; the separate attributed share
+URN is never treated as an activity ID. Container IDs alone do not manufacture
+permalinks, and IDs are never decoded into dates. Public actor-name links must
+belong to the card's own entity-lockup header. The linked display name and cleaned
+member/company/school profile URL are retained without guessing an @handle from
+a slug. Body mentions, comment authors, hidden names and conflicting author
+observations do not provide an account. One visible scoped header `time` supplies
+the observed datetime attribute or displayed date label, preserving relative
+labels and edited markers. Missing/duplicate times stay blank; generic body times
+and hidden tooltips do not supply publication dates. No timestamp hover, identity
+resolution, short-link expansion or external API was added.
+
+Public `section.comment` elements have separate ownership. The inspected layout
+exposes only author links and relative labels, so comment-only crops leave source,
+account and date blank. Crops with comments and post content, including margins,
+require review. Unlinked nested articles cannot inherit the enclosing source;
+references to other posts or platforms are kept only when directly selected and
+require review. Authenticated feed layouts, LinkedIn articles and comment
+permalinks are not supported by this addition.
+
+Validation: 280 production-script browser fixtures, 13 native source tests and
+nine native export tests passed. Both GN header checks, seven patch lint checks,
+patch-file checks, existing devutils tests and the strict no-fuzz reverse/apply
+round trip for the four changed Chromium files passed. The persistent macOS app
+rebuilt successfully. Public company/person posts were inspected for activity vs
+share URNs, localized author URLs, relative/edited date labels and separate
+comment sections. Live sign-in overlays correctly yielded no suggestions.
+Unobscured live capture and authenticated layout QA remain unverified because
+LinkedIn presented sign-in overlays; no account or CAPTCHA flow was used.
+
+Native QA at `http://127.0.0.1:8236/linkedin-capture` verified the post's activity
+URL, Example Company name and unchanged `11mo Edited` label. A comment-only crop
+left all attribution fields blank; the full page offered a chooser with blank
+permalink/account/date. ExifTool inspection of a saved post PNG verified its
+reviewed-field origins, original tracked `/posts/` URL, normalized company profile,
+LinkedIn credit, site-date evidence and separate capture timestamp. This fixture
+is controlled local content, not an unobscured live LinkedIn capture.
