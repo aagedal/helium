@@ -19,6 +19,9 @@ It retains Helium's privacy-focused foundation and adds the features below.
   are retained, and additional panes open new-tab pages.
 - **Resizable boundaries throughout the split**, including the inner dividers
   of grids and mixed layouts. Drag a divider or focus it and use arrow keys.
+- **See the active pane** with the normal sub-tab background highlight,
+  including compact pinned tabs and vertical tabs. Expanded vertical pinned
+  splits use icon tiles, wrapping larger splits to fit the sidebar. Click a sub-tab in the current split to select its pane.
 - **Reload the focused pane** with Command-R, including bypass-cache reload.
   Explicitly selecting additional tab-strip tabs retains multiple-tab reload.
 - **Pinned splits return across sessions** with their pages, layout, divider
@@ -42,9 +45,10 @@ page, including when it is part of a split.
   pinned saved tab group, with a side-by-side split. The original page is kept.
 
 Mobile previews run without opening a DevTools window. They use Chromium's
-mobile viewport and touch emulation; the rendering engine and browser user agent
-remain Chromium's. Per-tab settings are restored locally and are not synced
-between devices.
+mobile viewport and touch emulation, plus an Android mobile Chromium identity
+in the user agent and Client Hints. Switching between desktop and mobile reloads
+eligible pages so device detection runs again. The rendering engine remains
+Chromium. Per-tab settings are restored locally and are not synced between devices.
 
 ### Startup and identity
 
