@@ -80,10 +80,10 @@ failure codes without collecting account credentials, cookies, or license data.
 
 ## 3. Prototype WebKit inside the Helium UI
 
-- [ ] Inspect Chromium's tab/content host and macOS native view ownership before
+- [x] Inspect Chromium's tab/content host and macOS native view ownership before
   selecting the integration point. A WKWebView cannot replace a WebContents by
   simply changing its renderer.
-- [ ] Prototype hosting WKWebView beneath the existing Helium tab/address bar,
+- [x] Prototype hosting WKWebView beneath the existing Helium tab/address bar,
   with clear engine ownership for each tab and no transfer of live page state.
 - [ ] Connect navigation, title, focus, shortcuts, fullscreen, and close behavior.
 - [ ] Define engine choice on cross-domain navigation and authentication redirects.
@@ -95,6 +95,40 @@ failure codes without collecting account credentials, cookies, or license data.
   developer inspection, and site-data controls for the second engine.
 - [ ] Decide private browsing behavior explicitly; until it is implemented and
   verified, keep it excluded from automatic WebKit routing.
+
+The first in-tab prototype is implemented behind a separate
+`helium-webkit-streaming-tabs` flag. `ContentsWebView` holds a second
+`NativeViewHost` above the blank Chromium surface; per-tab `WebContents` user data
+owns the native controller. The bridge is a component in development builds, so
+the browser and UI share session ownership without copying profile registries.
+Switching tabs removes the native host while retaining the per-tab WebKit page;
+close/navigation releases that page. Removing the unused host and restoring native
+view order is necessary to keep Chromium surfaces drawing after tab switches.
+Hidden media is suspended; reveal pauses it before allowing playback again.
+Pending handoffs are invalidated by newer Chromium navigations. Native focus is
+forwarded to WebKit, and native mouse interaction activates the owning tab.
+
+The Chromium WebContents is deliberately a blank shell. The existing native
+WebKit navigation toolbar supplies the real address and Back/Forward/Reload;
+omnibox/security state and browser commands are not yet integrated. HTTP(S)
+service/authentication navigation stays in WebKit; an ordinary omnibox navigation
+exits to Chromium. Restoring the blank shell does not recreate a WK player.
+The integration checkboxes above remain open until runtime validation covers
+these behaviors and the remaining browser-chrome work.
+
+Prototype validation on macOS 27.0.1 (2026-10-16): the persistent component
+build succeeds; patch parsing and dry application pass. Visual smoke tests with
+isolated temporary profiles confirmed Netflix and TV 2 Play rendering under the
+Helium tab strip, multiple tabs, switching to a visible Chromium page, ordinary
+omnibox navigation releasing WebKit, subsequent streaming re-entry, and closing
+and reopening a tab as a blank shell without recreating its WebKit player.
+A flag-disabled run displayed ordinary Chromium content. The accessibility tree
+omits the embedded native WebKit subtree, so screenshots were required to verify
+its content; accessibility integration remains unresolved. Both tab labels and
+the omnibox can still say `about:blank`. Protected in-tab playback, media
+suspension/resume behavior, split-pane interaction, and profile isolation were
+not verified by this smoke test. The prepared source was updated directly; the
+older fork-source snapshot and its unrelated changes were preserved.
 
 ## 4. Release decision
 

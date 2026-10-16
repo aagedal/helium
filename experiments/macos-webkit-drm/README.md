@@ -83,3 +83,43 @@ For local lifecycle diagnostics, add
 `--enable-logging=stderr --vmodule=helium_webkit_streaming_mac=1` to the launcher.
 The optional messages report window opening/closing and navigation completion or
 numeric failure codes without collecting page URLs, cookies, or license data.
+
+## In-tab WebKit prototype
+
+`macos-webkit-streaming-tabs.patch` adds a separate, macOS-only prototype. Launch
+with the persistent launcher and `--helium-webkit-streaming-tabs`, or enable
+`chrome://flags/#helium-webkit-streaming-tabs` and restart. This mode takes
+precedence over the separate streaming-window flag.
+
+Opening an eligible Netflix or TV 2 Play URL gives that Helium tab its own
+WKWebView beneath Helium's tab strip and toolbar. Multiple streaming tabs have
+independent live pages and share only their profile's existing WebKit data store.
+The native Back/Forward/Reload buttons and address field inside the content area
+control WebKit. Authentication and other HTTP(S) links inside WebKit stay in
+WebKit; typing an ordinary URL into Helium's omnibox returns the tab to Chromium.
+Private/guest profiles remain excluded.
+
+This is a hosting prototype, not complete browser-chrome integration. Helium's
+omnibox intentionally displays the blank Chromium shell (`about:blank`), and the
+tab can also be labelled `about:blank`. The inner address field displays the WebKit page.
+Browser Back/Forward/Reload, bookmarks, history, permission indicators, Find,
+downloads, extension commands, and site-data controls are not wired to WebKit.
+Use the inner navigation controls. The Chromium shell must not be interpreted as
+the displayed page's security identity. Existing native-window mode is unchanged.
+
+Switching away suspends media; returning pauses it before lifting suspension so
+playback requires an explicit resume. Closing the tab or navigating it back to
+Chromium releases the WebKit page. WebKit sessions are not serialized: restoring
+or duplicating the blank shell must not restore a hidden player. Split panes use
+separate native hosts, with native clicks activating their owning tab, but split
+focus, clipping, modal overlays, fullscreen, accessibility, and protected playback
+still require integrated manual verification.
+
+
+The prototype builds in the persistent component cache. On macOS 27.0.1, visual
+smoke tests confirmed both public service pages in tabs, tab switching alongside
+Chromium pages, ordinary omnibox fallback and subsequent streaming re-entry,
+and close/reopen without restoring the WebKit player. Protected playback and
+hidden-media behavior have not yet been tested in this tab host. The embedded
+WebKit content is absent from the current accessibility tree; this remains a
+prototype limitation. See [PLAN.md](PLAN.md) for the remaining integration work.
