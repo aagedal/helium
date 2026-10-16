@@ -1,0 +1,548 @@
+--- a/chrome/browser/helium_flag_entries.h
++++ b/chrome/browser/helium_flag_entries.h
+@@ -93,9 +93,9 @@
+      kOsMac, SINGLE_VALUE_TYPE("helium-webkit-streaming")},
+     {"helium-webkit-streaming-tabs", "WebKit streaming tabs (prototype)",
+      "Hosts streaming services in Helium tabs on macOS 14+. Use the tab menu to "
+-     "switch other HTTP(S) pages manually. WebKit has its own toolbar; the shell shows "
+-     "about:blank. Separate logins; no extensions or session restore. Hidden "
+-     "media is paused. Excludes private/guest windows. Overrides streaming "
+-     "window mode. Helium flag.",
++     "switch other HTTP(S) pages manually. Uses Helium’s address bar and "
++     "navigation controls. Separate logins; no extensions or session restore. "
++     "Hidden media is paused. Excludes private/guest windows. Overrides "
++     "streaming window mode. Helium flag.",
+      kOsMac, SINGLE_VALUE_TYPE("helium-webkit-streaming-tabs")},
+ #endif  // CHROME_BROWSER_HELIUM_FLAG_ENTRIES_H_
+--- a/chrome/browser/helium_webkit_streaming_mac.h
++++ b/chrome/browser/helium_webkit_streaming_mac.h
+@@ -10,6 +10,8 @@
+ #include "base/functional/callback_forward.h"
+ #include "ui/gfx/native_ui_types.h"
+ 
++class GURL;
++
+ namespace content {
+ class WebContents;
+ class NavigationThrottleRegistry;
+@@ -18,6 +20,24 @@
+ namespace helium {
+ // The WebContents remains a blank Chromium shell. Its user data owns the
+ // optional WebKit session; no Chromium security state represents the WK page.
++// URL is for display only; it does not fabricate Chromium navigation/security.
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++GURL GetWebKitStreamingTabURL(content::WebContents* contents);
++enum class WebKitTabCommand {
++  kBack,
++  kForward,
++  kReload,
++  kReloadBypassingCache,
++  kStop
++};
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++bool CanGoBackInWebKitStreamingTab(content::WebContents* contents);
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++bool CanGoForwardInWebKitStreamingTab(content::WebContents* contents);
++// Returns true when an active WK tab handled the command.
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++bool ExecuteWebKitStreamingTabCommand(content::WebContents* contents,
++                                      WebKitTabCommand command);
+ COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
+ gfx::NativeView GetWebKitStreamingTabView(content::WebContents* contents);
+ COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
+--- a/chrome/browser/helium_webkit_streaming_mac.mm
++++ b/chrome/browser/helium_webkit_streaming_mac.mm
+@@ -117,6 +117,8 @@
+ - (void)loadURL:(NSURL*)url;
+ - (NSView*)streamingView;
+ - (NSURL*)pageURL;
++- (WKWebView*)webView;
++- (void)setNavigationCallback:(base::RepeatingClosure)callback;
+ - (void)shutdown;
+ - (void)pauseMedia;
+ @end
+@@ -127,6 +129,7 @@
+   NSTextField* _address;
+   NSTextField* _status;
+   NSString* _windowKey;
++  base::RepeatingClosure _navigationChanged;
+ }
+ 
+ - (instancetype)initWithURL:(NSURL*)url
+@@ -169,11 +172,9 @@
+   NSStackView* toolbar = [[NSStackView alloc] init];
+   toolbar.orientation = NSUserInterfaceLayoutOrientationHorizontal;
+   toolbar.spacing = 8;
+-  NSArray<NSString*>* titles =
+-      @[ @"Back", @"Forward", @"Reload", @"Netflix", @"TV 2 Play" ];
++  NSArray<NSString*>* titles = @[ @"Back", @"Forward", @"Reload" ];
+   SEL actions[] = {@selector(goBack:), @selector(goForward:),
+-                   @selector(reload:), @selector(openNetflix:),
+-                   @selector(openTV2:)};
++                   @selector(reload:)};
+   for (NSUInteger i = 0; i < titles.count; ++i) {
+     [toolbar addArrangedSubview:[NSButton buttonWithTitle:titles[i]
+                                                    target:self
+@@ -198,34 +199,74 @@
+   if (window)
+     window.contentView = _root;
+   NSView* root = _root;
+-  for (NSView* view in @[ toolbar, _webView, _status ]) {
++  // Embedded tabs use Helium's toolbar and occupy the entire content area.
++  NSArray<NSView*>* children =
++      window ? @[ toolbar, _webView, _status ] : @[ _webView ];
++  for (NSView* view in children) {
+     view.translatesAutoresizingMaskIntoConstraints = NO;
+     [root addSubview:view];
+   }
+-  [NSLayoutConstraint activateConstraints:@[
+-    [toolbar.topAnchor constraintEqualToAnchor:root.topAnchor constant:8],
+-    [toolbar.leadingAnchor constraintEqualToAnchor:root.leadingAnchor
+-                                          constant:8],
+-    [toolbar.trailingAnchor constraintEqualToAnchor:root.trailingAnchor
+-                                           constant:-8],
+-    [_address.widthAnchor constraintGreaterThanOrEqualToConstant:120],
+-    [_webView.topAnchor constraintEqualToAnchor:toolbar.bottomAnchor
+-                                       constant:8],
+-    [_webView.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
+-    [_webView.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
+-    [_webView.bottomAnchor constraintEqualToAnchor:_status.topAnchor
+-                                          constant:-5],
+-    [_status.leadingAnchor constraintEqualToAnchor:root.leadingAnchor
+-                                          constant:8],
+-    [_status.trailingAnchor constraintEqualToAnchor:root.trailingAnchor
+-                                           constant:-8],
+-    [_status.bottomAnchor constraintEqualToAnchor:root.bottomAnchor
+-                                         constant:-5],
+-  ]];
++  if (window) {
++    [NSLayoutConstraint activateConstraints:@[
++      [toolbar.topAnchor constraintEqualToAnchor:root.topAnchor constant:8],
++      [toolbar.leadingAnchor constraintEqualToAnchor:root.leadingAnchor
++                                            constant:8],
++      [toolbar.trailingAnchor constraintEqualToAnchor:root.trailingAnchor
++                                             constant:-8],
++      [_address.widthAnchor constraintGreaterThanOrEqualToConstant:120],
++      [_webView.topAnchor constraintEqualToAnchor:toolbar.bottomAnchor
++                                         constant:8],
++      [_webView.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
++      [_webView.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
++      [_webView.bottomAnchor constraintEqualToAnchor:_status.topAnchor
++                                            constant:-5],
++      [_status.leadingAnchor constraintEqualToAnchor:root.leadingAnchor
++                                            constant:8],
++      [_status.trailingAnchor constraintEqualToAnchor:root.trailingAnchor
++                                             constant:-8],
++      [_status.bottomAnchor constraintEqualToAnchor:root.bottomAnchor
++                                           constant:-5],
++    ]];
++  } else {
++    [NSLayoutConstraint activateConstraints:@[
++      [_webView.topAnchor constraintEqualToAnchor:root.topAnchor],
++      [_webView.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
++      [_webView.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
++      [_webView.bottomAnchor constraintEqualToAnchor:root.bottomAnchor],
++    ]];
++  }
++  // KVO includes redirects, history traversal and same-document changes such
++  // as pushState, which do not necessarily finish a WKNavigation.
++  for (NSString* key in @[ @"URL", @"title", @"canGoBack", @"canGoForward" ])
++    [_webView addObserver:self forKeyPath:key options:0 context:nullptr];
+   [self loadURL:url];
+   return self;
+ }
+ 
++- (void)dealloc {
++  for (NSString* key in @[ @"URL", @"title", @"canGoBack", @"canGoForward" ])
++    [_webView removeObserver:self forKeyPath:key];
++}
++- (WKWebView*)webView {
++  return _webView;
++}
++- (void)setNavigationCallback:(base::RepeatingClosure)callback {
++  _navigationChanged = std::move(callback);
++}
++- (void)observeValueForKeyPath:(NSString*)keyPath
++                      ofObject:(id)object
++                        change:(NSDictionary<NSKeyValueChangeKey, id>*)change
++                       context:(void*)context {
++  if (object == _webView) {
++    if (_navigationChanged)
++      _navigationChanged.Run();
++    return;
++  }
++  [super observeValueForKeyPath:keyPath
++                       ofObject:object
++                         change:change
++                        context:context];
++}
+ - (NSURL*)pageURL {
+   return _webView.URL;
+ }
+@@ -236,6 +277,7 @@
+   [_webView pauseAllMediaPlaybackWithCompletionHandler:nil];
+ }
+ - (void)shutdown {
++  _navigationChanged.Reset();
+   [_root setActivateCallback:base::RepeatingClosure()];
+   [self pauseMedia];
+   [_webView stopLoading];
+@@ -255,12 +297,6 @@
+ }
+ - (void)reload:(id)sender {
+   [_webView reload];
+-}
+-- (void)openNetflix:(id)sender {
+-  [self loadURL:[NSURL URLWithString:@"https://www.netflix.com/"]];
+-}
+-- (void)openTV2:(id)sender {
+-  [self loadURL:[NSURL URLWithString:@"https://play.tv2.no/"]];
+ }
+ - (void)navigate:(id)sender {
+   NSString* value = [_address.stringValue
+@@ -357,8 +393,11 @@
+       [(HeliumStreamingRootView*)[controller_ streamingView]
+           setActivateCallback:base::BindRepeating(&StreamingTab::Activate,
+                                                   activation_factory_.GetWeakPtr())];
+-      // Discard the previous renderer page before hosting WebKit. A browser-
+-      // internal URL keeps the omnibox from claiming the WK page's identity.
++      [controller_ setNavigationCallback:base::BindRepeating(
++                                             &StreamingTab::NavigationChanged,
++                                             activation_factory_.GetWeakPtr())];
++      // Keep Chromium's document and security state blank. The location bar
++      // reads the WK URL explicitly rather than inventing a Chromium commit.
+       preparing_shell_ = true;
+       content::NavigationController::LoadURLParams params(GURL("about:blank"));
+       web_contents()->GetController().LoadURLWithParams(params);
+@@ -370,6 +409,47 @@
+     }
+   }
+ 
++  GURL url() const {
++    if (!controller_)
++      return GURL();
++    NSURL* native_url = [controller_ pageURL];
++    return native_url ? GURL(base::SysNSStringToUTF8(native_url.absoluteString))
++                      : last_requested_url_;
++  }
++  bool CanGoBack() const { return controller_.webView.canGoBack; }
++  bool CanGoForward() const { return controller_.webView.canGoForward; }
++  bool Execute(WebKitTabCommand command) {
++    if (!controller_)
++      return false;
++    switch (command) {
++      case WebKitTabCommand::kBack:
++        [controller_.webView goBack];
++        break;
++      case WebKitTabCommand::kForward:
++        [controller_.webView goForward];
++        break;
++      case WebKitTabCommand::kReload:
++        [controller_.webView reload];
++        break;
++      case WebKitTabCommand::kReloadBypassingCache:
++        [controller_.webView reloadFromOrigin];
++        break;
++      case WebKitTabCommand::kStop:
++        [controller_.webView stopLoading];
++        break;
++    }
++    return true;
++  }
++  void NavigationChanged() {
++    if (!controller_ || !web_contents())
++      return;
++    if (auto* entry = web_contents()->GetController().GetLastCommittedEntry()) {
++      NSString* title = controller_.webView.title;
++      web_contents()->UpdateTitleForEntry(
++          entry, title.length ? base::SysNSStringToUTF16(title) : u"WebKit");
++    }
++    web_contents()->NotifyNavigationStateChanged(content::INVALIDATE_TYPE_ALL);
++  }
+   gfx::NativeView view() const {
+     return gfx::NativeView([controller_ streamingView]);
+   }
+@@ -429,9 +509,11 @@
+     if (!controller_ || !handle->HasCommitted() ||
+         !handle->IsInPrimaryMainFrame())
+       return;
+-    if (auto* entry = web_contents()->GetController().GetLastCommittedEntry())
+-      web_contents()->UpdateTitleForEntry(entry, u"Streaming — WebKit (experimental)");
+-  }
++    NavigationChanged();
++  }
++  // The blank shell can finish after WK has already published its title.
++  // Reapply it once Chromium finishes setting the shell's default title.
++  void DidStopLoading() override { NavigationChanged(); }
+   void WebContentsDestroyed() override { Deactivate(); }
+   base::WeakPtr<StreamingTab> GetWeakPtr() { return weak_factory_.GetWeakPtr(); }
+ 
+@@ -445,6 +527,7 @@
+     changed_.Notify();
+     [old shutdown];
+     preparing_shell_ = false;
++    web_contents()->NotifyNavigationStateChanged(content::INVALIDATE_TYPE_ALL);
+   }
+   HeliumStreamingWindow* __strong controller_ = nil;
+   bool preparing_shell_ = false;
+@@ -535,6 +618,24 @@
+ };
+ }  // namespace
+ 
++GURL GetWebKitStreamingTabURL(content::WebContents* contents) {
++  auto* tab = GetStreamingTab(contents);
++  return tab ? tab->url() : GURL();
++}
++bool CanGoBackInWebKitStreamingTab(content::WebContents* contents) {
++  auto* tab = GetStreamingTab(contents);
++  return tab && tab->CanGoBack();
++}
++bool CanGoForwardInWebKitStreamingTab(content::WebContents* contents) {
++  auto* tab = GetStreamingTab(contents);
++  return tab && tab->CanGoForward();
++}
++bool ExecuteWebKitStreamingTabCommand(content::WebContents* contents,
++                                      WebKitTabCommand command) {
++  auto* tab = GetStreamingTab(contents);
++  return tab && tab->Execute(command);
++}
++
+ gfx::NativeView GetWebKitStreamingTabView(content::WebContents* contents) {
+   auto* tab = GetStreamingTab(contents);
+   return tab ? tab->view() : gfx::NativeView();
+--- a/chrome/browser/ui/BUILD.gn
++++ b/chrome/browser/ui/BUILD.gn
+@@ -2558,6 +2558,7 @@
+   }
+ 
+   if (is_mac) {
++    deps += [ "//chrome/browser:helium_webkit_streaming" ]
+     sources += [
+       "browser_shortcuts/browser_shortcut_platform_mac.h",
+       "browser_shortcuts/browser_shortcut_platform_mac.mm",
+--- a/chrome/browser/ui/browser_commands.cc
++++ b/chrome/browser/ui/browser_commands.cc
+@@ -29,6 +29,10 @@
+ #include "base/time/time.h"
+ #include "base/trace_event/trace_event.h"
+ #include "build/build_config.h"
++
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/helium_webkit_streaming_mac.h"
++#endif
+ #include "chrome/app/chrome_command_ids.h"
+ #include "chrome/browser/autocomplete/autocomplete_classifier_factory.h"
+ #include "chrome/browser/bookmarks/bookmark_model_factory.h"
+@@ -794,6 +798,14 @@
+       new_tab->Focus();
+     }
+ 
++#if BUILDFLAG(IS_MAC)
++    if (helium::ExecuteWebKitStreamingTabCommand(
++            new_tab, bypass_cache
++                         ? helium::WebKitTabCommand::kReloadBypassingCache
++                         : helium::WebKitTabCommand::kReload))
++      continue;
++#endif
++
+     DevToolsWindow* const devtools =
+         DevToolsWindow::GetInstanceForInspectedWebContents(new_tab);
+     constexpr content::ReloadType kBypassingType =
+@@ -1035,6 +1047,11 @@
+ }
+ 
+ bool CanGoBack(content::WebContents* web_contents) {
++#if BUILDFLAG(IS_MAC)
++  if (helium::GetWebKitStreamingTabView(web_contents))
++    return helium::CanGoBackInWebKitStreamingTab(web_contents);
++#endif
++
+   return web_contents &&
+          (web_contents->GetController().CanGoBack() ||
+           back_to_opener::BackToOpenerController::CanGoBackToOpener(
+@@ -1047,6 +1064,11 @@
+   if (!web_contents) {
+     return false;
+   }
++
++#if BUILDFLAG(IS_MAC)
++  if (helium::GetWebKitStreamingTabView(web_contents))
++    return helium::CanGoBackInWebKitStreamingTab(web_contents);
++#endif
+ 
+   // Check for regular back navigation first.
+   if (web_contents->GetController().ShouldEnableBackButton()) {
+@@ -1116,6 +1138,12 @@
+     return;
+   }
+ 
++#if BUILDFLAG(IS_MAC)
++  if (helium::ExecuteWebKitStreamingTabCommand(web_contents,
++                                               helium::WebKitTabCommand::kBack))
++    return;
++#endif
++
+   // Try regular back navigation first.
+   if (web_contents->GetController().CanGoBack()) {
+     web_contents->GetController().GoBack();
+@@ -1133,17 +1161,25 @@
+ }
+ 
+ bool CanGoForward(const BrowserWindowInterface* browser) {
+-  return browser->GetTabStripModel()
+-      ->GetActiveWebContents()
+-      ->GetController()
+-      .CanGoForward();
++  return CanGoForward(browser->GetTabStripModel()->GetActiveWebContents());
+ }
+ 
+ bool CanGoForward(content::WebContents* web_contents) {
++#if BUILDFLAG(IS_MAC)
++  if (helium::GetWebKitStreamingTabView(web_contents))
++    return helium::CanGoForwardInWebKitStreamingTab(web_contents);
++#endif
++
+   return web_contents->GetController().CanGoForward();
+ }
+ 
+ bool ShouldEnableForwardButton(const BrowserWindowInterface* browser) {
++#if BUILDFLAG(IS_MAC)
++  auto* contents = browser->GetTabStripModel()->GetActiveWebContents();
++  if (helium::GetWebKitStreamingTabView(contents))
++    return helium::CanGoForwardInWebKitStreamingTab(contents);
++#endif
++
+   return browser->GetTabStripModel()
+       ->GetActiveWebContents()
+       ->GetController()
+@@ -1156,11 +1192,17 @@
+   if (CanGoForward(browser)) {
+     tabs::TabInterface* tab = GetTabAndRevertIfNecessary(browser, disposition);
+     CHECK(tab);
+-    tab->GetContents()->GetController().GoForward();
++    GoForward(tab->GetContents());
+   }
+ }
+ 
+ void GoForward(content::WebContents* web_contents) {
++#if BUILDFLAG(IS_MAC)
++  if (helium::ExecuteWebKitStreamingTabCommand(
++          web_contents, helium::WebKitTabCommand::kForward))
++    return;
++#endif
++
+   base::RecordAction(UserMetricsAction("Forward"));
+   if (CanGoForward(web_contents)) {
+     web_contents->GetController().GoForward();
+@@ -1314,6 +1356,13 @@
+ 
+ void Stop(BrowserWindowInterface* browser) {
+   base::RecordAction(UserMetricsAction("Stop"));
++
++#if BUILDFLAG(IS_MAC)
++  if (helium::ExecuteWebKitStreamingTabCommand(
++          browser->GetTabStripModel()->GetActiveWebContents(),
++          helium::WebKitTabCommand::kStop))
++    return;
++#endif
+   browser->GetTabStripModel()->GetActiveWebContents()->Stop();
+ }
+ 
+--- a/chrome/browser/ui/toolbar/BUILD.gn
++++ b/chrome/browser/ui/toolbar/BUILD.gn
+@@ -39,6 +39,10 @@
+     "//content/public/browser",
+     "//content/public/common",
+   ]
++
++  if (is_mac) {
++    deps += [ "//chrome/browser:helium_webkit_streaming" ]
++  }
+ 
+   if (enable_offline_pages) {
+     deps += [ "//chrome:offline_pages_enum_javagen" ]
+--- a/chrome/browser/ui/toolbar/chrome_location_bar_model_delegate.cc
++++ b/chrome/browser/ui/toolbar/chrome_location_bar_model_delegate.cc
+@@ -7,6 +7,10 @@
+ #include "base/check.h"
+ #include "base/feature_list.h"
+ #include "build/build_config.h"
++
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/helium_webkit_streaming_mac.h"
++#endif
+ #include "chrome/browser/autocomplete/autocomplete_classifier_factory.h"
+ #include "chrome/browser/autocomplete/chrome_autocomplete_scheme_classifier.h"
+ #include "chrome/browser/contextual_tasks/contextual_tasks_ui_interface.h"
+@@ -71,6 +75,13 @@
+ 
+ bool ChromeLocationBarModelDelegate::GetURL(GURL* url) const {
+   DCHECK(url);
++#if BUILDFLAG(IS_MAC)
++  GURL webkit_url = helium::GetWebKitStreamingTabURL(GetActiveWebContents());
++  if (webkit_url.is_valid()) {
++    *url = webkit_url;
++    return true;
++  }
++#endif
+   content::NavigationEntry* entry = GetNavigationEntry();
+   if (!entry || entry->IsInitialEntry()) {
+     return false;
+@@ -90,6 +101,10 @@
+ }
+ 
+ bool ChromeLocationBarModelDelegate::ShouldDisplayURL() const {
++#if BUILDFLAG(IS_MAC)
++  if (helium::GetWebKitStreamingTabView(GetActiveWebContents()))
++    return true;
++#endif
+   // Note: The order here is important.
+   // - The WebUI test must come before the extension scheme test because there
+   //   can be WebUIs that have extension schemes (e.g. the bookmark manager). In
+@@ -145,6 +160,11 @@
+ security_state::SecurityLevel ChromeLocationBarModelDelegate::GetSecurityLevel()
+     const {
+   content::WebContents* web_contents = GetActiveWebContents();
++#if BUILDFLAG(IS_MAC)
++  // Chromium has no certificate/security information for the native WK page.
++  if (helium::GetWebKitStreamingTabView(web_contents))
++    return security_state::NONE;
++#endif
+   // If there is no active WebContents (which can happen during toolbar
+   // initialization), assume no security style.
+   if (!web_contents) {
+@@ -155,6 +175,11 @@
+ 
+ net::CertStatus ChromeLocationBarModelDelegate::GetCertStatus() const {
+   content::WebContents* web_contents = GetActiveWebContents();
++#if BUILDFLAG(IS_MAC)
++  // Chromium has no certificate/security information for the native WK page.
++  if (helium::GetWebKitStreamingTabView(web_contents))
++    return 0;
++#endif
+   // If there is no active WebContents (which can happen during toolbar
+   // initialization), assume no cert status.
+   if (!web_contents) {
+@@ -167,6 +192,11 @@
+ std::unique_ptr<security_state::VisibleSecurityState>
+ ChromeLocationBarModelDelegate::GetVisibleSecurityState() const {
+   content::WebContents* web_contents = GetActiveWebContents();
++#if BUILDFLAG(IS_MAC)
++  // Chromium has no certificate/security information for the native WK page.
++  if (helium::GetWebKitStreamingTabView(web_contents))
++    return std::make_unique<security_state::VisibleSecurityState>();
++#endif
+   // If there is no active WebContents (which can happen during toolbar
+   // initialization), assume no security info.
+   if (!web_contents) {
+@@ -177,6 +207,10 @@
+ 
+ scoped_refptr<net::X509Certificate>
+ ChromeLocationBarModelDelegate::GetCertificate() const {
++#if BUILDFLAG(IS_MAC)
++  if (helium::GetWebKitStreamingTabView(GetActiveWebContents()))
++    return nullptr;
++#endif
+   content::NavigationEntry* entry = GetNavigationEntry();
+   if (!entry || entry->IsInitialEntry()) {
+     return scoped_refptr<net::X509Certificate>();
