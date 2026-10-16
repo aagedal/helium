@@ -22,8 +22,9 @@ in device-independent pixels, and snapshot request/completion times are frozen
 with the capture. A document or URL change before completion discards the
 result. Later navigation does not rewrite the source details in the review.
 
-The optional permalink, posting account, publication date text and notes remain
-separate from automatically observed fields. Unknown dates are not inferred or
+The optional permalink, posting account, publication date text, post text,
+accessibility alt text and notes remain separate from automatically observed
+fields. Unknown dates are not inferred or
 converted to a fabricated exact timestamp. A read-only isolated-world DOM query
 runs alongside the snapshot to find post permalinks for Twitter/X, Instagram,
 Facebook, Threads and Truth Social. It associates visible links with the crop or an
@@ -150,9 +151,9 @@ precision or verified source authenticity.
 All three image formats embed the same XMP packet: IPTC Core Title
 (`dc:title`) and Headline (`photoshop:Headline`), both using the page title;
 Description (`dc:description`, source report without the capture
-limitations, copyright notice, language setting or browser/version), Extended
-Description (`Iptc4xmpCore:ExtDescrAccessibility`, the complete capture
-limitations), Source (`photoshop:Source`, the reviewed posting account), and Date Created
+limitations, copyright notice, language setting or browser/version), optional
+Alt Text (`Iptc4xmpCore:AltTextAccessibility`, the user-entered image description),
+Source (`photoshop:Source`, the reviewed posting account), and Date Created
 (`photoshop:DateCreated`, screenshot capture time). `dc:source` records the page
 URL; XMP CreatorTool/CreateDate record the browser and capture time. A custom
 `helium:SourceRecord` property preserves the complete schema-2 JSON, including
@@ -170,6 +171,32 @@ language preference. The ZIP text report retains the capture limitations.
 No creator or rights-holder flag is set. XML is escaped, and JPEG uses Adobe
 Extended XMP for long records.
 PNG uses the standard XMP iTXt keyword; JPEG XL uses an uncompressed `xml ` box.
+
+The review panel places editable source fields beside a read-only IPTC/XMP
+preview, stacking the preview below the form in narrow browser windows. Export
+settings, image description/notes, capture facts and the complete embedded JSON
+record have keyboard-accessible disclosure buttons. XMP property names can be
+hidden, and focusing a source field highlights the relevant standard metadata
+headings. Save/Copy actions stay outside the scrolling review area.
+
+The preview and encoder share `BuildScreenshotMetadata`, including the complete
+Description and source record. Color analysis is cached for the frozen capture;
+editing text does not encode images or repeat pixel analysis. Post text is
+manually entered in this version and remains separate from notes and alt text.
+Their origins are recorded as user-entered or not supplied. Empty alt text is
+omitted from XMP; notes and post text are never silently used as alt text.
+Capture limitations remain in `helium:SourceRecord` and the ZIP's `source.txt`,
+rather than occupying an accessibility-description field.
+
+Panel validation: the persistent macOS development app rebuilt successfully;
+13 native export tests, both GN header checks, patch lint, patch-file checks,
+12 utility tests and a strict no-fuzz apply/reverse round trip passed. Native
+checks covered two-column and stacked layouts, source suggestions, section
+disclosures, field-name visibility, live text/alt-text updates and saving a PNG.
+ExifTool and XML/JSON inspection verified exact multiline Unicode post text,
+separate notes/alt text and their user-entered origins, Norwegian credit, separate
+capture/publication dates and capture limitations in the embedded source record.
+The native export used the controlled local Telegram fixture, not a live post.
 
 Copyright-language validation passed the persistent macOS browser build, all
 nine export tests, GN dependency checks, patch lint and strict patch apply/reverse.

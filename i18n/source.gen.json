@@ -1315,6 +1315,138 @@
     "message": "Show loading progress in the address bar"
   },
   {
+    "name": "IDS_NEO_CAPTURE_REVIEW_NOTICE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Review notice for screenshot source suggestions.",
+    "message": "Review the suggested source details before saving."
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_ALT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "IPTC accessibility alt text preview label.",
+    "message": "Alt Text (Accessibility)"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_POST_TEXT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label for manually entered post text preserved in screenshot metadata.",
+    "message": "Post text (optional)"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_ALT_TEXT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label for optional accessibility text describing the screenshot.",
+    "message": "Alt text (optional)"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_SOURCE_SECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Heading for screenshot source fields.",
+    "message": "Source details"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_DESCRIPTION_SECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Expandable screenshot description section.",
+    "message": "Image description and notes"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_EXPORT_SECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Expandable screenshot export settings section.",
+    "message": "Export options"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_CAPTURE_SECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Expandable observed screenshot capture facts section.",
+    "message": "Capture details"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_METADATA_TITLE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Heading for metadata that will be embedded in the screenshot.",
+    "message": "IPTC / XMP preview"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_METADATA_HELP",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Explanation for live screenshot metadata preview.",
+    "message": "Read-only preview of the values embedded in your saved image."
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_SHOW_TAGS",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Checkbox to show technical XMP property names.",
+    "message": "Show XMP field names"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_TITLE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "IPTC title and headline preview label.",
+    "message": "Title / Headline"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_SOURCE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "IPTC source preview label.",
+    "message": "Source"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_CREDIT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "IPTC copyright notice preview label.",
+    "message": "Copyright Notice"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_DESCRIPTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "IPTC description preview label.",
+    "message": "Description / Caption"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_CAPTURE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Screenshot capture timestamp preview label, distinct from post publication time.",
+    "message": "Capture date"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_PAGE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "XMP observed page source URL label.",
+    "message": "Captured page URL"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_META_TOOL",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "XMP creator software preview label.",
+    "message": "Creator tool"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_RECORD_SECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Expandable custom embedded screenshot JSON source record.",
+    "message": "Helium Neo source record"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_RECORD_HELP",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Explanation of custom source metadata distinct from IPTC properties.",
+    "message": "Post links, publication dates, text, notes, field origins and capture limitations are also preserved in this embedded JSON record."
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_NOT_SUPPLIED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Placeholder for an empty optional screenshot metadata value.",
+    "message": "Not supplied"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_COPY_HELP",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Explains the difference between saving and copying a screenshot.",
+    "message": "Save preserves source metadata. Copy image copies pixels only."
+  },
+  {
     "name": "IDS_NEO_CAPTURE_SELECTION_HINT",
     "source": "chrome/app/generated_resources.grd",
     "context": "Instructions displayed over the screenshot region selector.",
@@ -1330,7 +1462,7 @@
     "name": "IDS_NEO_CAPTURE_TITLE",
     "source": "chrome/app/generated_resources.grd",
     "context": "Screenshot documentation dialog title.",
-    "message": "Document screenshot"
+    "message": "Save screenshot"
   },
   {
     "name": "IDS_NEO_CAPTURE_HELP",
@@ -1384,7 +1516,7 @@
     "name": "IDS_NEO_CAPTURE_NOTES",
     "source": "chrome/app/generated_resources.grd",
     "context": "Label for capture notes entered by the user.",
-    "message": "Notes / post text (optional)"
+    "message": "Notes (optional)"
   },
   {
     "name": "IDS_NEO_CAPTURE_FORMAT",
@@ -1858,13 +1990,61 @@
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
     "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
     "context": "Title of the onboarding screen for importing browser data.",
-    "message": "Take your stuff with you"
+    "message": "Import from other browsers"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_SUBTITLE",
     "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
     "context": "Subtitle of the onboarding screen for importing browser data.",
-    "message": "Transfer your most important bookmarks, history, and extensions from other browsers."
+    "message": "Transfer your bookmarks, history, and extensions from other browsers."
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_PROMPT_TITLE",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Title of the prompt asking to look for other browsers before showing import options.",
+    "message": "Find browsers to import from"
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_PROMPT_PERMISSION",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Explanation asking for permission to look for other browsers before choosing data to import.",
+    "message": "Allow Helium Neo to look for other browsers on this device so you can choose what to transfer."
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_ALLOW",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Button that allows Helium Neo to look for browsers to import data from.",
+    "message": "Allow"
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_REFRESH",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Accessible label and tooltip for the icon-only button that looks for browsers to import data from again, after the user has changed macOS permissions.",
+    "message": "Refresh"
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_NO_BROWSERS",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Notice shown when no previous browsers are available to import data from.",
+    "message": "No compatible browsers could be found."
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_DISCOVERY_ERROR",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Error shown when looking for browsers fails. The user can retry using the Allow button.",
+    "message": "An error occurred. Please try again."
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_MAC_NOTICE_TITLE",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Title of the macOS-only banner below browser import options.",
+    "message": "Don't see your previous browser?"
+  },
+  {
+    "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_MAC_NOTICE_BODY",
+    "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
+    "context": "Explanation of macOS browser detection permissions. Keep the BEGIN/END placeholder pair around the System Settings link, but move it as needed for a natural translation.",
+    "message": "macOS protects some browsers from being automatically detected. To see more options, allow Helium Neo to access them in <ph name=\"BEGIN_LINK_SETTINGS\">$1</ph>System Settings<ph name=\"END_LINK_SETTINGS\">$2</ph>."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_BOOKMARKS",
