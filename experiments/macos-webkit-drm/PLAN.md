@@ -3,7 +3,9 @@
 ## Objective
 
 Play Netflix and Norwegian TV 2 Play through macOS's system WebKit while using
-Chromium for ordinary browsing. Keep the implementation optional and macOS-only;
+Chromium for ordinary browsing. Also provide a manual per-tab WebKit choice for
+other HTTP(S) sites; add HBO Max and Disney+ to automatic routing. Keep this
+optional and macOS-only;
 other platforms can continue using Chromium. Separate streaming logins and lack
 of Chromium content blocking are accepted for this experiment.
 
@@ -111,8 +113,9 @@ forwarded to WebKit, and native mouse interaction activates the owning tab.
 The Chromium WebContents is deliberately a blank shell. The existing native
 WebKit navigation toolbar supplies the real address and Back/Forward/Reload;
 omnibox/security state and browser commands are not yet integrated. HTTP(S)
-service/authentication navigation stays in WebKit; an ordinary omnibox navigation
-exits to Chromium. Restoring the blank shell does not recreate a WK player.
+service/authentication navigation stays in WebKit. An ordinary omnibox navigation
+exits automatically routed tabs to Chromium; manual WebKit selection keeps
+HTTP(S) omnibox navigation in WebKit. Restoring the blank shell does not recreate a WK player.
 The integration checkboxes above remain open until runtime validation covers
 these behaviors and the remaining browser-chrome work.
 
@@ -129,6 +132,24 @@ the omnibox can still say `about:blank`. Protected in-tab playback, media
 suspension/resume behavior, split-pane interaction, and profile isolation were
 not verified by this smoke test. The prepared source was updated directly; the
 older fork-source snapshot and its unrelated changes were preserved.
+
+The tab context menu now provides **Use WebKit renderer (reloads page)** for
+manual selection on any eligible HTTP(S) page. Unchecking reloads WebKit's current
+URL in Chromium and suppresses automatic service routing for that tab until
+explicitly enabled again. A manual WebKit choice keeps eligible HTTP(S) omnibox
+navigation in WebKit; browser-internal/local/POST navigation exits it. These are
+in-memory tab choices, not saved domain preferences. Private/guest profiles remain
+excluded. Automatic routing now also covers `hbomax.com`, `max.com`, and
+`disneyplus.com`, with separate per-service keys in native-window mode.
+
+On macOS 27.0.1, the persistent build and patch checks pass. Manual UI checks
+confirmed switching an unlisted page to WebKit, retaining that engine for another
+unlisted omnibox URL, switching back at the actual WK URL, and keeping a subsequent
+Netflix navigation in Chromium after explicit opt-out. The toggle is disabled
+on browser-internal pages and private HTTP(S) tabs. A fresh run handed off all
+three new service domains and left two lookalikes in Chromium. Public HBO Max and
+Disney+ pages rendered in their tabs. Playback, POST handling, guest mode, and
+session restoration of manual choices were not additionally validated.
 
 ## 4. Release decision
 
