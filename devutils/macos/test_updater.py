@@ -22,14 +22,18 @@ from make_appcast import SPARKLE
 
 
 def free_port():
+    """Choose an available loopback port for an isolated test service."""
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         return sock.getsockname()[1]
 
 
 def webdriver(base, method, path, payload=None):
+    """Make a WebDriver request and fail on protocol errors."""
     data = None if payload is None else json.dumps(payload).encode()
-    request = Request(base + path, data=data, method=method,
+    request = Request(base + path,
+                      data=data,
+                      method=method,
                       headers={'Content-Type': 'application/json'})
     with urlopen(request, timeout=120) as response:
         result = json.load(response)['value']
@@ -38,7 +42,8 @@ def webdriver(base, method, path, payload=None):
     return result
 
 
-def main():
+def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    """Drive a disposable signed app through a real Sparkle update scenario."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--app', type=Path, required=True)
     parser.add_argument('--chromedriver', type=Path, required=True)
@@ -46,7 +51,12 @@ def main():
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--identity', required=True)
     parser.add_argument('--source', type=Path, required=True)
-    parser.add_argument('--scenario', choices=['current', 'feed-fallback', 'download-fallback', 'both-down', 'bad-signature', 'disabled'], required=True)
+    parser.add_argument('--scenario',
+                        choices=[
+                            'current', 'feed-fallback', 'download-fallback', 'both-down',
+                            'bad-signature', 'disabled'
+                        ],
+                        required=True)
     args = parser.parse_args()
     manifest = json.loads((args.release / 'update-manifest.json').read_text())
     archive = args.release / manifest['installer']
@@ -55,10 +65,13 @@ def main():
     origin = 'http://127.0.0.1:' + str(http_port)
 
     class Handler(BaseHTTPRequestHandler):
+        """Serve the selected failure scenario and record updater traffic."""
+
         def log_message(self, *unused):
             pass
 
-        def do_GET(self):
+        def do_GET(self): # pylint: disable=invalid-name
+            """Serve an appcast or signed installer, injecting the requested failure."""
             path = self.path.split('?')[0]
             requests.append(path)
             primary = path.startswith('/primary/')
@@ -69,7 +82,10 @@ def main():
                 root = ET.parse(args.release / 'helium-neo.xml').getroot()
                 item = root.find('./channel/item')
                 enclosure = item.find('enclosure')
-                enclosure.set('url', origin + ('/missing.dmg' if primary and args.scenario == 'download-fallback' else '/installer.dmg'))
+                enclosure.set(
+                    'url',
+                    origin + ('/missing.dmg' if primary and args.scenario == 'download-fallback'
+                              else '/installer.dmg'))
                 if args.scenario == 'bad-signature':
                     enclosure.set(f'{{{SPARKLE}}}edSignature', 'A' * 86 + '==')
                 data = ET.tostring(root, encoding='utf-8', xml_declaration=True)
@@ -111,70 +127,111 @@ def main():
                 info['CFBundleVersion'] = '.'.join(parts)
                 with info_path.open('wb') as stream:
                     plistlib.dump(info, stream)
-                subprocess.run(['codesign', '--force', '--timestamp', '--sign', args.identity,
-                                '--options', 'restrict,kill,library,runtime', '--entitlements',
-                                str(args.source / 'chrome/app/app-entitlements.plist'), str(test_app)], check=True)
+                subprocess.run([
+                    'codesign', '--force', '--timestamp', '--sign', args.identity, '--options',
+                    'restrict,kill,library,runtime', '--entitlements',
+                    str(args.source / 'chrome/app/app-entitlements.plist'),
+                    str(test_app)
+                ],
+                               check=True)
             profile = root / 'profile'
             (profile / 'Default').mkdir(parents=True)
-            (profile / 'Default/Preferences').write_text(json.dumps({
-                'helium': {'completed_onboarding': True, 'services': {
-                    'enabled': True, 'user_consented': True, 'schema_version': 999,
-                    'browser_updates': args.scenario != 'disabled',
-                    'ext_proxy': False, 'bangs': False, 'spellcheck_files': False,
-                    'ublock_assets': False,
-                }},
-            }))
+            (profile / 'Default/Preferences').write_text(
+                json.dumps({
+                    'helium': {
+                        'completed_onboarding': True,
+                        'services': {
+                            'enabled': True,
+                            'user_consented': True,
+                            'schema_version': 999,
+                            'browser_updates': args.scenario != 'disabled',
+                            'ext_proxy': False,
+                            'bangs': False,
+                            'spellcheck_files': False,
+                            'ublock_assets': False,
+                        }
+                    },
+                }))
             port = free_port()
             base = 'http://127.0.0.1:' + str(port)
             with (args.report.with_suffix('.driver.log')).open('w') as log:
-                driver = subprocess.Popen([str(args.chromedriver), '--port=' + str(port)], stdout=log, stderr=log)
+                driver = subprocess.Popen( # pylint: disable=consider-using-with
+                    [str(args.chromedriver), '--port=' + str(port)],
+                    stdout=log,
+                    stderr=log)
                 session = None
                 try:
-                    for attempt in range(100):
+                    for _ in range(100):
                         try:
                             webdriver(base, 'GET', '/status')
                             break
                         except OSError:
                             time.sleep(.1)
-                    session = webdriver(base, 'POST', '/session', {'capabilities': {'alwaysMatch': {
-                        'browserName': 'chrome', 'goog:chromeOptions': {
-                            'binary': str(test_app / 'Contents/MacOS/Helium Neo'),
-                            'args': ['--headless', '--no-first-run', '--no-default-browser-check',
-                                     '--use-mock-keychain', '--user-data-dir=' + str(profile),
-                                     '--custom-update-server-url=' + origin + '/primary/',
-                                     '--custom-update-fallback-url=' + origin + '/backup/'],
-                        },
-                    }}})['sessionId']
+                    session = webdriver(
+                        base, 'POST', '/session', {
+                            'capabilities': {
+                                'alwaysMatch': {
+                                    'browserName': 'chrome',
+                                    'goog:chromeOptions': {
+                                        'binary': str(test_app / 'Contents/MacOS/Helium Neo'),
+                                        'args': [
+                                            '--headless', '--no-first-run',
+                                            '--no-default-browser-check', '--use-mock-keychain',
+                                            '--user-data-dir=' + str(profile),
+                                            '--custom-update-server-url=' + origin + '/primary/',
+                                            '--custom-update-fallback-url=' + origin + '/backup/'
+                                        ],
+                                    },
+                                }
+                            }
+                        })['sessionId']
                     route = '/session/' + session
                     webdriver(base, 'POST', route + '/url', {'url': 'chrome://settings/help'})
-                    webdriver(base, 'POST', route + '/execute/async', {'script': '''
+                    webdriver(
+                        base, 'POST', route + '/execute/async', {
+                            'script': '''
                         const done = arguments[arguments.length - 1];
                         import('chrome://resources/js/cr.js').then(({addWebUiListener}) => {
                           window.neoUpdateStatuses = [];
                           addWebUiListener('update-status-changed', e => window.neoUpdateStatuses.push(e));
                           chrome.send('refreshUpdateStatus'); done(true);
                         }).catch(e => done(String(e)));
-                    ''', 'args': []})
-                    expected = {'current': 'updated', 'feed-fallback': 'nearly_updated',
-                                'download-fallback': 'nearly_updated', 'both-down': 'failed',
-                                'bad-signature': 'failed', 'disabled': 'disabled'}[args.scenario]
+                    ''',
+                            'args': []
+                        })
+                    expected = {
+                        'current': 'updated',
+                        'feed-fallback': 'nearly_updated',
+                        'download-fallback': 'nearly_updated',
+                        'both-down': 'failed',
+                        'bad-signature': 'failed',
+                        'disabled': 'disabled'
+                    }[args.scenario]
                     deadline = time.monotonic() + 150
                     while time.monotonic() < deadline:
                         statuses = webdriver(base, 'POST', route + '/execute/sync', {
-                            'script': 'return window.neoUpdateStatuses || []', 'args': []})
+                            'script': 'return window.neoUpdateStatuses || []',
+                            'args': []
+                        })
                         if any(s.get('status') == expected for s in statuses):
                             break
                         time.sleep(.5)
                     else:
-                        raise AssertionError('Expected ' + expected + '; got ' + repr(statuses) + '; requests ' + repr(requests))
+                        raise AssertionError('Expected ' + expected + '; got ' + repr(statuses) +
+                                             '; requests ' + repr(requests))
                     if args.scenario in ('feed-fallback', 'download-fallback', 'both-down'):
-                        assert 1 <= requests.count('/backup/helium-neo.xml') <= requests.count('/primary/helium-neo.xml'), requests
+                        assert 1 <= requests.count('/backup/helium-neo.xml') <= requests.count(
+                            '/primary/helium-neo.xml'), requests
                     else:
                         assert '/backup/helium-neo.xml' not in requests, requests
                     if args.scenario == 'disabled':
                         assert not requests, requests
-                    results = {'scenario': args.scenario, 'passed': True,
-                               'requests': list(requests), 'statuses': statuses}
+                    results = {
+                        'scenario': args.scenario,
+                        'passed': True,
+                        'requests': list(requests),
+                        'statuses': statuses
+                    }
                 finally:
                     if session:
                         try:
@@ -196,14 +253,22 @@ def main():
                         time.sleep(.5)
                     else:
                         raise AssertionError('Downloaded update was not installed on quit')
-                    subprocess.run(['codesign', '--verify', '--deep', '--strict', str(test_app)], check=True)
+                    subprocess.run(['codesign', '--verify', '--deep', '--strict',
+                                    str(test_app)],
+                                   check=True)
                     results['installed_build'] = installed
                     results['installed_signature_valid'] = True
                 succeeded = True
     finally:
         server.shutdown()
         results['passed'] = succeeded
-        args.report.write_text(json.dumps(results or {'scenario': args.scenario, 'passed': False, 'requests': requests}, indent=2) + '\n')
+        args.report.write_text(
+            json.dumps(results or {
+                'scenario': args.scenario,
+                'passed': False,
+                'requests': requests
+            },
+                       indent=2) + '\n')
     print(json.dumps(results, indent=2))
 
 

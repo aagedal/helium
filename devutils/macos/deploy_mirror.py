@@ -20,19 +20,20 @@ from urllib.request import Request, urlopen
 import uuid
 import xml.etree.ElementTree as ET
 
-from make_appcast import SPARKLE
+from make_appcast import SPARKLE, sha256_stream
 
 INSTALLER = re.compile(r'Helium-Neo-[0-9.]+-macOS-arm64-signed\.dmg')
 
 
 def validate_bundle(directory):
+    """Validate archive bytes and both feed destinations before any upload."""
     manifest = json.loads((directory / 'update-manifest.json').read_text())
     filename = manifest['installer']
     if not INSTALLER.fullmatch(filename):
         raise ValueError('Unexpected installer filename')
     archive = directory / filename
     with archive.open('rb') as stream:
-        digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+        digest = sha256_stream(stream)
     if digest != manifest['sha256'] or archive.stat().st_size != manifest['bytes']:
         raise ValueError('Installer does not match the release manifest')
     for feed, url in [('helium-neo.xml', manifest['primary_download']),
@@ -43,10 +44,10 @@ def validate_bundle(directory):
             raise ValueError('Expected one current stable release in each feed')
         item = items[0]
         enclosure = item.find('enclosure')
-        if (enclosure is None or enclosure.get('url') != url or
-                enclosure.get('length') != str(manifest['bytes']) or
-                enclosure.get(f'{{{SPARKLE}}}edSignature') != manifest['ed_signature'] or
-                item.findtext(f'{{{SPARKLE}}}version') != manifest['build']):
+        if (enclosure is None or enclosure.get('url') != url
+                or enclosure.get('length') != str(manifest['bytes'])
+                or enclosure.get(f'{{{SPARKLE}}}edSignature') != manifest['ed_signature']
+                or item.findtext(f'{{{SPARKLE}}}version') != manifest['build']):
             raise ValueError('Appcast and release manifest disagree')
     if manifest['backup_download'] != 'https://aagedal.me/apps/helium-neo/' + filename:
         raise ValueError('Unexpected mirror destination')
@@ -56,9 +57,10 @@ def validate_bundle(directory):
 
 
 def verify_public(url, expected_hash):
+    """Download public bytes and compare them to the expected SHA-256."""
     request = Request(url, headers={'Cache-Control': 'no-cache'})
     with urlopen(request, timeout=120) as response:
-        digest = hashlib.file_digest(response, 'sha256').hexdigest()
+        digest = sha256_stream(response)
     if digest != expected_hash:
         raise RuntimeError('Public mirror verification failed: ' + url)
 
@@ -66,23 +68,29 @@ def verify_public(url, expected_hash):
 def check_not_older(manifest):
     """A rerun of an older release must never roll the mirror feed backwards."""
     try:
-        with urlopen(manifest['backup_feed'] + '?revision=' + uuid.uuid4().hex, timeout=30) as response:
+        with urlopen(manifest['backup_feed'] + '?revision=' + uuid.uuid4().hex,
+                     timeout=30) as response:
             current = ET.fromstring(response.read(1024 * 1024))
     except HTTPError as error:
         if error.code == 404:
             return
         raise
+
     def version(value):
         if not value or not re.fullmatch(r'\d+(?:\.\d+)*', value):
             raise ValueError('Mirror contains an unexpected updater version')
         return tuple(map(int, value.split('.')))
-    builds = [version(item.findtext(f'{{{SPARKLE}}}version'))
-              for item in current.findall('./channel/item')]
+
+    builds = [
+        version(item.findtext(f'{{{SPARKLE}}}version'))
+        for item in current.findall('./channel/item')
+    ]
     if builds and max(builds) > version(manifest['build']):
         raise ValueError('Refusing to overwrite a newer mirror release')
 
 
 def upload_atomic(ftp, source, directory, filename):
+    """Upload to a unique temporary name and rename only after transfer succeeds."""
     ftp.cwd('/')
     try:
         ftp.mkd(directory)
@@ -97,6 +105,7 @@ def upload_atomic(ftp, source, directory, filename):
 
 
 def main():
+    """Deploy one validated release and clean up eligible older downloads."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
     parser.add_argument('--retain', type=int, default=5)
@@ -130,7 +139,8 @@ def main():
             name = listed.rsplit('/', 1)[-1]
             if INSTALLER.fullmatch(name):
                 timestamp = ftp.sendcmd('MDTM ' + name).split()[1]
-                modified = datetime.strptime(timestamp.split('.')[0], '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
+                modified = datetime.strptime(timestamp.split('.')[0],
+                                             '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
                 entries.append((modified, name))
         entries.sort(reverse=True)
         for modified, name in entries[args.retain:]:

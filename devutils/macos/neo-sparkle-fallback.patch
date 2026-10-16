@@ -4,8 +4,8 @@
  
  @implementation SparkleObserver {
    base::WeakPtr<Profile> profile_;
-+  BOOL usingMirror_ = NO;
-+  BOOL retryPending_ = NO;
++  BOOL usingMirror_;
++  BOOL retryPending_;
  }
  
  @synthesize invocationBlock = invocationBlock_;

@@ -9,21 +9,25 @@ import subprocess
 
 
 def main():
+    """Apply missing updater changes without resetting prepared source or outputs."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--build-output', type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    config = json.loads(Path(__file__).with_name('release.json').read_text())
+    config = json.loads(Path(__file__).with_name('release.json').read_text(encoding='utf-8'))
     args_file = args.build_output / 'args.gn'
-    gn_args = args_file.read_text()
+    gn_args = args_file.read_text(encoding='utf-8')
     for name in ('is_component_build=false', 'is_official_build=true'):
         if name not in gn_args.replace(' ', ''):
             parser.error('Use an existing official standalone release output: ' + name)
     for patch in (root / 'patches/helium/core/neo-update-feeds.patch',
                   Path(__file__).with_name('neo-sparkle-fallback.patch')):
-        reverse = subprocess.run(['git', 'apply', '--reverse', '--check', str(patch)],
-                                 cwd=args.source, capture_output=True)
+        reverse = subprocess.run(['git', 'apply', '--reverse', '--check',
+                                  str(patch)],
+                                 cwd=args.source,
+                                 capture_output=True,
+                                 check=False)
         if reverse.returncode == 0:
             print('Already applied:', patch.name)
             continue
