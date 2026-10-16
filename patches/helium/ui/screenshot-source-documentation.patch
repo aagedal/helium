@@ -1007,7 +1007,7 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,1209 @@
+@@ -0,0 +1,1348 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1028,11 +1028,27 @@
 +
 +// Keep the function expression self-contained for repeatable real-DOM tests.
 +constexpr char kSourceScript[] = R"JS((region => {
++  // Mastodon runs on independent hosts. URL shape alone never identifies one.
++  const mastodonSources = new Map();
++  const mastodonUrl = raw => {
++    try {
++      const u = new URL(raw, document.baseURI);
++      if (u.protocol !== 'https:' || u.username || u.password || u.port || u.href.length > 2048) return null;
++      const match = u.pathname.match(/^\/@([A-Za-z0-9_]+(?:@[A-Za-z0-9.-]+)?)\/(\d+)\/?$/);
++      if (!match) return null;
++      return {url:u.origin + '/@' + match[1] + '/' + match[2],
++        original_url:u.href, profile_url:u.origin + '/@' + match[1], route_account:'@' + match[1]};
++    } catch { return null; }
++  };
 +  const normalize = raw => {
 +    try {
 +      const u = new URL(raw, document.baseURI);
 +      if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password ||
 +          u.port || u.href.length > 2048) return null;
++      const mastodon = mastodonUrl(raw);
++      if (mastodon && mastodonSources.has(mastodon.url))
++        return {url:mastodon.url, original_url:u.href, platform:'mastodon',
++          mastodon_ownership:mastodonSources.get(mastodon.url).proof};
 +      const host = u.hostname.replace(/^(www|mobile|m|mbasic)\./, '');
 +      let path = u.pathname, platform, match, account_hint;
 +      if (host === 'x.com' || host === 'twitter.com') {
@@ -1169,13 +1185,14 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
++  const mastodonSelector = '#mastodon .status,#mastodon .detailed-status,#mastodon .status__quote';
 +  const linkedinSelector = 'article[data-activity-urn],section.comment';
 +  const youtubeCommentSelector = 'ytd-comment-view-model,ytd-comment-renderer';
 +  const youtubeSelector = 'ytd-watch-flexy,ytd-reel-video-renderer,' + youtubeCommentSelector +
 +      ',ytd-compact-video-renderer,ytd-video-renderer,ytd-rich-grid-media,yt-lockup-view-model,' +
 +      '.ytp-suggestion-set,.ytp-autonav-endscreen-link-container,ytd-live-chat-frame';
 +  const redditSelector = 'shreddit-post,shreddit-comment';
-+  const postSelector = linkedinSelector + ',' + youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
++  const postSelector = mastodonSelector + ',' + linkedinSelector + ',' + youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1393,6 +1410,56 @@
 +    }
 +    return details;
 +  };
++  const mastodonPosts = [...document.querySelectorAll('#mastodon .status,#mastodon .detailed-status')];
++  for (const post of mastodonPosts.slice(0, 1000)) {
++    const owns = node => postFor(node) === post;
++    const detailed = post.matches('.detailed-status');
++    const stamps = [...post.querySelectorAll(detailed ? 'a.detailed-status__datetime[href]' : 'a.status__relative-time[href]')]
++        .filter(a => owns(a) && visible(a, false) && a.querySelector('time'));
++    const authors = [...post.querySelectorAll(detailed ? 'a.detailed-status__display-name[href]' : 'a.status__display-name[href]')]
++        .filter(a => owns(a) && visible(a, false));
++    if (stamps.length !== 1 || authors.length !== 1 || !visible(post, false)) continue;
++    const parsed = mastodonUrl(stamps[0].href), author = authors[0];
++    if (!parsed) continue;
++    try {
++      const profile = new URL(author.href);
++      if (profile.protocol !== 'https:' || profile.username || profile.password || profile.port ||
++          profile.origin + profile.pathname.replace(/\/$/, '') !== parsed.profile_url) continue;
++      const accountNode = author.querySelector('.display-name__account');
++      if (!accountNode || !visible(accountNode, false)) continue;
++      const account = text(accountNode), route = parsed.route_account;
++      const match = account.match(/^@([A-Za-z0-9_]+)(?:@([A-Za-z0-9.-]+))?$/);
++      if (!match || account.length > 256 ||
++          !(account.toLowerCase() === route.toLowerCase() ||
++            (!route.slice(1).includes('@') && account.toLowerCase().startsWith(route.toLowerCase() + '@')))) continue;
++      const time = stamps[0].querySelector('time');
++      if (!owns(time) || !visible(time, false)) continue;
++      const proof = {layout:'mastodon_status_header_v1', timestamp_url:parsed.url,
++        profile_url:parsed.profile_url, account};
++      // Duplicate URL observations retain separate owners; conflicting details
++      // are handled by the existing candidate merge rather than picking one.
++      if (!mastodonSources.has(parsed.url)) mastodonSources.set(parsed.url, {proof, observations:[]});
++      mastodonSources.get(parsed.url).observations.push({post, author, time, proof});
++    } catch { /* Not a matching observed profile. */ }
++  }
++  const mastodonDetails = (post, parsed) => {
++    const matches = mastodonSources.get(parsed.url)?.observations.filter(item => item.post === post) || [];
++    if (matches.length !== 1) return {};
++    const {author, time, proof} = matches[0], details = {
++      posting_account:proof.account, account_profile_url:proof.profile_url,
++      account_display_name:text(author.querySelector('.display-name__html')),
++      account_evidence:'mastodon_status_author_header'};
++    const displayed = text(time), machine = (time.getAttribute('datetime') || '').slice(0, 256);
++    if (machine || displayed) {
++      details.publication_date_text = machine || displayed;
++      details.publication_date_displayed = displayed;
++      if (machine) details.publication_datetime_attribute = machine;
++      const title = (time.getAttribute('title') || '').slice(0,256);
++      if (title) details.publication_date_tooltip = title;
++      details.date_evidence = 'mastodon_permalink_time';
++    }
++    return details;
++  };
 +  const fullTimestamp = value => /\d{4}/.test(value) && /\d[:.]\d{2}/.test(value);
 +  const compactTimestamp = value => /^(?:\d+\s*[a-zæøå]{1,3}|yesterday|today|i går|i dag)$/i.test(value);
 +  const selectorFor = element => {
@@ -1407,6 +1474,7 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'mastodon') return mastodonDetails(post, parsed);
 +    if (parsed.platform === 'linkedin') return linkedinDetails(post, parsed);
 +    if (parsed.platform === 'youtube') return youtubeDetails(post, parsed);
 +    if (parsed.platform === 'reddit' && !redditPostMatches(post, parsed.url)) return {};
@@ -1615,6 +1683,16 @@
 +    const parsed = normalize(raw);
 +    if (!parsed) return;
 +    parsed.original_url = new URL(observedRaw, document.baseURI).href;
++    if (parsed.platform === 'mastodon' || post?.matches(mastodonSelector)) {
++      const own = parsed.platform === 'mastodon' &&
++          mastodonSources.get(parsed.url)?.observations.some(item => item.post === post);
++      if (!own) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'mastodon_reference_link';
++      }
++    }
 +    if (parsed.platform === 'linkedin' || post?.matches(linkedinSelector)) {
 +      if (post?.matches('article[data-activity-urn]') && linkedinSelectedChild(post)) return;
 +      if (parsed.platform !== 'linkedin' || !linkedinMatches(post, raw)) {
@@ -1669,7 +1747,7 @@
 +    }
 +    const details = post?.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
 +        post.querySelector('.ad-showing,.ad-interrupting') ? {} : siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube','linkedin'].includes(parsed.platform)) {
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube','linkedin','mastodon'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1699,10 +1777,13 @@
 +    candidates.set(parsed.url, {...parsed, evidence, site_details:details});
 +  };
 +  const anchors = document.querySelectorAll('a[href]');
-+  if (anchors.length > 10000) truncated = true;
++  if (anchors.length > 10000 || mastodonPosts.length > 1000) truncated = true;
++  let mastodonReference = false;
 +  for (let i = 0; i < Math.min(anchors.length, 10000); ++i) {
 +    const a = anchors[i];
 +    if ((a.getAttribute('href') || '').trim().startsWith('#')) continue;
++    if (a.closest(mastodonSelector) && mastodonUrl(a.href) && !normalize(a.href) &&
++        visible(a, false) && exposed(a, a.getBoundingClientRect())) mastodonReference = true;
 +    if (!normalize(a.href) || !visible(a, false)) continue;
 +    const direct = exposed(a, a.getBoundingClientRect());
 +    const post = postFor(a) || a.closest('[role="dialog"]');
@@ -1743,6 +1824,7 @@
 +      const address = normalize(location.href);
 +      const pageSourceAllowed = raw => {
 +        const platform = normalize(raw)?.platform;
++        if (platform === 'mastodon') return false;  // Only the status's own timestamp establishes its URL.
 +        if (platform === 'linkedin') return false;  // Match the card's own activity URN below.
 +        if (platform === 'youtube') return false;  // Match explicit video/comment ownership below.
 +        if (platform === 'reddit') return false;  // Require the item's own ID/permalink.
@@ -1824,7 +1906,7 @@
 +    return posts?.size === 1 ? [...posts][0] : null;
 +  });
 +  let preferred = null, selectionReason = '', unlinkedEnclosingPost = false;
-+  if (!truncated && list.length && list.every(c => ['twitter_x','threads','bluesky'].includes(c.platform)) &&
++  if (!truncated && list.length && list.every(c => ['twitter_x','threads','bluesky','mastodon'].includes(c.platform)) &&
 +      contexts.every(Boolean) && new Set(contexts).size === list.length) {
 +    // A crop contained within a quote belongs to that quote. Otherwise prefer
 +    // an enclosing post only when its own header/comment is visibly selected.
@@ -1924,8 +2006,17 @@
 +  const linkedinReview = list.some(c => c.evidence === 'linkedin_reference_link') ||
 +      (list.some(c => c.platform === 'linkedin') && overlapping.some(post =>
 +          !contexts.includes(post) && contexts.some(parent => parent?.contains(post))));
++  const mastodonUnlinked = list.some(c => c.platform === 'mastodon') &&
++      overlapping.some(post => post.matches(mastodonSelector) && !contexts.includes(post) &&
++          !contexts.some(child => post.contains(child)) && contexts.some(parent => parent?.contains(post)));
++  const mastodonBoostOnly = [...document.querySelectorAll('#mastodon .status__prepend')]
++      .some(node => visible(node, false) &&
++          area(intersection(node.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const mastodonReview = mastodonReference || mastodonUnlinked || mastodonBoostOnly ||
++      list.some(c => c.evidence === 'mastodon_reference_link');
++  if (mastodonReview) preferred = null;
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || linkedinReview || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || linkedinReview || mastodonReview || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -2070,6 +2161,50 @@
 +         url.host() == "www.threads.com" || url.host() == "bsky.app";
 +}
 +
++bool ValidMastodonCandidate(const base::DictValue& candidate) {
++  const auto* platform = candidate.FindString("platform");
++  const auto* raw = candidate.FindString("url");
++  const auto* proof = candidate.FindDict("mastodon_ownership");
++  if (!platform || *platform != "mastodon" || !raw || raw->size() > 2048 || !proof)
++    return false;
++  const GURL url(*raw);
++  if (!url.is_valid() || !url.SchemeIs("https") || url.host().empty() ||
++      url.has_username() || url.has_password() || url.has_port() ||
++      url.has_query() || url.has_ref())
++    return false;
++  const auto parts = base::SplitStringPiece(
++      url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++  if (parts.size() != 3 || !parts[0].empty() || parts[1].size() < 2 ||
++      parts[1].front() != '@' || parts[2].empty() ||
++      !base::ContainsOnlyChars(parts[2], "0123456789"))
++    return false;
++  const auto identity = base::SplitStringPiece(
++      parts[1].substr(1), "@", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++  if (identity.empty() || identity.size() > 2 || identity[0].empty() ||
++      !base::ContainsOnlyChars(identity[0],
++          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") ||
++      (identity.size() == 2 && (identity[1].empty() || !base::ContainsOnlyChars(
++          identity[1], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-"))))
++    return false;
++  const auto* layout = proof->FindString("layout");
++  const auto* timestamp = proof->FindString("timestamp_url");
++  const auto* profile = proof->FindString("profile_url");
++  const auto* account = proof->FindString("account");
++  const std::string expected_profile = url.GetWithEmptyPath().spec() + std::string(parts[1]);
++  if (!layout || *layout != "mastodon_status_header_v1" || !timestamp ||
++      *timestamp != *raw || !profile || *profile != expected_profile ||
++      !account || account->size() > 256)
++    return false;
++  if (base::EqualsCaseInsensitiveASCII(*account, parts[1]))
++    return true;
++  if (identity.size() != 1 || !base::StartsWith(
++          *account, std::string(parts[1]) + "@", base::CompareCase::INSENSITIVE_ASCII))
++    return false;
++  const auto domain = std::string_view(*account).substr(parts[1].size() + 1);
++  return !domain.empty() && base::ContainsOnlyChars(
++      domain, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-");
++}
++
 +}  // namespace
 +
 +std::u16string ScreenshotSourceScript(const gfx::Rect& region,
@@ -2165,7 +2300,11 @@
 +    if (!candidate.is_dict())
 +      return unavailable();
 +    const auto* url = candidate.GetDict().FindString("url");
-+    if (!url || !SupportedUrl(*url))
++    const auto& fields = candidate.GetDict();
++    const auto* platform = fields.FindString("platform");
++    if (!url || ((platform && *platform == "mastodon")
++                     ? !ValidMastodonCandidate(fields)
++                     : !SupportedUrl(*url)))
 +      return unavailable();
 +  }
 +  const auto* suggested = dict.FindString("suggested_permalink");
@@ -2254,12 +2393,14 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,336 @@
+@@ -0,0 +1,444 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
 +
 +#include "chrome/browser/image_editor/screenshot_source.h"
++
++#include <utility>
 +
 +#include "testing/gtest/include/gtest/gtest.h"
 +
@@ -2294,6 +2435,112 @@
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++base::Value MastodonSources(const std::string& url,
++                            const std::string& profile,
++                            const std::string& account) {
++  auto value = Sources(url);
++  auto& candidate = value.GetDict().FindList("candidates")->front().GetDict();
++  candidate.Set("platform", "mastodon");
++  candidate.Set("mastodon_ownership",
++                base::DictValue()
++                    .Set("layout", "mastodon_status_header_v1")
++                    .Set("timestamp_url", url)
++                    .Set("profile_url", profile)
++                    .Set("account", account));
++  return value;
++}
++
++TEST(ScreenshotSourceTest, AcceptsOwnedMastodonStatusAcrossInstances) {
++  for (const char* host : {"independent.example", "www.community.example",
++                           "m.community.example"}) {
++    const std::string profile = std::string("https://") + host + "/@Reporter";
++    const std::string url = profile + "/123456";
++    auto result = ValidateScreenshotSources(
++        MastodonSources(url, profile, "@Reporter@identity.example"));
++    EXPECT_EQ(*result.FindString("status"), "unique");
++    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++  // A local proxy's numeric ID and fully qualified account remain observed;
++  // neither is rewritten to an inferred URL on the originating server.
++  const std::string proxy = "https://view.example/@alice@origin.example";
++  const std::string url = proxy + "/987654";
++  auto result = ValidateScreenshotSources(
++      MastodonSources(url, proxy, "@alice@origin.example"));
++  EXPECT_EQ(*result.FindString("status"), "unique");
++  EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++}
++
++TEST(ScreenshotSourceTest, RejectsMastodonUrlWithoutOwnership) {
++  const std::string url = "https://unrelated.example/@alice/123";
++  EXPECT_EQ(*ValidateScreenshotSources(Sources(url)).FindString("status"),
++            "unavailable");
++  auto value = Sources(url);
++  value.GetDict().FindList("candidates")->front().GetDict().Set("platform",
++                                                               "mastodon");
++  EXPECT_EQ(*ValidateScreenshotSources(std::move(value)).FindString("status"),
++            "unavailable");
++  auto complete = MastodonSources(url, "https://unrelated.example/@alice",
++                                   "@alice");
++  complete.GetDict().FindList("candidates")->front().GetDict().Remove("platform");
++  EXPECT_EQ(*ValidateScreenshotSources(std::move(complete)).FindString("status"),
++            "unavailable");
++}
++
++TEST(ScreenshotSourceTest, RejectsMismatchedMastodonOwnership) {
++  const std::string url = "https://community.example/@alice/123";
++  const auto valid = [&] {
++    return MastodonSources(url, "https://community.example/@alice", "@alice");
++  };
++  for (const char* field : {"layout", "timestamp_url", "profile_url", "account"}) {
++    auto value = valid();
++    auto* proof = value.GetDict().FindList("candidates")->front().GetDict()
++                      .FindDict("mastodon_ownership");
++    proof->Remove(field);
++    EXPECT_EQ(*ValidateScreenshotSources(std::move(value)).FindString("status"),
++              "unavailable") << field;
++  }
++  for (const auto& change : {
++           std::pair{"layout", "generic_article"},
++           std::pair{"timestamp_url", "https://community.example/@alice/456"},
++           std::pair{"profile_url", "https://other.example/@alice"},
++           std::pair{"profile_url", "https://community.example/@bob"},
++           std::pair{"account", "@bob"},
++           std::pair{"account", "@alice@"},
++           std::pair{"account", "@alice@identity.example/path"}}) {
++    auto value = valid();
++    value.GetDict().FindList("candidates")->front().GetDict()
++        .FindDict("mastodon_ownership")->Set(change.first, change.second);
++    EXPECT_EQ(*ValidateScreenshotSources(std::move(value)).FindString("status"),
++              "unavailable") << change.first << ": " << change.second;
++  }
++  auto proxy = MastodonSources("https://view.example/@alice@origin.example/123",
++                               "https://view.example/@alice@origin.example",
++                               "@alice@other.example");
++  EXPECT_EQ(*ValidateScreenshotSources(std::move(proxy)).FindString("status"),
++            "unavailable");
++}
++
++TEST(ScreenshotSourceTest, RejectsMalformedMastodonPermalinksWithProof) {
++  for (const char* url : {
++           "http://community.example/@alice/123",
++           "https://user:pass@community.example/@alice/123",
++           "https://community.example:8443/@alice/123",
++           "https://community.example/@alice/123?tracking=1",
++           "https://community.example/@alice/123#reply",
++           "https://community.example/@alice/123/",
++           "https://community.example/@alice/abc",
++           "https://community.example/@alice/",
++           "https://community.example/@/123",
++           "https://community.example/@alice@/123",
++           "https://community.example/@alice@origin.example@other.example/123",
++           "https://community.example/users/alice/statuses/123"}) {
++    EXPECT_EQ(*ValidateScreenshotSources(MastodonSources(
++                  url, "https://community.example/@alice", "@alice"))
++                   .FindString("status"),
++              "unavailable") << url;
 +  }
 +}
 +
@@ -2999,7 +3246,7 @@
 +}
 --- a/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
-@@ -3,242 +3,527 @@
+@@ -3,242 +3,531 @@
  // found in the LICENSE file.
  
  #include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h"
@@ -3500,6 +3747,10 @@
 +    return;
 +  base::DictValue automatic, user;
 +  automatic.Set("page_url", capture_.page_url.spec());
++  auto sources = base::JSONReader::ReadDict(capture_.source_suggestions_json,
++                                            base::JSON_PARSE_RFC);
++  if (sources)
++    automatic.Set("permalink_suggestions", std::move(*sources));
 +  user.Set("posting_account", base::UTF16ToUTF8(account_->GetText()));
 +  user.Set("post_permalink", base::UTF16ToUTF8(permalink_->GetText()));
 +  const auto notice = ScreenshotCopyrightNotice(
@@ -3848,7 +4099,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,463 @@
+@@ -0,0 +1,482 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4163,6 +4414,25 @@
 +  };
 +  // Prefer the reviewed post link. Otherwise use the captured page's platform.
 +  std::string source = platform(user_provided.FindString("post_permalink"));
++  if (source.empty()) {
++    const auto* reviewed = user_provided.FindString("post_permalink");
++    const auto* suggestions = automatic.FindDict("permalink_suggestions");
++    const auto* candidates = suggestions ? suggestions->FindList("candidates") : nullptr;
++    if (reviewed && candidates) {
++      for (const auto& value : *candidates) {
++        if (!value.is_dict())
++          continue;
++        const auto& candidate = value.GetDict();
++        const auto* link = candidate.FindString("url");
++        const auto* site = candidate.FindString("platform");
++        if (link && *link == *reviewed && site && *site == "mastodon" &&
++            candidate.FindDict("mastodon_ownership")) {
++          source = "Mastodon";
++          break;
++        }
++      }
++    }
++  }
 +  if (source.empty())
 +    source = platform(automatic.FindString("page_url"));
 +  if (source.empty()) {
@@ -4362,7 +4632,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,491 @@
+@@ -0,0 +1,534 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4737,6 +5007,49 @@
 +  EXPECT_TRUE(ScreenshotCopyrightNotice(automatic, user,
 +                                        ScreenshotTextLanguage::kEnglish)
 +                  .empty());
++}
++
++TEST(ScreenshotDocumentationTest, MastodonCreditRequiresSelectedOwnedCandidate) {
++  const std::string url = "https://community.example/@alice/123";
++  base::DictValue automatic, user;
++  automatic.Set("page_url", "https://view.example/timelines/public");
++  user.Set("posting_account", "@alice@identity.example");
++  user.Set("post_permalink", url);
++  auto credit = [&] {
++    return ScreenshotCopyrightNotice(automatic, user,
++                                     ScreenshotTextLanguage::kEnglish);
++  };
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  base::ListValue candidates;
++  candidates.Append(base::DictValue()
++                        .Set("url", url)
++                        .Set("platform", "mastodon")
++                        .Set("mastodon_ownership",
++                             base::DictValue()
++                                 .Set("layout", "mastodon_status_header_v1")
++                                 .Set("timestamp_url", url)
++                                 .Set("profile_url", "https://community.example/@alice")
++                                 .Set("account", "@alice@identity.example")));
++  automatic.Set("permalink_suggestions",
++                base::DictValue().Set("candidates", std::move(candidates)));
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / Mastodon");
++  EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
++                                      ScreenshotTextLanguage::kNorwegian),
++            "Skjermbilde / @alice@identity.example / Mastodon");
++  // A manually entered or different status URL does not inherit the label
++  // from another candidate, even if its URL resembles a Mastodon permalink.
++  user.Set("post_permalink", "https://community.example/@alice/456");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  user.Set("post_permalink", url);
++  auto& candidate = automatic.FindDict("permalink_suggestions")
++                        ->FindList("candidates")->front().GetDict();
++  candidate.Set("platform", "other");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  candidate.Set("platform", "mastodon");
++  candidate.Remove("mastodon_ownership");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  user.Remove("post_permalink");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
 +}
 +
 +TEST(ScreenshotDocumentationTest,

@@ -74,8 +74,8 @@ The review dialog records the page URL, title, capture times in UTC, selection
 bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
-post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky
-TikTok, Reddit, YouTube and LinkedIn using visible links and the post container overlapping your
+post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky,
+TikTok, Reddit, YouTube, LinkedIn and Mastodon using visible links and the post container overlapping your
 selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
@@ -299,3 +299,11 @@ repositories is licensed under GPL-3.0. See [LICENSE](LICENSE).
 Any content imported from other projects retains its original license (for
 example, any original unmodified code imported from ungoogled-chromium remains
 licensed under their [BSD 3-Clause license](LICENSE.ungoogled_chromium)).
+
+Mastodon support targets the standard web app's timeline and detailed status
+layouts across instances. It requires a post's own matching author profile and
+timestamp link. Remote accounts retain their observed handle and instance-local
+permalink; status IDs are never translated into home-instance URLs. Boost actors,
+mentions and edited labels do not replace the original author or publication time.
+Other clients, ActivityPub URI-only layouts and missing ownership evidence require
+manual attribution. These DOM observations remain unverified.

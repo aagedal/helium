@@ -952,3 +952,48 @@ permalink/account/date. ExifTool inspection of a saved post PNG verified its
 reviewed-field origins, original tracked `/posts/` URL, normalized company profile,
 LinkedIn credit, site-date evidence and separate capture timestamp. This fixture
 is controlled local content, not an unobscured live LinkedIn capture.
+
+
+### Mastodon instance and status ownership
+
+Mastodon uses a scoped `#mastodon` web-app fingerprint and standard `.status` /
+`.detailed-status` headers and timestamp links. One own visible author profile,
+observed `.display-name__account` and matching timestamp permalink must agree
+before a URL is accepted. Arbitrary `/@account/id` links on other pages are not
+platform evidence. Native validation checks a bounded ownership record; URL-only
+candidates on arbitrary domains remain unsupported. This is heuristic DOM
+attribution, not server or account authentication.
+
+Instance hostnames, including `www`, `m` and `mobile`, remain intact. A remote
+`/@user@home.example/id` route keeps the viewing instance's observed ID and URL.
+Qualified handles remain exactly as displayed; account domains may differ from
+profile web domains. No WebFinger, API request, data-id conversion or inferred
+origin URL is used. The timestamp's own datetime/display text/title is recorded;
+separate edited markers are excluded. Boost actors, mentions and preview cards
+cannot supply the author. Linked nested quotes have separate ownership; missing
+quote evidence and selected references require review. Multiple selected posts
+cannot autofill a single source.
+
+The current standard web app was inspected on mastodon.social and fosstodon.org.
+Production-script checks on a local profile timeline, detailed status and remote
+Fosstodon status returned the observed account, permalink and publication time.
+A detailed reply containing a remote quoted status informed the quote fixtures.
+Alternative frontends, older layouts, ActivityPub `/users/.../statuses/...` URI-only
+links and inaccessible or virtualized placeholders are not supported.
+
+The controlled native capture fixture is `/mastodon-capture`; it deliberately
+uses a remote proxy handle, a `www` instance, a mismatched local data-id and a
+separate edited label. It is local test content, not a live Mastodon post.
+
+Validation: 306 production-script browser fixtures, 17 native source tests and
+10 native export tests passed. The persistent macOS app rebuilt successfully;
+both GN header checks, patch lint, patch-file checks, devutils tests and a strict
+no-fuzz reverse/apply round trip for the four changed added Chromium files passed.
+The separate copyright-preview change matches its compiled source block.
+
+Native QA at `http://127.0.0.1:8237/mastodon-capture` confirmed the proxy permalink,
+qualified account and original publication timestamp for a crop excluding the
+header. The credit preview shows Mastodon. ExifTool inspection of a saved PNG
+confirmed Mastodon credit, reviewed-field origins, observed tracked URL, ownership
+record, exact instance hostname and separate capture timestamp. The edited label
+was excluded. This remains a controlled local export test.

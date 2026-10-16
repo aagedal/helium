@@ -50,6 +50,8 @@ def main():
                 data, mime = production_script(), 'text/javascript'
             elif path == '/':
                 data, mime = (ROOT / 'screenshot_source_fixtures.html').read_bytes(), 'text/html'
+            elif path == '/mastodon-capture':
+                data, mime = (ROOT / 'screenshot_source_mastodon_capture.html').read_bytes(), 'text/html'
             elif path == '/linkedin-capture':
                 data, mime = (ROOT / 'screenshot_source_linkedin_capture.html').read_bytes(), 'text/html'
             elif path == '/youtube-capture':

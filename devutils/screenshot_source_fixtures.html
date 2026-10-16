@@ -240,6 +240,44 @@ window.runScreenshotSourceTests = () => {
   check('LinkedIn full post including unlinked nested content requires review',liUnlinkedQuote,'ambiguous','',()=>{
     const r=document.querySelector('article').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
   liCanonical.remove();
+  const mUrl = 'https://www.example.social/@reporter/123';
+  const mPost = `<div id="mastodon"><div class="status" data-id="999" id="m-post" style="position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div class="status__info"><a class="status__display-name" href="https://www.example.social/@reporter"><span class="display-name__html">Reporter</span><span class="display-name__account">@reporter</span></a>
+    <a class="status__relative-time" href="${mUrl}?utm_source=share"><time datetime="2026-10-15T12:34:56Z" title="Oct 15, 2026, 14:34">1d</time><abbr title="Last edited Oct 16, 2026, 10:00"> *</abbr></a></div>
+    <div id="crop" class="body">Post body</div></div></div>`;
+  const mDetails={posting_account:'@reporter',account_display_name:'Reporter',account_profile_url:'https://www.example.social/@reporter',publication_date_text:'2026-10-15T12:34:56Z',publication_date_displayed:'1d',date_evidence:'mastodon_permalink_time'};
+  detailsCheck('Mastodon scoped header preserves www instance and original publication date',mPost,mUrl,mDetails);
+  results.at(-1).passed &&= results.at(-1).actual.candidates[0].mastodon_ownership?.timestamp_url===mUrl;
+  detailsCheck('Mastodon detailed status owns its footer timestamp',mPost.replaceAll('status__display-name','detailed-status__display-name').replaceAll('status__relative-time','detailed-status__datetime').replace('class="status"','class="detailed-status"'),mUrl,mDetails);
+  for(const host of ['m.example.social','mobile.example.social','social.example.net']) {
+    detailsCheck('Mastodon preserves exact instance '+host,mPost.replaceAll('www.example.social',host),mUrl.replace('www.example.social',host),{posting_account:'@reporter'});
+  }
+  const mRemote=mPost.replaceAll('@reporter','@reporter@home.example');
+  detailsCheck('Mastodon remote proxy ID and qualified observed account are preserved',mRemote,mUrl.replace('@reporter','@reporter@home.example'),{posting_account:'@reporter@home.example'});
+  detailsCheck('Mastodon account domain may differ from profile web domain',mPost.replace('>@reporter<','>@reporter@identity.example<'),mUrl,{posting_account:'@reporter@identity.example'});
+  detailsCheck('Mastodon boost actor cannot replace original author',mPost.replace('<div class="status__info">','<div class="status__prepend"><a href="https://www.example.social/@booster">Booster boosted</a></div><div class="status__info">'),mUrl,mDetails);
+  check('Mastodon boost-banner-only crop cannot autofill original author',mPost.replace('<div class="status__info">','<div class="status__prepend" id="boost-only" style="height:25px">Booster boosted</div><div class="status__info">'),'ambiguous','',()=>crop('boost-only'));
+  detailsCheck('Mastodon displayed relative date remains observed text without machine date',mPost.replace(' datetime="2026-10-15T12:34:56Z"',''),mUrl,{publication_date_text:'1d'});
+  for(const [label,html] of [
+    ['no app fingerprint',mPost.replace('id="mastodon"','id="generic-blog"')],
+    ['missing own timestamp',mPost.replace('status__relative-time','unrelated-time')],
+    ['missing own author',mPost.replace('status__display-name','unrelated-author')],
+    ['wrong author profile',mPost.replace('href="https://www.example.social/@reporter"','href="https://www.example.social/@other"')],
+    ['wrong profile host',mPost.replace('href="https://www.example.social/@reporter"','href="https://other.social/@reporter"')],
+    ['wrong observed account',mPost.replace('>@reporter<','>@other<')],
+    ['hidden author',mPost.replace('class="status__display-name"','class="status__display-name" style="display:none"')],
+    ['ID alone',mPost.replace(mUrl+'?utm_source=share','https://www.example.social/unavailable')],
+    ['ActivityPub URI',mPost.replace(mUrl+'?utm_source=share','https://www.example.social/users/reporter/statuses/123')],
+    ['covering overlay',mPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Sign in</div>']]) {
+    check('Mastodon rejects '+label,html,'none','');
+  }
+  check('Mastodon selected unknown body reference requires review',mPost.replace('Post body','Post body <a href="https://other.social/@other/456">Other post</a>'),'ambiguous','');
+  detailsCheck('Mastodon off-crop reference cannot replace owner',mPost.replace('</div></div></div>','</div><a style="position:absolute;top:230px" href="https://other.social/@other/456">Other post</a></div></div>'),mUrl,mDetails);
+  const mQuote=mPost.replace('</div></div></div>','</div><div class="status__quote" style="position:absolute;left:10px;top:150px;width:370px;height:140px"><div class="status status--is-quote" id="m-quote" style="width:370px;height:140px;background:white"><a class="status__display-name" href="https://www.example.social/@quoted@remote.example"><span class="display-name__html">Quoted</span><span class="display-name__account">@quoted@remote.example</span></a><a class="status__relative-time" href="https://www.example.social/@quoted@remote.example/456"><time datetime="2026-10-14T01:02:03Z">2d</time></a><p id="m-quote-body">Quoted text</p></div></div></div></div>');
+  quoteCheck('Mastodon full quote prefers enclosing source',mQuote,'m-post','preferred',mUrl,'@reporter','2026-10-15T12:34:56Z');
+  quoteCheck('Mastodon isolated quote uses remote quoted author',mQuote,'m-quote','preferred','https://www.example.social/@quoted@remote.example/456','@quoted@remote.example','2026-10-14T01:02:03Z');
+  check('Mastodon unlinked quote prevents enclosing autofill',mQuote.replace('https://www.example.social/@quoted@remote.example/456','https://www.example.social/unavailable'),'ambiguous','',()=>crop('m-post'));
+  check('Mastodon separate selected posts require review',mPost+mPost.replace('left:20px;top:20px','left:20px;top:340px').replaceAll('/123','/456').replaceAll('id="crop"','id="second"'),'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
   const ytUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
   const ytOther = 'https://www.youtube.com/watch?v=otherId1234';
   const ytComment = ytUrl+'&lc=UgABC_123.reply-2';

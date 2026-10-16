@@ -1,0 +1,24 @@
+<!doctype html>
+<!-- Copyright 2026 The Helium Authors.
+You can use, redistribute, and/or modify this source code under
+ the terms of the GPL-3.0 license that can be found in the LICENSE file. -->
+<meta charset="utf-8">
+<title>Mastodon source capture fixture</title>
+<style>
+body { margin: 28px; color: #202124; background: #f5f5f5; font: 16px system-ui; }
+.status { width: 600px; background: white; padding: 20px; }
+.status__info { padding-bottom: 20px; }
+.display-name__account { margin-left: 12px; }
+.status__relative-time { margin-left: 20px; }
+#media { height: 200px; display: grid; place-items: center; background: #dce7ed; font-size: 28px; }
+</style>
+<h1>Local Mastodon attribution fixture</h1>
+<p>This is controlled test content. Capture the blue post body.</p>
+<div id="mastodon"><div class="status" data-id="999">
+  <div class="status__info">
+    <a class="status__display-name" href="https://www.example.social/@reporter@home.example"><span class="display-name__html">Reporter</span><span class="display-name__account">@reporter@home.example</span></a>
+    <a class="status__relative-time" href="https://www.example.social/@reporter@home.example/123?utm_source=share"><time datetime="2026-10-15T12:34:56Z" title="Oct 15, 2026, 14:34">1d</time><abbr title="Last edited Oct 16, 2026, 10:00"> *</abbr></a>
+  </div>
+  <div id="media">Post crop target</div>
+</div></div>
+<p>Expected: @reporter@home.example, 2026-10-15T12:34:56Z, the observed www.example.social proxy permalink and Mastodon credit. The local data-id and edited timestamp are not publication evidence.</p>
