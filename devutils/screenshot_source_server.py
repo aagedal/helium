@@ -12,6 +12,7 @@ import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 import re
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 
@@ -44,10 +45,13 @@ def main():
 
         def do_GET(self): # pylint: disable=invalid-name
             """Respond to an allowed fixture request."""
-            if self.path == '/source.js':
+            path = urlsplit(self.path).path
+            if path == '/source.js':
                 data, mime = production_script(), 'text/javascript'
-            elif self.path == '/':
+            elif path == '/':
                 data, mime = (ROOT / 'screenshot_source_fixtures.html').read_bytes(), 'text/html'
+            elif path == '/tiktok-capture':
+                data, mime = (ROOT / 'screenshot_source_tiktok_capture.html').read_bytes(), 'text/html'
             else:
                 self.send_error(404)
                 return

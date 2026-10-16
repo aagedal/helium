@@ -168,6 +168,103 @@ window.runScreenshotSourceTests = () => {
     bskyPost.replace('feedItem-by-', 'postThreadItem-by-').replace('3l6oveex3ii2l','3reply'),
     bskyUrl.replace('3l6oveex3ii2l','3reply'), {publication_date_text:bskyDate});
   bskyCanonical.remove();
+  const ttUrl = 'https://www.tiktok.com/@reporter/video/6718335390845095173';
+  const ttProfile = 'https://www.tiktok.com/@reporter';
+  const ttPost = `<article data-e2e="recommend-list-item-container" style="height:260px">
+    <section data-e2e="feed-video"><div><a href="${ttProfile}">Reporter</a><span>· 2019-7-27</span></div>
+      <div id="crop" class="body" data-e2e="video-desc">Caption without a linked timestamp</div>
+      <button data-e2e="more-menu-icon" data-more-menu-item-id="6718335390845095173" style="position:absolute;top:230px">More</button>
+    </section></article>`;
+  check('TikTok video path strips tracking and preserves post identity', post(ttUrl+'/?is_from_webapp=1'), 'unique',ttUrl);
+  check('TikTok photo path is a distinct observed post', post(ttUrl.replace('/video/','/photo/')+'?photo_id=4'), 'unique',ttUrl.replace('/video/','/photo/'));
+  check('TikTok profiles, music and shortened links are not post permalinks',
+    post(ttProfile, '<a href="https://www.tiktok.com/music/sound-123">Music</a><a href="https://vm.tiktok.com/ABC/">Short link</a>'), 'none','');
+  check('TikTok lookalike hosts are rejected',post(ttUrl.replace('tiktok.com/','tiktok.com.attacker.test/')), 'none','');
+  check('TikTok credentials and ports are rejected',post(ttUrl.replace('https://','https://user@'))+post(ttUrl.replace('tiktok.com/','tiktok.com:8443/')), 'none','');
+  check('TikTok nonnumeric IDs and extra path components are rejected',post(ttUrl.replace('6718335390845095173','oops'))+post(ttUrl+'/comments'), 'none','');
+  const ttCanonical = document.createElement('link');ttCanonical.rel='canonical';ttCanonical.href=ttUrl;document.head.append(ttCanonical);
+  detailsCheck('TikTok exact item ID binds page permalink, author and creator date',ttPost,ttUrl,
+    {posting_account:'@reporter',account_display_name:'Reporter',publication_date_text:'· 2019-7-27',date_evidence:'tiktok_creator_date_row'});
+  detailsCheck('TikTok relative date is preserved without inventing a year or timezone',ttPost.replace('2019-7-27','12h ago'),ttUrl,
+    {publication_date_text:'· 12h ago',publication_datetime_attribute:undefined});
+  detailsCheck('TikTok incomplete calendar date stays incomplete',ttPost.replace('2019-7-27','10-7'),ttUrl,
+    {publication_date_text:'· 10-7'});
+  detailsCheck('TikTok tracked profile links still establish creator date ownership',ttPost.replace(ttProfile,ttProfile+'/?lang=en'),ttUrl,
+    {posting_account:'@reporter',publication_date_text:'· 2019-7-27'});
+  detailsCheck('TikTok caption mentions do not establish an author or publication date',
+    ttPost.replace(ttProfile,'https://example.com').replace('Caption without a linked timestamp',`<a href="${ttProfile}">Reporter</a><span>· 2026-10-16</span>`),ttUrl,
+    {posting_account:undefined,publication_date_text:undefined});
+  detailsCheck('TikTok comment times cannot replace a missing creator date',
+    ttPost.replace('<span>· 2019-7-27</span>','').replace('</section>', '<div data-e2e="comment-level-1"><a href="https://www.tiktok.com/@reader">Reader</a><time datetime="2026-10-16T12:00:00Z">1h ago</time></div></section>'),
+    ttUrl,{publication_date_text:undefined});
+  detailsCheck('TikTok conflicting creator date rows stay unset',ttPost.replace('</section>',`<div><a href="${ttProfile}">Reporter</a><span>· 2026-10-16</span></div></section>`),
+    ttUrl,{posting_account:'@reporter',publication_date_text:undefined});
+  check('TikTok stale canonical cannot label another video from the same creator',ttPost.replace('data-more-menu-item-id="6718335390845095173"','data-more-menu-item-id="999"'), 'none','');
+  check('TikTok missing item ID cannot bind page metadata',ttPost.replace('data-more-menu-item-id="6718335390845095173"',''), 'none','');
+  check('TikTok multiple item IDs cannot bind page metadata',ttPost.replace('</section>','<button data-e2e="more-menu-icon" data-more-menu-item-id="999">Other</button></section>'), 'none','');
+  check('TikTok unrelated article cannot inherit page URL',post('https://example.com/unlinked'), 'none','');
+  detailsCheck('TikTok ID is never decoded into an unobserved date',ttPost.replace('<span>· 2019-7-27</span>',''),ttUrl,
+    {publication_date_text:undefined,posting_account:'@reporter'});
+  check('TikTok crop confined to an unlinked comment cannot adopt post source',
+    ttPost.replace('</section>','<div id="comment-crop" data-e2e="comment-level-1" style="position:absolute;left:20px;top:150px;width:300px;height:40px;background:white"><a href="https://www.tiktok.com/@reader">Reader</a><time datetime="2026-10-16T12:00:00Z">1h ago</time></div></section>'),
+    'ambiguous','',()=>crop('comment-crop'));
+  const commentPost = ttPost.replace('</section>','<div id="comment-margin" data-e2e="comment-level-1" style="position:absolute;left:20px;top:150px;width:300px;height:40px;background:white">Reader: separate comment</div></section>');
+  check('TikTok comment crop with margins cannot inherit enclosing source',commentPost,
+    'ambiguous','',()=>{const r=crop('comment-margin');return {...r,x:r.x-5,y:r.y-5,width:r.width+10,height:r.height+10};});
+  check('TikTok full post with an unsupported comment requires source review',commentPost,
+    'ambiguous','',()=>({x:20,y:20,width:360,height:260,view_width:innerWidth,view_height:innerHeight}));
+  detailsCheck('TikTok linked caption timestamp cannot become the post date',
+    ttPost.replace('<span>· 2019-7-27</span>','').replace('Caption without a linked timestamp',`<a href="${ttUrl}"><time datetime="2026-10-16T12:00:00Z">Caption reference</time></a>`),
+    ttUrl,{publication_date_text:undefined});
+  ttCanonical.href=ttUrl.replace('/video/','/photo/');
+  detailsCheck('TikTok exact photo item retains its observed photo URL',ttPost,ttCanonical.href,
+    {posting_account:'@reporter',publication_date_text:'· 2019-7-27'});
+  const observedPhotoUrl = ttCanonical.href + '?image_index=3';
+  check('TikTok photo slide URL normalizes only the post link',post(observedPhotoUrl), 'unique',ttCanonical.href);
+  results[results.length-1].passed &&= results[results.length-1].actual.candidates[0]?.original_url === observedPhotoUrl;
+  ttCanonical.href = 'https://www.tiktok.com/@qq.mm.pp/photo/7479037796326362385';
+  detailsCheck('TikTok live photo creator markup keeps its own date and handle',
+    ttPost.replaceAll('reporter','qq.mm.pp').replaceAll('6718335390845095173','7479037796326362385').replace('Reporter','ً').replace('2019-7-27','2025-3-7')
+      .replace('</section>',`<a href="https://www.tiktok.com/@qq.mm.pp" data-e2e="video-author-avatar"><img alt="qq.mm.pp" width="30" height="30"></a></section>`),
+    'https://www.tiktok.com/@qq.mm.pp/photo/7479037796326362385',
+    {posting_account:'@qq.mm.pp',publication_date_text:'· 2025-3-7'});
+  ttCanonical.href = ttUrl;
+  detailsCheck('TikTok hidden creator link cannot establish date despite a visible avatar',
+    ttPost.replace(`<a href="${ttProfile}">Reporter</a>`,`<a href="${ttProfile}" hidden>Reporter</a>`)
+      .replace('</section>',`<a href="${ttProfile}" data-e2e="video-author-avatar"><span style="display:inline-block;width:30px;height:30px">R</span></a></section>`),
+    ttUrl,{posting_account:'@reporter',publication_date_text:undefined});
+  detailsCheck('TikTok zero-width name without visible identity leaves attribution blank',
+    ttPost.replace('Reporter','ً'),ttUrl,{posting_account:undefined,publication_date_text:undefined});
+  const referenceCaption = ttPost.replace('Caption without a linked timestamp',`<a href="${ttUrl.replace('6718335390845095173','999')}">Another post</a>`);
+  check('TikTok referenced post cannot replace an unlinked enclosing source',
+    referenceCaption.replace('data-more-menu-item-id="6718335390845095173"',''), 'ambiguous','');
+  const referenceResult = results[results.length-1];
+  referenceResult.passed &&= referenceResult.actual.candidates[0]?.evidence === 'referenced_post_link' &&
+    referenceResult.actual.candidates[0]?.site_details.posting_account === undefined;
+  check('TikTok own source plus a caption reference remains reviewable',referenceCaption,'ambiguous','');
+  const adjacentPosts = ttPost.replace('id="crop"','id="first-crop"') +
+    ttPost.replace('height:260px','height:260px;top:300px').replaceAll('6718335390845095173','999').replace('2019-7-27','2026-10-10');
+  ttCanonical.href = ttUrl.replace('6718335390845095173','999');
+  detailsCheck('TikTok selected item keeps its source with an adjacent visible preload',adjacentPosts,ttCanonical.href,
+    {posting_account:'@reporter',publication_date_text:'· 2026-10-10'});
+  check('TikTok current page URL cannot label the adjacent item of the same creator',adjacentPosts,
+    'none','',()=>crop('first-crop'));
+  check('TikTok two selected native items cannot silently fill the one known source',adjacentPosts,
+    'ambiguous','',()=>({x:20,y:20,width:360,height:540,view_width:innerWidth,view_height:innerHeight}));
+  ttCanonical.href = ttUrl;
+  detailsCheck('TikTok media crop ignores caption references outside the selection',
+    referenceCaption.replace('</section>','<div id="media-crop" style="position:absolute;left:15px;top:170px;width:300px;height:40px">Media</div></section>'),
+    ttUrl,{posting_account:'@reporter',publication_date_text:'· 2019-7-27'},()=>crop('media-crop'));
+  ttCanonical.href = ttUrl.replace('6718335390845095173','999');
+  const foreignHeaderLink = ttPost.replace('</section>',`<a id="foreign-link" style="position:absolute;left:15px;top:180px" href="${ttCanonical.href}"><time datetime="2026-10-17T10:00:00Z">Referenced header post</time></a></section>`);
+  check('TikTok mismatched header permalink cannot replace the selected item',foreignHeaderLink,
+    'ambiguous','',()=>crop('foreign-link'));
+  check('TikTok off-crop mismatched header link is not a source candidate',foreignHeaderLink,
+    'none','');
+  ttCanonical.remove();
+  check('Two selected TikTok posts stay ambiguous',
+    post(ttUrl)+post(ttUrl.replace('6718335390845095173','999')).replace('<article>','<article style="top:195px">').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:360,height:335,view_width:innerWidth,view_height:innerHeight}));
   const trigger = '<a href="https://x.com/reporter/status/123" data-base-ui-tooltip-trigger data-popup-open>9m</a>';
   const portal = '<div data-base-ui-portal><div data-open data-base-ui-focusable class="bg-(--x-tooltip-bg)">11:57 PM · Oct 15, 2026</div></div>';
   const tooltipCheck = (name, html, expected) => {

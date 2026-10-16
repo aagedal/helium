@@ -1007,7 +1007,7 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,757 @@
+@@ -0,0 +1,856 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1016,6 +1016,8 @@
 +
 +#include "base/json/json_writer.h"
 +#include "base/strings/strcat.h"
++#include "base/strings/string_split.h"
++#include "base/strings/string_util.h"
 +#include "base/strings/utf_string_conversions.h"
 +#include "url/gurl.h"
 +
@@ -1037,6 +1039,11 @@
 +        // Use the observed account path; strip photo/video suffixes and tracking.
 +        path = path.slice(0, path.indexOf('/status/') + 8) + match[1];
 +        platform = 'twitter_x';
++      } else if (host === 'tiktok.com') {
++        match = path.match(/^\/@([A-Za-z0-9_.]+)\/(video|photo)\/(\d+)\/?$/);
++        if (!match) return null;
++        path = '/@' + match[1] + '/' + match[2] + '/' + match[3];
++        platform = 'tiktok';
 +      } else if (host === 'bsky.app') {
 +        // Preserve the observed handle or DID. Never resolve identity aliases
 +        // or manufacture a permalink for an unlinked quoted post.
@@ -1086,6 +1093,7 @@
 +        }
 +      } else return null;
 +      const targetHost = platform === 'twitter_x' ? 'x.com' :
++          platform === 'tiktok' ? 'www.tiktok.com' :
 +          platform === 'bluesky' ? 'bsky.app' :
 +          platform === 'threads' ? 'www.threads.com' :
 +          platform === 'instagram' ? 'www.instagram.com' :
@@ -1106,13 +1114,13 @@
 +    top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom)});
 +  const viewport = {left: vv ? vv.offsetLeft : 0, top: vv ? vv.offsetTop : 0,
 +    right: (vv ? vv.offsetLeft : 0) + width, bottom: (vv ? vv.offsetTop : 0) + height};
-+  const visible = (element, requireInViewport = true) => {
++  const visible = (element, requireInViewport = true, allowEmpty = false) => {
 +    for (let node = element; node; node = node.parentElement) {
 +      if (Number(getComputedStyle(node).opacity) === 0) return false;
 +    }
 +    const style = getComputedStyle(element);
 +    return style.display !== 'none' && style.visibility === 'visible' && Number(style.opacity) > 0 &&
-+        area(element.getBoundingClientRect()) > 0 &&
++        (allowEmpty || area(element.getBoundingClientRect()) > 0) &&
 +        (!requireInViewport || area(intersection(element.getBoundingClientRect(), viewport)) > 0) &&
 +        !element.closest('[hidden],[inert],[aria-hidden="true"]');
 +  };
@@ -1126,7 +1134,7 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
-+  const postSelector = 'article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"]';
++  const postSelector = 'article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1167,6 +1175,18 @@
 +    }
 +    return null;
 +  };
++  const tiktokPostMatches = (post, raw) => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'tiktok' ||
++        !post.matches('article[data-e2e="recommend-list-item-container"]')) return false;
++    const id = new URL(parsed.url).pathname.split('/').pop();
++    const ids = new Set([...post.querySelectorAll('[data-e2e="more-menu-icon"][data-more-menu-item-id]')]
++        .filter(node => postFor(node) === post)
++        .map(node => node.getAttribute('data-more-menu-item-id')));
++    // The address/canonical can lag behind a scrolled feed. Match the item's
++    // own ID before using page metadata; never derive a date from this ID.
++    return ids.size === 1 && ids.has(id);
++  };
 +  const fullTimestamp = value => /\d{4}/.test(value) && /\d[:.]\d{2}/.test(value);
 +  const compactTimestamp = value => /^(?:\d+\s*[a-zæøå]{1,3}|yesterday|today|i går|i dag)$/i.test(value);
 +  const selectorFor = element => {
@@ -1181,18 +1201,28 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'tiktok' &&
++        post.matches('article[data-e2e="recommend-list-item-container"]') &&
++        !tiktokPostMatches(post, parsed.url)) return {};
 +    const owns = node => !!node && postFor(node) === post;
 +    const details = {};
 +    const postUrl = new URL(parsed.url);
 +    const handleMatch = parsed.platform === 'twitter_x'
 +        ? postUrl.pathname.match(/^\/(?!i\/)([^/]+)\/status\//)
++        : parsed.platform === 'tiktok' ? postUrl.pathname.match(/^\/@([^/]+)\/(?:video|photo)\//)
 +        : parsed.platform === 'bluesky' ? postUrl.pathname.match(/^\/profile\/([^/]+)\/post\//)
 +        : parsed.platform === 'threads' ? postUrl.pathname.match(/^\/@([^/]+)\/post\//)
 +        : parsed.platform === 'truth_social' ? postUrl.pathname.match(/^\/@([^/]+)\/posts\//) : null;
 +    const expectedHandle = handleMatch ? handleMatch[1].toLowerCase() : parsed.account_hint?.toLowerCase();
 +    const profiles = new Map();
++    const authorLinks = new Set();
 +    for (const link of post.querySelectorAll('a[href]')) {
-+      if (!owns(link) || !visible(link, false)) continue;
++      if (!owns(link)) continue;
++      const profileVisible = visible(link, false);
++      // Some TikTok display names contain only zero-width combining marks.
++      // Their rendered creator link can still own an adjacent visible date,
++      // provided another visible profile link (e.g. the avatar) identifies it.
++      if (!profileVisible && !(parsed.platform === 'tiktok' && visible(link, false, true))) continue;
 +      // A URL's account name alone is not an observed posting account. Require
 +      // a matching profile link in the post, or a scoped author/header link.
 +      if (!expectedHandle && !link.closest('header,h2,h3,[data-testid="User-Name"],[data-testid="account"]')) continue;
@@ -1207,6 +1237,11 @@
 +          match = u.pathname.match(/^\/([A-Za-z0-9_]+)\/?$/);
 +          if (match && !['home','explore','search','notifications','messages','settings','i'].includes(match[1].toLowerCase())) {
 +            account = '@' + match[1]; profileUrl = 'https://x.com/' + match[1];
++          }
++        } else if (parsed.platform === 'tiktok' && host === 'tiktok.com') {
++          match = u.pathname.match(/^\/@([A-Za-z0-9_.]+)\/?$/);
++          if (match && !link.closest('[data-e2e="video-desc"],[data-e2e="browse-video-desc"],[data-e2e^="comment-"]')) {
++            account = '@' + match[1]; profileUrl = 'https://www.tiktok.com/@' + match[1];
 +          }
 +        } else if (parsed.platform === 'bluesky' && host === 'bsky.app') {
 +          match = u.pathname.match(/^\/profile\/([A-Za-z0-9.:-]+)\/?$/);
@@ -1231,6 +1266,8 @@
 +          }
 +        }
 +        if (!account || !profileUrl || (expectedHandle && (account.startsWith('@') ? account.slice(1) : account).toLowerCase() !== expectedHandle)) continue;
++        authorLinks.add(link);
++        if (!profileVisible) continue;
 +        const key = profileUrl.toLowerCase(), display = text(link);
 +        if (!profiles.has(key) || (display && (parsed.platform !== 'bluesky' || !display.startsWith('@')))) profiles.set(key, {account, profile_url:profileUrl, display_name:display});
 +      } catch { /* Not a usable profile link. */ }
@@ -1267,6 +1304,16 @@
 +          fullTimestamp(text(node)) && visible(node, false));
 +      if (dates.length === 1) dateNode = dates[0];
 +    }
++    if (!dateNode && parsed.platform === 'tiktok' && profiles.size === 1) {
++      // Current feed/detail markup puts the date in a leaf span immediately
++      // after the creator profile link. Caption and comment dates do not count.
++      const dates = [...post.querySelectorAll('a[href]')].filter(link =>
++          authorLinks.has(link)).map(link => link.nextElementSibling)
++          .filter(node => owns(node) && visible(node, false) && node.matches('span') &&
++              !node.children.length &&
++              /^[·•]\s*(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}-\d{1,2}|\d+\s*[\p{L} .]+)$/u.test(text(node)));
++      if (dates.length === 1) dateNode = dates[0];
++    }
 +    if (!dateNode && parsed.platform === 'facebook' && owns(anchor) &&
 +        !anchor.querySelector('img,video') &&
 +        (compactTimestamp(text(anchor)) ||
@@ -1280,7 +1327,7 @@
 +      dateNode = post.querySelector(':scope > div:last-child > span');
 +      if (!owns(dateNode)) dateNode = null;
 +    }
-+    if (!dateNode) {
++    if (!dateNode && parsed.platform !== 'tiktok') {
 +      const times = [...post.querySelectorAll('time,abbr[data-utime]')].filter(owns);
 +      if (times.length === 1) dateNode = times[0];
 +    }
@@ -1301,7 +1348,8 @@
 +        if (aria) details.publication_date_aria_label = aria;
 +        if (epochUtc) details.publication_datetime_from_epoch_utc = epochUtc;
 +        const hoverNode = dateNode;
-+        if (!(parsed.platform === 'bluesky' && fullTimestamp(displayed)) &&
++        if (parsed.platform !== 'tiktok' &&
++            !(parsed.platform === 'bluesky' && fullTimestamp(displayed)) &&
 +            !machine && !epochUtc && !fullTimestamp(tooltip) && !fullTimestamp(aria) &&
 +            normalize(parsed.url) && visible(hoverNode) &&
 +            exposed(post, post.getBoundingClientRect())) {
@@ -1322,6 +1370,7 @@
 +        if (epoch) details.publication_epoch_attribute = epoch;
 +        details.date_evidence = dateNode.matches('time') ? 'time_element_in_post' :
 +            epoch ? 'timestamp_element_in_post' : dateNode.matches('a') ? 'post_permalink_timestamp_text' :
++            parsed.platform === 'tiktok' ? 'tiktok_creator_date_row' :
 +            parsed.platform === 'bluesky' ? 'bluesky_detail_footer' : 'truth_social_detail_footer';
 +      }
 +    }
@@ -1340,8 +1389,23 @@
 +      post = null;
 +      anchor = null;
 +    }
++    const tiktokTextLink = parsed.platform === 'tiktok' &&
++        anchor?.closest('[data-e2e="video-desc"],[data-e2e="browse-video-desc"],[data-e2e^="comment-"]');
++    if (parsed.platform === 'tiktok' && anchor &&
++        (tiktokTextLink || post?.matches('article[data-e2e="recommend-list-item-container"]'))) {
++      // A link to a different ID is a reference, wherever it appears inside
++      // the item. Only keep it when the link itself is visibly selected.
++      if (!post || !tiktokPostMatches(post, parsed.url)) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'referenced_post_link';
++      } else if (tiktokTextLink) {
++        anchor = null;  // Caption text cannot supply a publication timestamp.
++      }
++    }
 +    const details = siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook','bluesky'].includes(parsed.platform)) {
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1413,8 +1477,12 @@
 +    const post = topPosts[0], rect = intersection(post.getBoundingClientRect(), viewport);
 +    if (area(intersection(rect, selected)) >= 0.5 * area(selected) && exposed(post, rect)) {
 +      const address = normalize(location.href);
-+      const pageSourceAllowed = raw => normalize(raw)?.platform !== 'bluesky' ||
-+          post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])');
++      const pageSourceAllowed = raw => {
++        const platform = normalize(raw)?.platform;
++        if (platform === 'tiktok') return false;  // Matched per item below.
++        return platform !== 'bluesky' ||
++            post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])');
++      };
 +      if (address) {
 +        if (pageSourceAllowed(location.href)) add(location.href, 'post_page_address', post);
 +      }
@@ -1434,6 +1502,19 @@
 +        post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])'));
 +    if (expanded.length === 1 && overlapping.includes(expanded[0]))
 +      add(location.href, 'post_page_address', expanded[0]);
++  }
++  // TikTok preloads adjacent items. A second visible article must not prevent
++  // attribution to the selected item when its ID matches an observed page URL.
++  const tiktokPageSources = [
++    [location.href, 'post_page_address'],
++    [document.querySelector('link[rel="canonical"]')?.href, 'post_page_canonical'],
++    [document.querySelector('meta[property="og:url"]')?.content, 'post_page_metadata']];
++  for (const post of overlapping) {
++    const rect = intersection(post.getBoundingClientRect(), viewport);
++    if (area(intersection(rect, selected)) < 0.5 * Math.min(area(selected), area(rect))) continue;
++    for (const [raw, evidence] of tiktokPageSources) {
++      if (tiktokPostMatches(post, raw)) add(raw, evidence, post);
++    }
 +  }
 +  const list = [...candidates.values()];
 +  const ownContentSelected = post => {
@@ -1523,8 +1604,15 @@
 +          contexts.some(parent => parent?.contains(post)) &&
 +          area(intersection(post.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
 +  if (unlinkedBlueskyQuote) preferred = null;
++  // TikTok comments currently lack a supported permalink. Even a crop with
++  // margins, or one including both the post and a comment, needs source review.
++  const unlinkedTikTokComment = list.some(c => c.platform === 'tiktok') &&
++      overlapping.some(post => post.matches('[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]') &&
++          contexts.some(parent => parent?.contains(post)));
++  const unattributedTikTokReference = list.some((candidate, i) =>
++      candidate.platform === 'tiktok' && candidate.evidence === 'referenced_post_link' && !contexts[i]);
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -1613,6 +1701,17 @@
 +  if (!url.is_valid() || !url.SchemeIs("https") || url.has_username() ||
 +      url.has_password() || url.has_port() || raw.size() > 2048)
 +    return false;
++  if (url.host() == "www.tiktok.com") {
++    const auto parts = base::SplitStringPiece(
++        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    return !url.has_query() && !url.has_ref() && parts.size() == 4 &&
++           parts[0].empty() && parts[1].size() > 1 && parts[1].front() == '@' &&
++           base::ContainsOnlyChars(parts[1].substr(1),
++                                   "abcdefghijklmnopqrstuvwxyz"
++                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.") &&
++           (parts[2] == "video" || parts[2] == "photo") && !parts[3].empty() &&
++           base::ContainsOnlyChars(parts[3], "0123456789");
++  }
 +  return url.host() == "x.com" || url.host() == "www.instagram.com" ||
 +         url.host() == "www.facebook.com" || url.host() == "truthsocial.com" ||
 +         url.host() == "www.threads.com" || url.host() == "bsky.app";
@@ -1802,7 +1901,7 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,254 @@
+@@ -0,0 +1,275 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1830,10 +1929,29 @@
 +                   "https://truthsocial.com/@reporter/posts/123",
 +                   "https://www.threads.com/@reporter/post/ABC_12",
 +                   "https://bsky.app/profile/reporter.bsky.social/post/3l6oveex3ii2l",
-+                   "https://bsky.app/profile/did:plc:abc123/post/3l6oveex3ii2l"}) {
++                   "https://bsky.app/profile/did:plc:abc123/post/3l6oveex3ii2l",
++                   "https://www.tiktok.com/@reporter/video/123",
++                   "https://www.tiktok.com/@reporter/photo/456"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsTikTokNonPostSuggestions) {
++  for (const char* url : {
++           "https://www.tiktok.com/@reporter",
++           "https://www.tiktok.com/@reporter/live",
++           "https://www.tiktok.com/@/video/123",
++           "https://www.tiktok.com/@bad!handle/video/123",
++           "https://www.tiktok.com/@reporter/video/not-an-id",
++           "https://www.tiktok.com/@reporter/video/123/comments",
++           "https://www.tiktok.com/@reporter/photo/123?image_index=2",
++           "https://www.tiktok.com/@reporter/video/123#comments",
++           "https://www.tiktok.com/music/sound-123",
++           "https://www.tiktok.com/t/share-code"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
 +  }
 +}
 +
@@ -1845,7 +1963,9 @@
 +        "https://truthsocial.com.attacker.example/@reporter/posts/123",
 +        "https://attacker@truthsocial.com/@reporter/posts/123",
 +        "https://bsky.app.attacker.test/profile/a/post/123",
-+        "https://user@bsky.app/profile/a/post/123"}) {
++        "https://user@bsky.app/profile/a/post/123",
++        "https://www.tiktok.com.attacker.test/@reporter/video/123",
++        "https://user@www.tiktok.com/@reporter/video/123"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unavailable");
 +    EXPECT_FALSE(result.FindString("suggested_permalink"));
@@ -3314,7 +3434,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,455 @@
+@@ -0,0 +1,457 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -3613,6 +3733,8 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.DomainIs("tiktok.com"))
++      return "TikTok";
 +    if (url.DomainIs("bsky.app"))
 +      return "Bluesky";
 +    if (url.DomainIs("truthsocial.com"))
@@ -3820,7 +3942,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,487 @@
+@@ -0,0 +1,488 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4160,7 +4282,8 @@
 +           {"https://truthsocial.com/@source/posts/123", "Truth Social"},
 +           {"https://www.threads.com/@source/post/ABC_12", "Threads"},
 +           {"https://www.threads.net/@source/post/ABC_12", "Threads"},
-+           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"}}) {
++           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"},
++           {"https://www.tiktok.com/@source/video/123", "TikTok"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");

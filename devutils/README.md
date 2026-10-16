@@ -774,3 +774,44 @@ The focused native targets were rebuilt in the persistent macOS cache. The full
 app rebuild was stopped after it scheduled a broad dependency rebuild; native
 capture-dialog and saved-image QA for Bluesky remain to be completed. No external
 API requests or identity resolution were added to the capture flow.
+
+
+TikTok source extraction recognizes explicit `/@account/video/id` and
+`/@account/photo/id` links. Current `recommend-list-item-container` articles can
+use page address/canonical/Open Graph metadata only when their scoped
+`more-menu-icon` item IDs agree with the URL. Adjacent preloaded articles are
+matched independently. Missing, conflicting or stale IDs leave page-derived
+sources unset, and a crop containing multiple posts cannot silently autofill
+its only discoverable source. Native validation accepts only normalized TikTok
+video/photo post paths.
+
+Creator profile links must match the permalink's account. The adjacent creator
+row supplies the displayed date, without decoding dates from IDs or inventing
+years/timezones. A visible avatar can support a date next to a rendered zero-width
+creator name; hidden links cannot. Caption/header links to a different post are
+references, retained only when directly selected and requiring review. Known
+comment containers have separate ownership, and captures including unsupported
+comments require review, including crops with margins. No short-link resolution
+or external API was added. An observed photo URL can retain `image_index` in the
+source record while the suggested permalink identifies the post.
+
+Validation passed 141 production-script browser fixtures, ten native source
+tests, nine native export tests, two GN header dependency checks, patch lint and
+a strict no-fuzz reverse/apply round trip for the four changed Chromium files.
+The full development app and the final incremental revision were rebuilt using
+the persistent macOS cache. Native review filled the video/photo permalink,
+account and date; a full-pane capture including a comment required review with
+blank fields. Stale item IDs and an obscuring overlay left all source fields
+blank. ExifTool verified a saved PNG's reviewed values and origins, original photo
+URL with `image_index=3`, creator-row date evidence and distinct capture timestamp.
+
+Current public video and photo markup was inspected directly for item IDs,
+creator/date rows and preloaded articles. Unobscured authenticated live capture
+checks remain limited by TikTok's login/signup and verification prompts; the
+live overlay correctly returned no source for its obscured post.
+
+For reproducible native capture/export checks, run the fixture server and open
+`http://127.0.0.1:8232/tiktok-capture`. Video and photo media crops should suggest
+`@reporter` with the displayed date. Comment crops require source review. The
+stale-metadata and overlay variants should leave the source blank. This is
+controlled local content, not an authenticated live TikTok capture.

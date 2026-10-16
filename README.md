@@ -74,8 +74,8 @@ The review dialog records the page URL, title, capture times in UTC, selection
 bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
-post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social and Bluesky using
-visible links and the post container overlapping your selection. One clear match fills the field;
+post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky
+and TikTok using visible links and the post container overlapping your selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
 heuristics, not verified attribution. Posting account and publication date can
@@ -100,6 +100,14 @@ matching profile link and timestamp. Expanded posts use their scoped date footer
 the displayed time is preserved without assuming a timezone. A crop confined to
 a quoted post with no exposed permalink stays ambiguous instead of filling the
 enclosing post's source. Linked quotes keep their separate source details.
+
+TikTok recognizes explicit video and photo permalinks. Its current article layout
+can use the page URL only when the article's own item ID matches that URL. The
+matching creator profile and adjacent date label provide attribution, including
+when adjacent posts are preloaded. A capture including an unsupported comment or
+a caption link to another post requires source review. Relative
+dates and dates without a year stay as displayed. Captions and comment dates do
+not supply publication dates. Shortened share links are not resolved.
 
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image
