@@ -108,6 +108,13 @@ for the crop, and consumes scrolling without implicitly committing selection.
 Encoding, metadata embedding, SHA-256 calculation and optional ZIP creation run
 on a blocking worker. The remembered per-profile choices are PNG, JPEG (quality
 95, 4:4:4) or lossless JPEG XL, and standalone image or documentation ZIP.
+Standalone image is the default; all formats retain embedded IPTC/XMP metadata.
+Direct saving is enabled by default and asks for a screenshot folder on first
+save. The review panel shows the remembered folder and provides a folder picker
+to change it. Disabling direct saving restores Save As for each capture.
+Screenshot-specific folder and direct-save preferences do not change the general
+download directory. Each direct save uses a fresh UUID in its filename to avoid
+overwrites, including repeated saves of the same capture.
 JPEG uses Chromium's existing encoder. JPEG XL statically links the standalone
 fast lossless encoder from libjxl 0.12.0, downloaded with a pinned SHA-256 in
 `deps.ini`; it does not require a system library, Homebrew or a subprocess.
@@ -153,7 +160,8 @@ All three image formats embed the same XMP packet: IPTC Core Title
 Description (`dc:description`, source report without the capture
 limitations, copyright notice, language setting or browser/version), optional
 Alt Text (`Iptc4xmpCore:AltTextAccessibility`, the user-entered image description),
-Source (`photoshop:Source`, the reviewed posting account), and Date Created
+Source (`photoshop:Source`, the reviewed posting account and permalink joined
+with ` / `, or either value alone when only one is supplied), and Date Created
 (`photoshop:DateCreated`, screenshot capture time). `dc:source` records the page
 URL; XMP CreatorTool/CreateDate record the browser and capture time. A custom
 `helium:SourceRecord` property preserves the complete schema-2 JSON, including
@@ -164,11 +172,19 @@ contains the requested source credit: `Screenshot / [account] / [platform]` or
 `Skjermbilde / [account] / [platform]`. The remembered English/Norwegian selector
 updates a live preview. The notice uses the reviewed account and recognized
 permalink platform, falling back to the captured page's platform or hostname;
-an empty account leaves the notice absent. Twitter/X is labeled Twitter. XMP
+an empty or missing account uses `Screenshot / [hostname]` or
+`Skjermbilde / [hostname]` from the captured HTTP(S) page instead. This works
+on any website, omits a leading `www.` and excludes ports, paths, queries and
+fragments. Invalid, non-HTTP(S) or credential-bearing URLs leave the fallback
+absent. Twitter/X is labeled Twitter. XMP
 stores the selected text as both `x-default` and `en`/`nb`; the complete source
 record identifies the formatted-source-credit method without recording the
 language preference. The ZIP text report retains the capture limitations.
-No creator or rights-holder flag is set. XML is escaped, and JPEG uses Adobe
+The optional remembered `Captured by (username)` field is explicitly entered
+by the user and stored in IPTC Creator (`dc:creator`, an RDF sequence), the
+readable description and `user_provided.captured_by` in the complete record.
+It identifies the screenshot capturer separately from the posting account.
+Creator stays absent when this field is empty; no rights-holder flag is set. XML is escaped, and JPEG uses Adobe
 Extended XMP for long records.
 PNG uses the standard XMP iTXt keyword; JPEG XL uses an uncompressed `xml ` box.
 
@@ -210,8 +226,8 @@ A ZIP contains exactly `screenshot.png`, `.jpg` or `.jxl`, `metadata.json`
 embedded metadata. The embedded record omits that hash: a file cannot include
 its own final hash. Page/user strings are file contents, never paths or commands.
 Temporary files are removed after archive creation. A browser-created blob
-hands the complete image or ZIP to Chromium's download manager with a
-save-location prompt, avoiding data-URL size limits. The archive excludes cookies and browser
+hands the complete image or ZIP to Chromium's download manager, using the
+remembered screenshot folder for direct saving or a save-location prompt, avoiding data-URL size limits. The archive excludes cookies and browser
 storage, but the selected pixels, page URL/title and user notes may themselves
 contain private information. The user explicitly chooses when and where to save.
 
