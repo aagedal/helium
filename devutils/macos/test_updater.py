@@ -92,6 +92,7 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
             """Serve an appcast or signed installer, injecting the requested failure."""
             path = self.path.split('?')[0]
             requests.append(path)
+            print('Updater request:', path, flush=True)
             primary = path.startswith('/primary/')
             if args.scenario == 'both-down' or (primary and args.scenario == 'feed-fallback'):
                 self.send_error(503)
@@ -196,7 +197,7 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
                                     'goog:chromeOptions': {
                                         'binary': str(test_app / 'Contents/MacOS/Helium Neo'),
                                         'args': [
-                                            '--headless', '--no-first-run',
+                                            '--enable-logging=stderr', '--no-first-run',
                                             '--no-default-browser-check', '--use-mock-keychain',
                                             '--user-data-dir=' + str(profile),
                                             '--custom-update-server-url=' + origin + '/primary/',
