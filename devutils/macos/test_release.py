@@ -4,14 +4,14 @@
 # pylint: disable=missing-function-docstring,consider-using-with
 
 import hashlib
-import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, call
+import xml.etree.ElementTree as ET
 
-from deploy_mirror import check_not_older, upload_atomic, validate_bundle
+from deploy_mirror import check_not_older, read_existing_feed, upload_atomic, validate_bundle
 from make_appcast import make_feed
 
 
@@ -77,14 +77,30 @@ class ReleaseTests(unittest.TestCase):
     def test_old_release_cannot_replace_newer_feed(self):
         newer = {**self.config, 'build': '99999999.1'}
         feed = make_feed(newer, self.archive, 'signature', self.manifest['backup_download'], 'now')
-        with patch('deploy_mirror.urlopen', return_value=io.BytesIO(feed)):
-            with self.assertRaisesRegex(ValueError, 'newer'):
-                check_not_older(self.manifest)
+        with self.assertRaisesRegex(ValueError, 'newer'):
+            check_not_older(self.manifest, feed)
 
     def test_same_release_can_be_retried(self):
         feed = (self.root / 'helium-neo-backup.xml').read_bytes()
-        with patch('deploy_mirror.urlopen', return_value=io.BytesIO(feed)):
-            check_not_older(self.manifest)
+        check_not_older(self.manifest, feed)
+
+    def test_first_deployment_has_no_existing_feed(self):
+        ftp = Mock()
+        ftp.nlst.side_effect = [['appcast'], ['mediaconverter.xml']]
+        self.assertIsNone(read_existing_feed(ftp, '/hosting/www/apps'))
+        ftp.retrbinary.assert_not_called()
+        check_not_older(self.manifest, None)
+
+    def test_existing_feed_is_read_from_ftp(self):
+        ftp = Mock()
+        ftp.nlst.side_effect = [['appcast'], ['helium-neo.xml']]
+        feed = (self.root / 'helium-neo-backup.xml').read_bytes()
+        ftp.retrbinary.side_effect = lambda command, callback: callback(feed)
+        self.assertEqual(read_existing_feed(ftp, '/hosting/www/apps'), feed)
+
+    def test_invalid_existing_feed_still_blocks_deployment(self):
+        with self.assertRaises(ET.ParseError):
+            check_not_older(self.manifest, b'<html>invalid feed')
 
     def test_upload_uses_login_directory_instead_of_server_root(self):
         ftp = Mock()

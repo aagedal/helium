@@ -9,13 +9,13 @@ variables; they are never printed or stored in release artifacts.
 import argparse
 import ftplib
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import ssl
 from datetime import datetime, timezone, timedelta
-from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 import uuid
 import xml.etree.ElementTree as ET
@@ -65,16 +65,26 @@ def verify_public(url, expected_hash):
         raise RuntimeError('Public mirror verification failed: ' + url)
 
 
-def check_not_older(manifest):
+def read_existing_feed(ftp, login_directory):
+    """Read the actual FTP file, avoiding websites that return HTML for missing URLs."""
+    ftp.cwd(login_directory)
+    directories = {name.rstrip('/').rsplit('/', 1)[-1] for name in ftp.nlst()}
+    if 'appcast' not in directories:
+        return None
+    ftp.cwd('appcast')
+    names = {name.rsplit('/', 1)[-1] for name in ftp.nlst()}
+    if 'helium-neo.xml' not in names:
+        return None
+    with io.BytesIO() as existing:
+        ftp.retrbinary('RETR helium-neo.xml', existing.write)
+        return existing.getvalue()
+
+
+def check_not_older(manifest, existing_feed):
     """A rerun of an older release must never roll the mirror feed backwards."""
-    try:
-        with urlopen(manifest['backup_feed'] + '?revision=' + uuid.uuid4().hex,
-                     timeout=30) as response:
-            current = ET.fromstring(response.read(1024 * 1024))
-    except HTTPError as error:
-        if error.code == 404:
-            return
-        raise
+    if existing_feed is None:
+        return
+    current = ET.fromstring(existing_feed)
 
     def version(value):
         if not value or not re.fullmatch(r'\d+(?:\.\d+)*', value):
@@ -117,13 +127,13 @@ def main():
     if args.validate_only:
         print('Release bundle and both feeds agree.')
         return
-    check_not_older(manifest)
     ftp = ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=120)
     ftp.connect(os.environ['APPCAST_FTP_HOST'], int(os.environ.get('APPCAST_FTP_PORT') or '21'))
     try:
         ftp.login(os.environ['APPCAST_FTP_USERNAME'], os.environ['APPCAST_FTP_PASSWORD'])
         login_directory = ftp.pwd()
         ftp.prot_p()
+        check_not_older(manifest, read_existing_feed(ftp, login_directory))
         filename = manifest['installer']
         upload_atomic(ftp, args.directory / filename, 'helium-neo', filename, login_directory)
         verify_public(manifest['backup_download'], manifest['sha256'])
