@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import ssl
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 import uuid
 import xml.etree.ElementTree as ET
@@ -23,6 +24,26 @@ import xml.etree.ElementTree as ET
 from make_appcast import SPARKLE, sha256_stream
 
 INSTALLER = re.compile(r'Helium-Neo-[0-9.]+-macOS-arm64-signed\.dmg')
+
+
+def ftp_endpoint(host_setting, port_setting):
+    """Accept a hostname or FTP URL without passing URL syntax to DNS lookup."""
+    value = host_setting.strip()
+    try:
+        parsed = urlsplit(value if '://' in value else '//' + value)
+        if parsed.scheme not in ('', 'ftp', 'ftps') or not parsed.hostname:
+            raise ValueError()
+        if parsed.path not in ('', '/') or parsed.query or parsed.fragment:
+            raise ValueError()
+        if parsed.username or parsed.password:
+            raise ValueError()
+        port = int(port_setting.strip()) if port_setting.strip() else (parsed.port or 21)
+        if not 1 <= port <= 65535 or (parsed.port and parsed.port != port):
+            raise ValueError()
+        return parsed.hostname, port
+    except ValueError:
+        raise ValueError('APPCAST_FTP_HOST must be a hostname or FTP URL without credentials '
+                         'or a directory; APPCAST_FTP_PORT must be its numeric port.') from None
 
 
 def validate_bundle(directory):
@@ -128,7 +149,9 @@ def main():
         print('Release bundle and both feeds agree.')
         return
     ftp = ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=120)
-    ftp.connect(os.environ['APPCAST_FTP_HOST'], int(os.environ.get('APPCAST_FTP_PORT') or '21'))
+    host, port = ftp_endpoint(os.environ['APPCAST_FTP_HOST'],
+                              os.environ.get('APPCAST_FTP_PORT', ''))
+    ftp.connect(host, port)
     try:
         ftp.login(os.environ['APPCAST_FTP_USERNAME'], os.environ['APPCAST_FTP_PASSWORD'])
         login_directory = ftp.pwd()

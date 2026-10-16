@@ -11,7 +11,8 @@ import unittest
 from unittest.mock import Mock, call
 import xml.etree.ElementTree as ET
 
-from deploy_mirror import check_not_older, read_existing_feed, upload_atomic, validate_bundle
+from deploy_mirror import (check_not_older, ftp_endpoint, read_existing_feed, upload_atomic,
+                           validate_bundle)
 from make_appcast import make_feed
 
 
@@ -106,6 +107,23 @@ class ReleaseTests(unittest.TestCase):
         ftp = Mock()
         upload_atomic(ftp, self.archive, 'helium-neo', self.archive.name, '/hosting/www/apps')
         self.assertEqual(ftp.cwd.call_args_list, [call('/hosting/www/apps'), call('helium-neo')])
+
+    def test_ftp_host_formats_are_normalized(self):
+        for host in [
+                'ftp.example.com', ' ftp.example.com\n', 'ftp://ftp.example.com',
+                'ftps://ftp.example.com:21/', 'ftp.example.com:21'
+        ]:
+            with self.subTest(host=host):
+                self.assertEqual(ftp_endpoint(host, '21'), ('ftp.example.com', 21))
+
+    def test_ambiguous_ftp_settings_are_rejected(self):
+        for host in [
+                'ftp://user:password@ftp.example.com', 'ftp://ftp.example.com/apps',
+                'ftp.example.com:990'
+        ]:
+            with self.subTest(host=host):
+                with self.assertRaisesRegex(ValueError, 'APPCAST_FTP_HOST'):
+                    ftp_endpoint(host, '21')
 
 
 if __name__ == '__main__':

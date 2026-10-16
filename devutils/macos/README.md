@@ -97,7 +97,7 @@ Existing betas need one manual installation to acquire the updater.
 The `Publish Neo update mirror` workflow runs when a stable release is published
 and can be rerun manually with a tag. Its `Aagedal Apps` environment needs:
 
-- `APPCAST_FTP_HOST`
+- `APPCAST_FTP_HOST` (hostname; a pasted FTP URL without credentials or a path is also accepted)
 - `APPCAST_FTP_PORT` (defaults to 21 when empty)
 - `APPCAST_FTP_USERNAME`
 - `APPCAST_FTP_PASSWORD`
