@@ -1,0 +1,202 @@
+--- a/chrome/browser/ui/tabs/pane_settings.cc
++++ b/chrome/browser/ui/tabs/pane_settings.cc
+@@ -14,6 +14,7 @@
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/sessions/session_service.h"
+ #include "chrome/browser/sessions/session_service_factory.h"
++#include "components/embedder_support/user_agent_utils.h"
+ #include "components/sessions/content/session_tab_helper.h"
+ #include "content/public/browser/devtools_agent_host.h"
+ #include "content/public/browser/navigation_controller.h"
+@@ -61,7 +62,7 @@
+   auto* settings = GetOrCreate(contents);
+   if (auto it = data.find(kMobileKey); it != data.end()) {
+     settings->SetMobileEnabled(it->second == "1" || it->second == "2",
+-                               it->second == "2");
++                               it->second == "2", /*reload=*/false);
+   }
+   int seconds = 0;
+   if (auto it = data.find(kRefreshKey);
+@@ -71,21 +72,34 @@
+   }
+ }
+ 
+-void PaneSettings::SetMobileEnabled(bool enabled, bool full_height) {
++void PaneSettings::SetMobileEnabled(bool enabled, bool full_height, bool reload) {
+   full_height = enabled && full_height;
+   if (mobile_enabled_ == enabled && mobile_full_height_ == full_height) {
+     return;
+   }
++  const bool identity_changed = mobile_enabled_ != enabled;
+   mobile_enabled_ = enabled;
+   mobile_full_height_ = full_height;
+   if (enabled) {
+     ApplyMobileEmulation();
+   } else {
+-    // Detaching also clears metrics and touch overrides in Chromium.
++    // Detaching clears identity, metrics, and touch overrides in Chromium.
+     Detach();
+   }
+   Save();
+   changed_callbacks_.Notify();
++  // Device detection may happen on the server or only during initial scripts.
++  // Restoration sets identity before loading and must not start another load.
++  if (reload && identity_changed && mobile_enabled_ == enabled) {
++    auto& controller = web_contents()->GetController();
++    const auto* entry = controller.GetLastCommittedEntry();
++    const auto* pending = controller.GetPendingEntry();
++    if (entry && entry->GetURL().SchemeIsHTTPOrHTTPS() &&
++        !entry->GetHasPostData() && !controller.NeedsReload() &&
++        (!pending || !pending->GetHasPostData())) {
++      web_contents()->GetController().Reload(content::ReloadType::NORMAL, true);
++    }
++  }
+ }
+ 
+ void PaneSettings::SetRefreshSeconds(int seconds) {
+@@ -156,8 +170,7 @@
+ }
+ 
+ void PaneSettings::ApplyMobileEmulation(bool metrics_only) {
+-  if (!mobile_enabled_ ||
+-      !web_contents()->GetPrimaryMainFrame()->IsRenderFrameLive()) {
++  if (!mobile_enabled_) {
+     return;
+   }
+   if (!agent_host_) {
+@@ -171,6 +184,35 @@
+     }
+     agent_host_ = std::move(host);
+     metrics_only = false;
++  }
++  if (!metrics_only) {
++    // Keep the real Chromium version/brands, but identify this pane as mobile
++    // in HTTP headers, navigator.userAgent, and navigator.userAgentData.
++    // Use Android Chromium rather than claiming to run Safari/WebKit.
++    base::DictValue metadata;
++    metadata.Set("platform", "Android");
++    metadata.Set("platformVersion", "10.0.0");
++    metadata.Set("architecture", "");
++    metadata.Set("model", "K");
++    metadata.Set("mobile", true);
++    metadata.Set("bitness", "");
++    metadata.Set("wow64", false);
++    base::ListValue form_factors;
++    form_factors.Append("Mobile");
++    metadata.Set("formFactors", std::move(form_factors));
++    base::DictValue identity;
++    identity.Set("userAgent", embedder_support::BuildUserAgentFromOSAndProduct(
++                                  "Linux; Android 10; K",
++                                  embedder_support::GetProductAndVersion() +
++                                      " Mobile"));
++    identity.Set("platform", "Linux armv81");
++    identity.Set("userAgentMetadata", std::move(metadata));
++    SendCommand("Emulation.setUserAgentOverride", std::move(identity));
++  }
++  // Identity must be installed even for a restored/discarded pane whose
++  // renderer is not live yet, before its first network request.
++  if (!web_contents()->GetPrimaryMainFrame()->IsRenderFrameLive()) {
++    return;
+   }
+   base::DictValue metrics;
+   metrics.Set("width", kMobilePreviewWidth);
+@@ -218,7 +260,7 @@
+   if (response && response->contains("error")) {
+     // Failed/policy-blocked emulation must not leave a checked mobile menu
+     // item.
+-    SetMobileEnabled(false);
++    SetMobileEnabled(false, /*full_height=*/false, /*reload=*/false);
+   }
+ }
+ 
+--- a/chrome/browser/ui/tabs/pane_settings.h
++++ b/chrome/browser/ui/tabs/pane_settings.h
+@@ -39,7 +39,8 @@
+   bool mobile_enabled() const { return mobile_enabled_; }
+   bool mobile_full_height() const { return mobile_full_height_; }
+   int refresh_seconds() const { return refresh_seconds_; }
+-  void SetMobileEnabled(bool enabled, bool full_height = false);
++  void SetMobileEnabled(bool enabled, bool full_height = false,
++                        bool reload = true);
+   void SetRefreshSeconds(int seconds);
+   void SetPreviewBounds(int width, int height);
+   base::CallbackListSubscription RegisterChanged(
+--- a/chrome/browser/ui/tabs/BUILD.gn
++++ b/chrome/browser/ui/tabs/BUILD.gn
+@@ -99,6 +99,7 @@
+     deps = [
+       "//chrome/browser/profiles:profile",
+       "//chrome/browser/sessions",
++      "//components/embedder_support:user_agent",
+       "//components/sessions",
+     ]
+   }
+--- a/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
++++ b/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
+@@ -24,6 +24,7 @@
+ #include "chrome/browser/ui/browser_window/public/browser_window_features.h"
+ #include "chrome/browser/ui/tabs/existing_base_sub_menu_model.h"
+ #include "chrome/browser/ui/tabs/features.h"
++#include "chrome/browser/ui/tabs/pane_settings.h"
+ #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_utils.h"
+ #include "chrome/browser/ui/tabs/split_tab_menu_model.h"
+ #include "chrome/browser/ui/tabs/split_tab_metrics.h"
+@@ -58,6 +59,9 @@
+ #include "components/tabs/public/split_tab_data.h"
+ #include "content/public/browser/web_contents.h"
+ #include "content/public/test/browser_test.h"
++#include "content/public/test/browser_test_utils.h"
++#include "content/public/test/test_navigation_observer.h"
++#include "net/test/embedded_test_server/embedded_test_server.h"
+ #include "testing/gtest/include/gtest/gtest.h"
+ #include "ui/base/l10n/l10n_util.h"
+ #include "ui/base/models/menu_model.h"
+@@ -955,3 +959,48 @@
+   EXPECT_FALSE(menu.IsCommandIdEnabled(exit_command));
+   menu.ExecuteCommand(exit_command, 0);
+ }
++
++IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, MobilePreviewDeviceIdentity) {
++  ASSERT_TRUE(embedded_test_server()->Start());
++  const GURL url = embedded_test_server()->GetURL(
++      "/echoheader?User-Agent&Sec-CH-UA-Mobile&Sec-CH-UA-Platform");
++  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
++  auto* desktop = browser()->tab_strip_model()->GetActiveWebContents();
++  chrome::NewTab(browser(), NewTabTypes::kNoUserAction);
++  ASSERT_TRUE(ui_test_utils::NavigateToURL(browser(), url));
++  auto* mobile = browser()->tab_strip_model()->GetActiveWebContents();
++  auto* settings = tabs::PaneSettings::GetOrCreate(mobile);
++  const auto desktop_ua =
++      content::EvalJs(desktop, "navigator.userAgent").ExtractString();
++  {
++    content::TestNavigationObserver reload(mobile);
++    settings->SetMobileEnabled(true);
++    reload.Wait();
++  }
++  EXPECT_EQ(true, content::EvalJs(mobile,
++      "navigator.userAgent.includes('Android') && "
++      "navigator.userAgent.includes(' Mobile ')"));
++  EXPECT_EQ(true, content::EvalJs(mobile, "navigator.userAgentData.mobile"));
++  EXPECT_EQ("Android", content::EvalJs(mobile, "navigator.userAgentData.platform"));
++  EXPECT_EQ("Linux armv81", content::EvalJs(mobile, "navigator.platform"));
++  EXPECT_EQ(true, content::EvalJs(mobile,
++      "document.body.innerText.includes(' Mobile ') && "
++      "document.body.innerText.includes('?1') && "
++      "document.body.innerText.includes('Android')"));
++  EXPECT_EQ(desktop_ua, content::EvalJs(desktop, "navigator.userAgent"));
++  EXPECT_EQ(false, content::EvalJs(desktop, "navigator.userAgentData.mobile"));
++  // Changing between mobile heights must not reload the document.
++  EXPECT_EQ(true, content::EvalJs(mobile, "window.identitySentinel = true"));
++  settings->SetMobileEnabled(true, true);
++  EXPECT_EQ(true, content::EvalJs(mobile, "window.identitySentinel"));
++  {
++    content::TestNavigationObserver reload(mobile);
++    settings->SetMobileEnabled(false);
++    reload.Wait();
++  }
++  EXPECT_EQ(desktop_ua, content::EvalJs(mobile, "navigator.userAgent"));
++  EXPECT_EQ(false, content::EvalJs(mobile, "navigator.userAgentData.mobile"));
++  EXPECT_EQ(true, content::EvalJs(mobile,
++      "!document.body.innerText.includes(' Mobile ') && "
++      "document.body.innerText.includes('?0')"));
++}
