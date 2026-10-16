@@ -1,0 +1,368 @@
+--- a/chrome/browser/BUILD.gn
++++ b/chrome/browser/BUILD.gn
+@@ -1529,6 +1529,8 @@
+       "file_select_helper_mac.mm",
+       "fullscreen_mac.mm",
+       "global_keyboard_shortcuts_mac.mm",
++      "helium_webkit_streaming_mac.h",
++      "helium_webkit_streaming_mac.mm",
+       "icon_loader_mac.mm",
+       "memory_details_mac.cc",
+       "platform_util_mac.mm",
+@@ -1597,6 +1599,7 @@
+       "UserNotifications.framework",
+       "UniformTypeIdentifiers.framework",
+       "VideoToolbox.framework",
++      "WebKit.framework",
+     ]
+ 
+     if (enable_sparkle) {
+--- a/chrome/browser/chrome_content_browser_client.cc
++++ b/chrome/browser/chrome_content_browser_client.cc
+@@ -839,6 +839,10 @@
+ using web_app::ChromeContentBrowserClientIsolatedWebAppsPart;
+ #endif
+ 
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/helium_webkit_streaming_mac.h"
++#endif
++
+ namespace {
+ 
+ const char kAIManagerUserDataKey[] = "ai_manager";
+@@ -5579,6 +5583,9 @@
+ void ChromeContentBrowserClient::CreateThrottlesForNavigation(
+     content::NavigationThrottleRegistry& registry) {
+   CreateAndAddChromeThrottlesForNavigation(registry);
++#if BUILDFLAG(IS_MAC)
++  helium::MaybeAddWebKitStreamingThrottle(registry);
++#endif
+ }
+ 
+ void ChromeContentBrowserClient::CreateThrottlesForCommitWithoutUrlLoader(
+--- a/chrome/browser/helium_flag_entries.h
++++ b/chrome/browser/helium_flag_entries.h
+@@ -85,4 +85,10 @@
+      "Important actions and indicators will be missing. Helium flag.",
+      kOsDesktop, FEATURE_VALUE_TYPE(features::kHeliumHidePageActions)},
+     // platform
++    {"helium-webkit-streaming", "WebKit streaming windows (experimental)",
++     "Opens Netflix and TV 2 Play in a separate native WebKit window on "
++     "macOS 14 or later. Uses a separate login per Helium profile and does "
++     "not apply Chromium extensions or content blocking. Disabled in "
++     "private/guest windows. Helium flag.",
++     kOsMac, SINGLE_VALUE_TYPE("helium-webkit-streaming")},
+ #endif  // CHROME_BROWSER_HELIUM_FLAG_ENTRIES_H_
+--- /dev/null
++++ b/chrome/browser/helium_webkit_streaming_mac.h
+@@ -0,0 +1,17 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#ifndef CHROME_BROWSER_HELIUM_WEBKIT_STREAMING_MAC_H_
++#define CHROME_BROWSER_HELIUM_WEBKIT_STREAMING_MAC_H_
++
++namespace content {
++class NavigationThrottleRegistry;
++}
++
++namespace helium {
++void MaybeAddWebKitStreamingThrottle(
++    content::NavigationThrottleRegistry& registry);
++}
++
++#endif  // CHROME_BROWSER_HELIUM_WEBKIT_STREAMING_MAC_H_
+--- /dev/null
++++ b/chrome/browser/helium_webkit_streaming_mac.mm
+@@ -0,0 +1,290 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/helium_webkit_streaming_mac.h"
++
++#import <Cocoa/Cocoa.h>
++#import <WebKit/WebKit.h>
++
++#include <memory>
++
++#include "base/command_line.h"
++#include "base/hash/sha1.h"
++#include "base/strings/sys_string_conversions.h"
++#include "chrome/browser/profiles/profile.h"
++#include "content/public/browser/navigation_handle.h"
++#include "content/public/browser/navigation_throttle.h"
++#include "content/public/browser/navigation_throttle_registry.h"
++#include "content/public/browser/web_contents.h"
++#include "url/gurl.h"
++
++namespace {
++// One native window per service/profile. Closing a window releases its web
++// view.
++NSMutableDictionary<NSString*, NSWindowController*>* g_streaming_windows;
++constexpr char kStreamingSwitch[] = "helium-webkit-streaming";
++
++bool IsStreamingURL(const GURL& url) {
++  return url.SchemeIs("https") && !url.has_username() && !url.has_password() &&
++         (url.DomainIs("netflix.com") || url.DomainIs("play.tv2.no"));
++}
++}  // namespace
++
++@interface HeliumStreamingWindow
++    : NSWindowController <WKNavigationDelegate, WKUIDelegate, NSWindowDelegate>
++- (instancetype)initWithURL:(NSURL*)url
++                 identifier:(NSUUID*)identifier
++                  windowKey:(NSString*)windowKey;
++- (void)loadURL:(NSURL*)url;
++@end
++
++@implementation HeliumStreamingWindow {
++  WKWebView* _webView;
++  NSTextField* _address;
++  NSTextField* _status;
++  NSString* _windowKey;
++}
++
++- (instancetype)initWithURL:(NSURL*)url
++                 identifier:(NSUUID*)identifier
++                  windowKey:(NSString*)windowKey {
++  NSWindow* window = [[NSWindow alloc]
++      initWithContentRect:NSMakeRect(0, 0, 1200, 800)
++                styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
++                          NSWindowStyleMaskMiniaturizable |
++                          NSWindowStyleMaskResizable
++                  backing:NSBackingStoreBuffered
++                    defer:NO];
++  self = [super initWithWindow:window];
++  if (!self)
++    return nil;
++  _windowKey = [windowKey copy];
++  window.title = @"Helium — Streaming (WebKit)";
++  window.releasedWhenClosed = NO;
++  window.delegate = self;
++  window.minSize = NSMakeSize(800, 500);
++  [window center];
++
++  WKWebViewConfiguration* config = [[WKWebViewConfiguration alloc] init];
++  if (@available(macOS 14.0, *)) {
++    config.websiteDataStore =
++        [WKWebsiteDataStore dataStoreForIdentifier:identifier];
++  } else {
++    return nil;
++  }
++  config.preferences.elementFullscreenEnabled = YES;
++  _webView = [[WKWebView alloc] initWithFrame:NSZeroRect configuration:config];
++  _webView.navigationDelegate = self;
++  _webView.UIDelegate = self;
++  // TV 2 Play rejects WKWebView's otherwise versionless user agent.
++  _webView.customUserAgent =
++      @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
++       "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15";
++
++  NSStackView* toolbar = [[NSStackView alloc] init];
++  toolbar.orientation = NSUserInterfaceLayoutOrientationHorizontal;
++  toolbar.spacing = 8;
++  NSArray<NSString*>* titles =
++      @[ @"Back", @"Forward", @"Reload", @"Netflix", @"TV 2 Play" ];
++  SEL actions[] = {@selector(goBack:), @selector(goForward:),
++                   @selector(reload:), @selector(openNetflix:),
++                   @selector(openTV2:)};
++  for (NSUInteger i = 0; i < titles.count; ++i) {
++    [toolbar addArrangedSubview:[NSButton buttonWithTitle:titles[i]
++                                                   target:self
++                                                   action:actions[i]]];
++  }
++  _address = [[NSTextField alloc] init];
++  _address.placeholderString = @"https://…";
++  _address.target = self;
++  _address.action = @selector(navigate:);
++  [_address setContentHuggingPriority:NSLayoutPriorityDefaultLow
++                       forOrientation:NSLayoutConstraintOrientationHorizontal];
++  [toolbar addArrangedSubview:_address];
++  _status = [NSTextField labelWithString:@"WebKit session — separate login; "
++                                         @"Chromium extensions do not apply."];
++  _status.font = [NSFont systemFontOfSize:11];
++  _status.lineBreakMode = NSLineBreakByTruncatingTail;
++
++  NSView* root = window.contentView;
++  for (NSView* view in @[ toolbar, _webView, _status ]) {
++    view.translatesAutoresizingMaskIntoConstraints = NO;
++    [root addSubview:view];
++  }
++  [NSLayoutConstraint activateConstraints:@[
++    [toolbar.topAnchor constraintEqualToAnchor:root.topAnchor constant:8],
++    [toolbar.leadingAnchor constraintEqualToAnchor:root.leadingAnchor
++                                          constant:8],
++    [toolbar.trailingAnchor constraintEqualToAnchor:root.trailingAnchor
++                                           constant:-8],
++    [_address.widthAnchor constraintGreaterThanOrEqualToConstant:120],
++    [_webView.topAnchor constraintEqualToAnchor:toolbar.bottomAnchor
++                                       constant:8],
++    [_webView.leadingAnchor constraintEqualToAnchor:root.leadingAnchor],
++    [_webView.trailingAnchor constraintEqualToAnchor:root.trailingAnchor],
++    [_webView.bottomAnchor constraintEqualToAnchor:_status.topAnchor
++                                          constant:-5],
++    [_status.leadingAnchor constraintEqualToAnchor:root.leadingAnchor
++                                          constant:8],
++    [_status.trailingAnchor constraintEqualToAnchor:root.trailingAnchor
++                                           constant:-8],
++    [_status.bottomAnchor constraintEqualToAnchor:root.bottomAnchor
++                                         constant:-5],
++  ]];
++  [self loadURL:url];
++  return self;
++}
++
++- (void)loadURL:(NSURL*)url {
++  _address.stringValue = url.absoluteString;
++  [_webView loadRequest:[NSURLRequest requestWithURL:url]];
++}
++- (void)goBack:(id)sender {
++  [_webView goBack];
++}
++- (void)goForward:(id)sender {
++  [_webView goForward];
++}
++- (void)reload:(id)sender {
++  [_webView reload];
++}
++- (void)openNetflix:(id)sender {
++  [self loadURL:[NSURL URLWithString:@"https://www.netflix.com/"]];
++}
++- (void)openTV2:(id)sender {
++  [self loadURL:[NSURL URLWithString:@"https://play.tv2.no/"]];
++}
++- (void)navigate:(id)sender {
++  NSString* value = [_address.stringValue
++      stringByTrimmingCharactersInSet:NSCharacterSet
++                                          .whitespaceAndNewlineCharacterSet];
++  if (![value containsString:@"://"])
++    value = [@"https://" stringByAppendingString:value];
++  NSURL* url = [NSURL URLWithString:value];
++  if ([url.scheme isEqualToString:@"https"] ||
++      [url.scheme isEqualToString:@"http"]) {
++    [self loadURL:url];
++  }
++}
++- (void)webView:(WKWebView*)webView
++    decidePolicyForNavigationAction:(WKNavigationAction*)action
++                    decisionHandler:
++                        (void (^)(WKNavigationActionPolicy))handler {
++  NSString* scheme = action.request.URL.scheme.lowercaseString;
++  // Do not launch external applications or load local files from this window.
++  bool allowed =
++      [scheme isEqualToString:@"https"] || [scheme isEqualToString:@"http"] ||
++      [action.request.URL.absoluteString isEqualToString:@"about:blank"];
++  handler(allowed ? WKNavigationActionPolicyAllow
++                  : WKNavigationActionPolicyCancel);
++}
++- (WKWebView*)webView:(WKWebView*)webView
++    createWebViewWithConfiguration:(WKWebViewConfiguration*)configuration
++               forNavigationAction:(WKNavigationAction*)action
++                    windowFeatures:(WKWindowFeatures*)features {
++  if (!action.targetFrame &&
++      ([action.request.URL.scheme isEqualToString:@"https"] ||
++       [action.request.URL.scheme isEqualToString:@"http"])) {
++    [self loadURL:action.request.URL];
++  }
++  return nil;
++}
++- (void)webView:(WKWebView*)webView
++    didFinishNavigation:(WKNavigation*)navigation {
++  _address.stringValue = webView.URL.absoluteString ?: @"";
++  self.window.title =
++      [NSString stringWithFormat:@"%@ — Helium Streaming (WebKit)",
++                                 webView.title ?: @"Streaming"];
++  _status.stringValue =
++      @"WebKit session — separate login; Chromium extensions do not apply.";
++}
++- (void)webView:(WKWebView*)webView
++    didFailProvisionalNavigation:(WKNavigation*)navigation
++                       withError:(NSError*)error {
++  _status.stringValue = error.localizedDescription;
++}
++- (void)webView:(WKWebView*)webView
++    didFailNavigation:(WKNavigation*)navigation
++            withError:(NSError*)error {
++  _status.stringValue = error.localizedDescription;
++}
++- (void)webViewWebContentProcessDidTerminate:(WKWebView*)webView {
++  _status.stringValue = @"WebKit stopped. Reload to retry.";
++}
++- (void)windowWillClose:(NSNotification*)notification {
++  [_webView stopLoading];
++  _webView.navigationDelegate = nil;
++  _webView.UIDelegate = nil;
++  [_webView loadHTMLString:@"" baseURL:nil];
++  [g_streaming_windows removeObjectForKey:_windowKey];
++}
++@end
++
++namespace helium {
++namespace {
++bool OpenStreamingWindow(Profile* profile, const GURL& url) {
++  // A stable store per profile; never access or copy Chromium cookies. The hash
++  // is used only as an identifier, not for any security decision.
++  std::string digest = base::SHA1HashString(profile->GetPath().value());
++  NSUUID* identifier = [[NSUUID alloc]
++      initWithUUIDBytes:reinterpret_cast<const unsigned char*>(digest.data())];
++  NSString* service = url.DomainIs("netflix.com") ? @"netflix" : @"tv2";
++  NSString* key =
++      [NSString stringWithFormat:@"%@/%@", identifier.UUIDString, service];
++  if (!g_streaming_windows)
++    g_streaming_windows = [[NSMutableDictionary alloc] init];
++  NSURL* native_url = [NSURL URLWithString:base::SysUTF8ToNSString(url.spec())];
++  HeliumStreamingWindow* controller =
++      (HeliumStreamingWindow*)g_streaming_windows[key];
++  if (controller) {
++    [controller loadURL:native_url];
++  } else {
++    controller = [[HeliumStreamingWindow alloc] initWithURL:native_url
++                                                 identifier:identifier
++                                                  windowKey:key];
++    if (!controller)
++      return false;
++    g_streaming_windows[key] = controller;
++  }
++  [controller showWindow:nil];
++  [controller.window makeKeyAndOrderFront:nil];
++  return true;
++}
++
++class WebKitStreamingThrottle : public content::NavigationThrottle {
++ public:
++  explicit WebKitStreamingThrottle(
++      content::NavigationThrottleRegistry& registry)
++      : NavigationThrottle(registry) {}
++  ThrottleCheckResult WillStartRequest() override { return MaybeOpen(); }
++  ThrottleCheckResult WillRedirectRequest() override { return MaybeOpen(); }
++  const char* GetNameForLogging() override { return "HeliumWebKitStreaming"; }
++
++ private:
++  ThrottleCheckResult MaybeOpen() {
++    auto* handle = navigation_handle();
++    if (!handle->IsInPrimaryMainFrame() || handle->IsPost() ||
++        !IsStreamingURL(handle->GetURL()) ||
++        (handle->IsRendererInitiated() && !handle->HasUserGesture())) {
++      return PROCEED;
++    }
++    Profile* profile = Profile::FromBrowserContext(
++        handle->GetWebContents()->GetBrowserContext());
++    if (profile->IsOffTheRecord() || profile->IsGuestSession())
++      return PROCEED;
++    return OpenStreamingWindow(profile, handle->GetURL()) ? CANCEL_AND_IGNORE
++                                                          : PROCEED;
++  }
++};
++}  // namespace
++
++void MaybeAddWebKitStreamingThrottle(
++    content::NavigationThrottleRegistry& registry) {
++  if (@available(macOS 14.0, *)) {
++    if (base::CommandLine::ForCurrentProcess()->HasSwitch(kStreamingSwitch)) {
++      registry.AddThrottle(std::make_unique<WebKitStreamingThrottle>(registry));
++    }
++  }
++}
++}  // namespace helium
