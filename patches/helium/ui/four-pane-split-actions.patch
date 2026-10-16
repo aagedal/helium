@@ -121,7 +121,7 @@
  
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -268,6 +268,8 @@
+@@ -277,6 +277,8 @@
    <release seq="1">
      <!-- IMPORTANT: .grdp files must be in the same directory as this file -->
      <messages fallback_to_english="true">

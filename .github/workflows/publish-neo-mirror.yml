@@ -1,0 +1,49 @@
+name: Publish Neo update mirror
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published stable Neo release tag to mirror
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-neo-update-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: github.event_name == 'workflow_dispatch' || (!github.event.release.prerelease && !github.event.release.draft)
+    runs-on: ubuntu-latest
+    environment: Aagedal Apps
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Download stable release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+-neo$ ]]
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease --jq 'if .isDraft or .isPrerelease then error("Expected a published stable release") else "Stable release confirmed" end'
+          gh release download "$RELEASE_TAG" --dir mirror-assets \
+            --pattern 'Helium-Neo-*-macOS-arm64-signed.dmg' \
+            --pattern helium-neo.xml --pattern helium-neo-backup.xml \
+            --pattern update-manifest.json
+      - name: Upload and verify installer, then publish backup appcast
+        env:
+          APPCAST_FTP_HOST: ${{ secrets.APPCAST_FTP_HOST }}
+          APPCAST_FTP_PORT: ${{ secrets.APPCAST_FTP_PORT }}
+          APPCAST_FTP_USERNAME: ${{ secrets.APPCAST_FTP_USERNAME }}
+          APPCAST_FTP_PASSWORD: ${{ secrets.APPCAST_FTP_PASSWORD }}
+        run: python3 devutils/macos/deploy_mirror.py mirror-assets --retain 5

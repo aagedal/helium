@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -288,6 +288,7 @@
+@@ -297,6 +297,7 @@
        <message name="IDS_HELIUM_CREATE_FOUR_PANE_SPLIT" desc="Tab context menu action creating a grid with this tab and three new tabs.">Create Four-Way Split</message>
        <message name="IDS_HELIUM_EXPAND_FOUR_PANE_SPLIT" desc="Tab context menu action adding new tabs to fill an existing split to four panes.">Expand to Four-Way Split</message>
        <message name="IDS_HELIUM_TAB_VIEW" desc="Tab menu submenu for individual tab preview and refresh settings.">Tab view</message>
@@ -616,7 +616,7 @@
  #include "ui/base/page_transition_types.h"
 @@ -76,3 +82,70 @@
        PinnedTabCodec::ReadPinnedTabs(browser()->GetProfile()));
-   EXPECT_EQ("https://www.9oo91e.qjz9zk/:pinned", result);
+   EXPECT_EQ("https://www.google.com/:pinned", result);
  }
 +
 +IN_PROC_BROWSER_TEST_F(PinnedTabCodecBrowserTest,

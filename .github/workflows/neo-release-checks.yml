@@ -1,0 +1,29 @@
+name: Neo release tooling
+
+on:
+  push:
+    paths:
+      - devutils/macos/**
+      - patches/helium/core/neo-update-feeds.patch
+      - .github/workflows/*neo*.yml
+  pull_request:
+    paths:
+      - devutils/macos/**
+      - patches/helium/core/neo-update-feeds.patch
+      - .github/workflows/*neo*.yml
+
+permissions:
+  contents: read
+
+jobs:
+  release-tooling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - run: python3 devutils/macos/test_release.py
+      - run: python3 -m py_compile devutils/macos/*.py

@@ -1573,6 +1573,30 @@
     "message": "HDR detected. This export clips highlights to SDR. Enable HDR preservation and choose JPEG XL to retain them."
   },
   {
+    "name": "IDS_NEO_CAPTURE_CAPTURED_BY",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Editable username of the person taking the screenshot, remembered for later captures.",
+    "message": "Captured by (username)"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_QUICK_SAVE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Checkbox to save screenshots directly in the remembered screenshot folder.",
+    "message": "Save directly to screenshot folder"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_CHOOSE_FOLDER",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Button to choose or change the remembered screenshot folder.",
+    "message": "Choose screenshot folder…"
+  },
+  {
+    "name": "IDS_NEO_CAPTURE_NO_FOLDER",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Shown before a screenshot folder has been selected.",
+    "message": "No folder selected. Save capture will ask once."
+  },
+  {
     "name": "IDS_NEO_CAPTURE_BUNDLE",
     "source": "chrome/app/generated_resources.grd",
     "context": "Checkbox to include source report and image checksum in a ZIP instead of a standalone image.",
@@ -2147,29 +2171,5 @@
     "source": "components/helium_onboarding/helium_onboarding_strings.grdp",
     "context": "Onboarding description of KeePassXC as a password manager option.",
     "message": "Free, local, and open-source password manager for advanced users. Requires technical knowledge to set up and use. Cannot sync without extra software."
-  },
-  {
-    "name": "IDS_NEO_CAPTURE_QUICK_SAVE",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Checkbox to save screenshots directly in the remembered screenshot folder.",
-    "message": "Save directly to screenshot folder"
-  },
-  {
-    "name": "IDS_NEO_CAPTURE_CHOOSE_FOLDER",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Button to choose or change the remembered screenshot folder.",
-    "message": "Choose screenshot folder…"
-  },
-  {
-    "name": "IDS_NEO_CAPTURE_NO_FOLDER",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Shown before a screenshot folder has been selected.",
-    "message": "No folder selected. Save capture will ask once."
-  },
-  {
-    "name": "IDS_NEO_CAPTURE_CAPTURED_BY",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Editable username of the person taking the screenshot, remembered for later captures.",
-    "message": "Captured by (username)"
   }
 ]

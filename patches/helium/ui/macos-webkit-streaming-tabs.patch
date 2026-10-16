@@ -1,6 +1,6 @@
 --- a/chrome/browser/BUILD.gn
 +++ b/chrome/browser/BUILD.gn
-@@ -338,6 +338,26 @@
+@@ -330,6 +330,26 @@
      "//third_party/blink/public/mojom:mojom_platform_headers",
      "//ui/base/clipboard",
    ]
@@ -27,7 +27,7 @@
  }
  
  source_set("helium_noise_settings_headers") {
-@@ -1529,8 +1549,6 @@
+@@ -1521,8 +1541,6 @@
        "file_select_helper_mac.mm",
        "fullscreen_mac.mm",
        "global_keyboard_shortcuts_mac.mm",
@@ -36,18 +36,18 @@
        "icon_loader_mac.mm",
        "memory_details_mac.cc",
        "platform_util_mac.mm",
-@@ -1599,8 +1617,9 @@
+@@ -1574,2 +1592,3 @@
+       "//third_party/crashpad/crashpad/client",
++      ":helium_webkit_streaming",
+     ]
+@@ -1591,7 +1610,6 @@
        "UserNotifications.framework",
        "UniformTypeIdentifiers.framework",
        "VideoToolbox.framework",
 -      "WebKit.framework",
--    ]
-+    ]
-+
-+    deps += [ ":helium_webkit_streaming" ]
+     ]
+   }
  
-     if (enable_sparkle) {
-       include_dirs = [ "//third_party/sparkle" ]
 --- a/chrome/browser/chrome_content_browser_client.cc
 +++ b/chrome/browser/chrome_content_browser_client.cc
 @@ -5584,7 +5584,11 @@
