@@ -753,3 +753,299 @@ browser-test source compilation passed. Native UI checks verified the expanded
 three-pane pinned icon row, per-pane selection, the collapsed icon stack, and
 expanding back to a row. Full browser-test execution remains unavailable in the
 pruned cache.
+
+
+Bluesky source extraction adds matching profile/permalink attribution, feed and
+reply timestamp accessibility labels, and the expanded thread item's scoped date
+footer. DID paths remain as observed; they are not resolved to guessed handles.
+Reposter links and body mentions cannot establish the posting account. An
+unlinked quote gets separate DOM ownership; a crop confined to it cannot autofill
+the enclosing source. The expanded page URL is never assigned to a lone reply.
+Linked quotes use the existing enclosing/quoted source relationships.
+
+Validation for this addition: 105 production-script browser fixtures, nine native
+source tests and nine native export tests, plus patch parsing, lint and a strict no-fuzz patch reverse/apply round trip
+for all four changed Chromium files. The complete patch round trip against the
+shared cache still encounters existing differences in screenshot_captured_bubble.h
+and the JPEG XL encoder, outside these changes. Public
+Bluesky pages were checked for an original feed post, a repost, an expanded quote
+post, a crop inside its unlinked quote, and a thread reply with its own date.
+The focused native targets were rebuilt in the persistent macOS cache. The full
+app rebuild was stopped after it scheduled a broad dependency rebuild; native
+capture-dialog and saved-image QA for Bluesky remain to be completed. No external
+API requests or identity resolution were added to the capture flow.
+
+
+TikTok source extraction recognizes explicit `/@account/video/id` and
+`/@account/photo/id` links. Current `recommend-list-item-container` articles can
+use page address/canonical/Open Graph metadata only when their scoped
+`more-menu-icon` item IDs agree with the URL. Adjacent preloaded articles are
+matched independently. Missing, conflicting or stale IDs leave page-derived
+sources unset, and a crop containing multiple posts cannot silently autofill
+its only discoverable source. Native validation accepts only normalized TikTok
+video/photo post paths.
+
+Creator profile links must match the permalink's account. The adjacent creator
+row supplies the displayed date, without decoding dates from IDs or inventing
+years/timezones. A visible avatar can support a date next to a rendered zero-width
+creator name; hidden links cannot. Caption/header links to a different post are
+references, retained only when directly selected and requiring review. Known
+comment containers have separate ownership, and captures including unsupported
+comments require review, including crops with margins. No short-link resolution
+or external API was added. An observed photo URL can retain `image_index` in the
+source record while the suggested permalink identifies the post.
+
+Validation passed 141 production-script browser fixtures, ten native source
+tests, nine native export tests, two GN header dependency checks, patch lint and
+a strict no-fuzz reverse/apply round trip for the four changed Chromium files.
+The full development app and the final incremental revision were rebuilt using
+the persistent macOS cache. Native review filled the video/photo permalink,
+account and date; a full-pane capture including a comment required review with
+blank fields. Stale item IDs and an obscuring overlay left all source fields
+blank. ExifTool verified a saved PNG's reviewed values and origins, original photo
+URL with `image_index=3`, creator-row date evidence and distinct capture timestamp.
+
+Current public video and photo markup was inspected directly for item IDs,
+creator/date rows and preloaded articles. Unobscured authenticated live capture
+checks remain limited by TikTok's login/signup and verification prompts; the
+live overlay correctly returned no source for its obscured post.
+
+For reproducible native capture/export checks, run the fixture server and open
+`http://127.0.0.1:8232/tiktok-capture`. Video and photo media crops should suggest
+`@reporter` with the displayed date. Comment crops require source review. The
+stale-metadata and overlay variants should leave the source blank. This is
+controlled local content, not an authenticated live TikTok capture.
+
+
+Reddit source extraction supports the observed current `shreddit-post` and
+`shreddit-comment` layouts. Post permalinks must agree with `t3_` IDs; comment
+permalinks must agree with both their `t1_` comment ID and `t3_` parent post ID.
+Current and legacy explicit comment paths normalize to a distinct comment URL;
+title slugs and tracking parameters are removed while the original URL remains
+in provenance. Native validation accepts only these normalized post/comment
+paths. Share-code links and `redd.it` links are not resolved.
+
+Author links must be visible in the item's own credit row and agree with its
+reported author. Subreddit links, body mentions, deleted authors and nested
+reply authors do not supply the selected item's account. Publication times must
+be visible in its own credit row and agree with its reported creation time;
+missing evidence or duplicate matching timestamps leave the date blank. Edited
+timestamps cannot substitute for creation times. The observed datetime, tooltip
+and displayed relative label remain separate; no hover or external API is used.
+A crop confined to a nested reply excludes its ancestors. Captures spanning
+multiple items, unsupported items, directly selected references or crossposts
+require review. Current crossposts embed the original's media inside the
+reposter's container without a separate author/ID scope, so they never autofill
+as a unique source. Page address/canonical/Open Graph URLs cannot establish
+Reddit item ownership.
+
+Validation: 178 production-script browser fixtures, 11 native source tests and
+nine native export tests passed. Both GN header dependency checks, patch lint,
+patch-file checks and the strict no-fuzz reverse/apply round trip for the four
+changed Chromium files passed. The persistent macOS development app rebuilt
+successfully. Live public Reddit checks covered a feed post, expanded post,
+comment, nested reply with its own date and a crosspost media crop requiring
+review. Old Reddit redirected to login and its layout is not supported by this
+addition; authenticated and additional locale layouts remain unverified.
+
+Native capture-dialog QA used `http://127.0.0.1:8234/reddit-capture` (or the port
+given to `screenshot_source_server.py`). Post and comment crops showed distinct
+permalinks, accounts and dates; a full-page capture left all three fields blank
+and offered a source chooser. A saved post PNG was inspected with ExifTool and
+its embedded source record verified the reviewed fields, original tracked URL,
+relative date, Reddit credit and separate capture time. This page is controlled
+local test content, not a live Reddit capture.
+
+
+YouTube extraction normalizes explicit watch, Shorts, live and `youtu.be` video
+links to `https://www.youtube.com/watch?v=VIDEO_ID`; an observed comment's full
+`lc` parameter remains distinct, including reply IDs containing dots. Playback
+time, playlists and tracking are omitted from the suggestion and retained in the
+original observed URL. Native validation accepts only the normalized video and
+comment forms. Embed, clip, playlist-only and channel URLs are not video sources.
+
+A watch video needs a matching `ytd-watch-flexy[video-id]` and agreement between
+observed page address/canonical/Open Graph video IDs. The crop must overlap the
+player or watch metadata; comments, sidebar recommendations, chat and unrelated
+panels cannot borrow that source. Shorts use their own scoped
+`#shorts-player a.ytp-title-link` rather than the current page address, so adjacent
+preloads stay independent. Uploader links come only from the video owner or the
+Short's channel bar. Observed handles, including Unicode, remain handles;
+channel-ID/legacy profile links retain their observed display name and profile
+URL without identity resolution. Conflicting owners leave the account blank.
+
+Watch dates come from the observed two-label watch-info row (view count and
+publication label). Expanded descriptions expose a calendar date in that same
+row; collapsed relative labels remain relative. Body text, generic time elements
+and hidden tooltip contents are excluded. Shorts dates remain absent. Current
+watch-page comments use their own `#published-time-text` link and scoped author
+row; nested replies retain their complete `lc` identity. Date text, including an
+edited marker, is preserved without parsing it into a guessed publication time.
+Shorts comment panels and live-chat messages are not attributed by this addition.
+References from any YouTube item are kept only when directly selected and require
+review. Known selected ads suppress uploader/date details; recommendation and
+end-screen tiles, unsupported selected items and multiple sources prevent silent
+autofill. No external API or timestamp hover was added.
+
+Validation: 230 production-script browser fixtures, 12 native source tests and
+nine native export tests passed. Both GN dependency checks, seven patch lint
+checks, patch-file checks, existing devutils tests and the strict no-fuzz
+reverse/apply round trip for all four changed Chromium files passed. The
+persistent macOS development app rebuilt successfully. Live public checks covered
+a watch-player crop, expanded watch date, comment with its own author and `lc`,
+a Short with its own handle, and end-screen recommendations requiring review.
+Authenticated, mobile and additional locale layouts, live broadcasts and actual
+advertisements still need broader live QA; the ad guard was verified in fixtures.
+
+Native QA at `http://127.0.0.1:8235/youtube-capture` verified separate video and
+comment fields, plus a full-page chooser with blank permalink/account/date.
+ExifTool inspection of the saved comment PNG verified its full `lc` URL,
+`@reader`, the unchanged relative edited label, reviewed-field origins, original
+tracking URL, YouTube credit and separate capture timestamp. This is controlled
+local test content, not a live YouTube capture.
+
+
+LinkedIn source extraction targets the observed public
+`article[data-activity-urn]` activity cards. Explicit `/posts/...-activity-ID-code`
+and `/feed/update/urn:li:activity:ID/` permalinks, including encoded URN colons and
+localized two-letter LinkedIn hosts, normalize to the activity URL. The original
+observed URL retains tracking. Comment/reply query parameters, fragments,
+profiles, articles, shortened `lnkd.in` links and share/UGC-post URNs are not
+normalized into an activity. Native validation accepts only the normalized HTTPS
+activity path with a numeric ID and no query/fragment.
+
+Page address/canonical/Open Graph sources must match the card's own activity URN.
+A different featured activity prevents attribution; the separate attributed share
+URN is never treated as an activity ID. Container IDs alone do not manufacture
+permalinks, and IDs are never decoded into dates. Public actor-name links must
+belong to the card's own entity-lockup header. The linked display name and cleaned
+member/company/school profile URL are retained without guessing an @handle from
+a slug. Body mentions, comment authors, hidden names and conflicting author
+observations do not provide an account. One visible scoped header `time` supplies
+the observed datetime attribute or displayed date label, preserving relative
+labels and edited markers. Missing/duplicate times stay blank; generic body times
+and hidden tooltips do not supply publication dates. No timestamp hover, identity
+resolution, short-link expansion or external API was added.
+
+Public `section.comment` elements have separate ownership. The inspected layout
+exposes only author links and relative labels, so comment-only crops leave source,
+account and date blank. Crops with comments and post content, including margins,
+require review. Unlinked nested articles cannot inherit the enclosing source;
+references to other posts or platforms are kept only when directly selected and
+require review. Authenticated feed layouts, LinkedIn articles and comment
+permalinks are not supported by this addition.
+
+Validation: 280 production-script browser fixtures, 13 native source tests and
+nine native export tests passed. Both GN header checks, seven patch lint checks,
+patch-file checks, existing devutils tests and the strict no-fuzz reverse/apply
+round trip for the four changed Chromium files passed. The persistent macOS app
+rebuilt successfully. Public company/person posts were inspected for activity vs
+share URNs, localized author URLs, relative/edited date labels and separate
+comment sections. Live sign-in overlays correctly yielded no suggestions.
+Unobscured live capture and authenticated layout QA remain unverified because
+LinkedIn presented sign-in overlays; no account or CAPTCHA flow was used.
+
+Native QA at `http://127.0.0.1:8236/linkedin-capture` verified the post's activity
+URL, Example Company name and unchanged `11mo Edited` label. A comment-only crop
+left all attribution fields blank; the full page offered a chooser with blank
+permalink/account/date. ExifTool inspection of a saved post PNG verified its
+reviewed-field origins, original tracked `/posts/` URL, normalized company profile,
+LinkedIn credit, site-date evidence and separate capture timestamp. This fixture
+is controlled local content, not an unobscured live LinkedIn capture.
+
+
+### Mastodon instance and status ownership
+
+Mastodon uses a scoped `#mastodon` web-app fingerprint and standard `.status` /
+`.detailed-status` headers and timestamp links. One own visible author profile,
+observed `.display-name__account` and matching timestamp permalink must agree
+before a URL is accepted. Arbitrary `/@account/id` links on other pages are not
+platform evidence. Native validation checks a bounded ownership record; URL-only
+candidates on arbitrary domains remain unsupported. This is heuristic DOM
+attribution, not server or account authentication.
+
+Instance hostnames, including `www`, `m` and `mobile`, remain intact. A remote
+`/@user@home.example/id` route keeps the viewing instance's observed ID and URL.
+Qualified handles remain exactly as displayed; account domains may differ from
+profile web domains. No WebFinger, API request, data-id conversion or inferred
+origin URL is used. The timestamp's own datetime/display text/title is recorded;
+separate edited markers are excluded. Boost actors, mentions and preview cards
+cannot supply the author. Linked nested quotes have separate ownership; missing
+quote evidence and selected references require review. Multiple selected posts
+cannot autofill a single source.
+
+The current standard web app was inspected on mastodon.social and fosstodon.org.
+Production-script checks on a local profile timeline, detailed status and remote
+Fosstodon status returned the observed account, permalink and publication time.
+A detailed reply containing a remote quoted status informed the quote fixtures.
+Alternative frontends, older layouts, ActivityPub `/users/.../statuses/...` URI-only
+links and inaccessible or virtualized placeholders are not supported.
+
+The controlled native capture fixture is `/mastodon-capture`; it deliberately
+uses a remote proxy handle, a `www` instance, a mismatched local data-id and a
+separate edited label. It is local test content, not a live Mastodon post.
+
+Validation: 306 production-script browser fixtures, 17 native source tests and
+10 native export tests passed. The persistent macOS app rebuilt successfully;
+both GN header checks, patch lint, patch-file checks, devutils tests and a strict
+no-fuzz reverse/apply round trip for the four changed added Chromium files passed.
+The separate copyright-preview change matches its compiled source block.
+
+Native QA at `http://127.0.0.1:8237/mastodon-capture` confirmed the proxy permalink,
+qualified account and original publication timestamp for a crop excluding the
+header. The credit preview shows Mastodon. ExifTool inspection of a saved PNG
+confirmed Mastodon credit, reviewed-field origins, observed tracked URL, ownership
+record, exact instance hostname and separate capture timestamp. The edited label
+was excluded. This remains a controlled local export test.
+
+
+### Telegram public channel messages
+
+The standard public `t.me/s/<channel>` timeline and standalone `?embed=1` message
+widget expose `.tgme_widget_message[data-post]`, an own footer
+`a.tgme_widget_message_date` and an own channel header link. The observed footer
+permalink must match data-post before a body crop can inherit it. The matching
+visible `.tgme_widget_message_owner_name` supplies the handle and display name;
+missing or conflicting headers leave the account blank. No URL is synthesized
+from data-post alone, page canonical metadata or a channel sidebar.
+
+Explicit `https://t.me/<channel>/<positive-message-id>` links and `/s/` equivalents
+normalize to the public message permalink. Original query parameters remain in
+`original_url`; comment/thread/reply parameters and fragments are rejected so
+separate identities are not collapsed. Native validation accepts only canonical
+public message URLs, with a bounded ASCII username, no reserved service routes,
+credentials, ports, query or fragment. Subdomains, private `/c/` links, invites,
+`tg:` links and `telegram.me` aliases remain unsupported.
+
+The footer time's datetime attribute and displayed text are preserved separately.
+Absent machine dates remain observed text, without invented dates or zones.
+Video duration, views, edited labels, forwarded-source names and reply previews
+cannot supply the hosting message's author or publication time. A forwarded
+message is attributed to its publishing channel and message timestamp, not its
+original author. Forwarded-banner-only, reply-only and link-preview-only crops
+require review; selected references and full reply context remain ambiguous.
+Media albums with distinct selected message links also require review.
+
+Live inspection of https://t.me/s/V_Zelenskiy_official and the standalone
+https://t.me/V_Zelenskiy_official/21387?embed=1&mode=tme confirmed these selectors.
+The production detector returned the exact message permalink, observed
+`@V_Zelenskiy_official` header, displayed time and datetime for body-only crops in
+both layouts. This tests public message content; private chats and Telegram Web's
+authenticated UI are not supported. Standalone widgets are supported when loaded
+as the captured top-level document; iframe-contained embeds are not traversed.
+
+The `/telegram-capture` route serves controlled local content for native export
+QA, including a tracked permalink, original timestamp, edited label and separate
+reply preview. It is not a live Telegram message.
+
+Validation: 344 production-script browser fixtures, 18 native source tests and
+11 native export tests passed. The persistent macOS build, both GN header checks,
+patch lint, patch-file checks, existing devutils tests and the strict no-fuzz
+reverse/apply round trip for all four changed Chromium files passed.
+
+Native QA at `http://127.0.0.1:8238/telegram-capture` verified body-only account,
+permalink, original publication timestamp and Telegram credit preview. Reply-only
+and full-page mixed captures offered review with blank permalink/account/date.
+ExifTool inspection of a saved body PNG verified Telegram credit, tracked original
+URL, normalized permalink, exact datetime offset and displayed time, reviewed-field
+origins and separate capture timestamps. This is controlled local export QA.

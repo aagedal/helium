@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- Copyright 2026 The Helium Authors.
+You can use, redistribute, and/or modify this source code under
+ the terms of the GPL-3.0 license that can be found in the LICENSE file. -->
+<meta charset="utf-8">
+<title>TikTok source capture fixture</title>
+<link rel="canonical" href="https://www.tiktok.com/@reporter/video/6718335390845095173">
+<style>
+body { margin: 28px; color: #202124; background: #f5f5f5; font: 16px system-ui; }
+nav a { margin-right: 16px; }
+article { position: relative; margin-top: 24px; width: 560px; height: 460px; background: #fff; border: 1px solid #bbb; }
+header { padding: 20px; }
+header a { color: #202124; font-weight: 600; }
+header span { margin-left: 10px; color: #555; }
+#media { margin: 0 20px; height: 230px; display: grid; place-items: center; background: #dce7ed; }
+#media p { font-size: 28px; }
+[data-e2e="video-desc"] { margin: 20px; }
+[data-e2e="more-menu-icon"] { position: absolute; right: 20px; top: 20px; }
+[data-e2e="comment-level-1"] { position: absolute; left: 20px; top: 355px; padding: 12px; width: 480px; background: #faf2d4; }
+#overlay { position: fixed; inset: 0; background: #0008; display: grid; place-items: center; z-index: 10; }
+#overlay div { background: white; padding: 40px; }
+</style>
+<h1>Local TikTok attribution fixture</h1>
+<p>This is controlled test content, not a TikTok post. Capture the media rectangle or the comment below it.</p>
+<nav>
+<a href="?mode=video">Video</a><a href="?mode=photo">Photo</a>
+<a href="?mode=stale">Stale page metadata</a><a href="?mode=overlay">Obscured post</a>
+</nav>
+<article data-e2e="recommend-list-item-container">
+  <section data-e2e="feed-video">
+    <header><a href="https://www.tiktok.com/@reporter">Fixture Reporter</a><span> · 2026-10-16</span></header>
+    <button data-e2e="more-menu-icon" data-more-menu-item-id="6718335390845095173">More</button>
+    <div id="media"><p>Media crop target</p></div>
+    <div data-e2e="video-desc">Caption mentioning <a href="https://www.tiktok.com/@someone_else">@someone_else</a>.</div>
+    <div data-e2e="comment-level-1"><a href="https://www.tiktok.com/@reader">Reader</a>: A separate comment. <time datetime="2026-10-17T10:00:00Z">1h ago</time></div>
+  </section>
+</article>
+<p id="expected"></p>
+<script>
+const mode = new URLSearchParams(location.search).get('mode') || 'video';
+const canonical = document.querySelector('link[rel="canonical"]');
+if (mode === 'photo') canonical.href = canonical.href.replace('/video/', '/photo/') + '?image_index=3';
+if (mode === 'stale') document.querySelector('[data-more-menu-item-id]').setAttribute('data-more-menu-item-id', '999');
+if (mode === 'overlay') {
+  const overlay = document.createElement('div'); overlay.id = 'overlay'; overlay.setAttribute('role', 'dialog');
+  overlay.innerHTML = '<div>Obscuring overlay. No source should autofill.<p><a href="?mode=video">Dismiss fixture overlay</a></p></div>';
+  document.body.append(overlay);
+}
+document.getElementById('expected').textContent = mode === 'stale' || mode === 'overlay'
+  ? 'Expected: no suggested post source.'
+  : 'Expected media source: ' + canonical.href.split('?')[0] + '; account @reporter; date · 2026-10-16. A comment-only crop stays ambiguous.';
+</script>
