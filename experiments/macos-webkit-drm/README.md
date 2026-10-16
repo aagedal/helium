@@ -53,8 +53,8 @@ page without that warning.
 
 The user subsequently confirmed that both Netflix and TV 2 Play play without
 issues in this standalone app. This confirms the feasibility of the system
-WebKit route. Resolution, prolonged playback, private browsing, and integration
-inside the Chromium process have not been separately verified.
+WebKit route. Resolution, prolonged playback, and private browsing have not
+been separately verified. Integrated playback results are recorded below.
 
 ## Helium-owned window integration
 
@@ -62,8 +62,9 @@ The branch also contains a patch adding the macOS-only
 `helium-webkit-streaming` experimental flag. It has been applied to the prepared
 source and built successfully with the persistent local build command. On macOS
 27.0.1, runtime diagnostics confirmed that Netflix and TV 2 Play opened native
-windows and completed page loading inside Helium. Signed-in playback in these
-integrated windows still requires confirmation separately from the standalone app.
+windows and completed page loading inside Helium. The user then confirmed
+that protected titles play correctly in both integrated Helium-owned windows.
+Fullscreen, extended playback, live TV, and profile lifecycle tests remain open.
 On macOS 14+, enabling it routes top-level HTTPS Netflix and `play.tv2.no`
 navigations to a Helium-owned WebKit window. Enable it at
 `chrome://flags/#helium-webkit-streaming` and restart, or start Helium with

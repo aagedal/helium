@@ -21,8 +21,8 @@ The standalone playback result does not establish integrated playback, maximum
 resolution, extended playback stability, or private browsing support. The native
 window patch now compiles and links inside Helium. On macOS 27.0.1, lifecycle
 diagnostics confirmed that top-level navigations opened native windows for both
-services and that both pages finished loading. Signed-in integrated playback
-remains a separate acceptance test.
+services and that both pages finished loading. The user subsequently confirmed
+that protected titles play correctly in both Helium-owned WebKit windows.
 
 ## 1. Build the Helium-owned streaming window
 
@@ -56,13 +56,15 @@ window-open events; the enabled run produced two native-window events and no
 Chromium Netflix history entries. The smoke run used separate `/tmp` Chromium
 profiles. The UI tool
 could not reliably distinguish concurrent Helium instances, so interactive
-lifecycle and account-playback tests remain unchecked below.
+lifecycle tests remain unchecked below; integrated account playback has now
+been confirmed by the user.
 
 - [ ] Confirm both services load from typed URLs, clicked links, and redirects.
   Test exact domain boundaries and ensure unrelated sites and embedded frames
   never trigger the handoff. Verify disabled-flag behavior.
-- [ ] Sign in again in the integrated window. Play a protected Netflix title and
-  a protected TV 2 on-demand title, plus live TV when the subscription permits.
+- [x] Sign in again in the integrated window and play a protected title in both
+  Netflix and TV 2 Play. Confirmed by the user.
+- [ ] Test TV 2 live TV separately when the subscription permits.
 - [ ] Test sustained picture/sound, seek, pause/resume, subtitles, fullscreen,
   display changes, and sleep/wake. Record macOS version and observed resolution.
 - [ ] Test editing shortcuts, address updates, authentication redirects, popup
