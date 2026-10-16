@@ -109,6 +109,490 @@ window.runScreenshotSourceTests = () => {
   detailsCheck('X timestamp title belongs to its containing permalink',
     detailedPost('https://x.com/reporter/status/123', 'https://x.com/reporter', '<time>9m</time>').replace('<a href="https://x.com/reporter/status/123">', '<a href="https://x.com/reporter/status/123" title="11:57 PM · Oct 15, 2026">'),
     'https://x.com/reporter/status/123', {publication_date_text:'11:57 PM · Oct 15, 2026',publication_date_displayed:'9m'});
+  const bskyUrl = 'https://bsky.app/profile/reporter.bsky.social/post/3l6oveex3ii2l';
+  const bskyProfile = 'https://bsky.app/profile/reporter.bsky.social';
+  const bskyDate = 'October 17, 2024 at 9:06 AM';
+  const bskyPost = `<div data-testid="feedItem-by-reporter.bsky.social" role="link" style="position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <a href="${bskyProfile}">Reporter</a><a href="${bskyProfile}">@reporter.bsky.social</a>
+    <a href="${bskyUrl}?ref_src=share" aria-label="${bskyDate}" data-tooltip="${bskyDate}">· Oct 17, 2024</a>
+    <div id="crop" class="body" data-testid="postText" dir="auto">Post text</div></div>`;
+  detailsCheck('Bluesky feed crop retains scoped author, display name and accessible date',
+    bskyPost, bskyUrl, {posting_account:'@reporter.bsky.social',account_display_name:'Reporter',
+      publication_date_text:bskyDate,publication_date_displayed:'· Oct 17, 2024',publication_date_tooltip:bskyDate});
+  detailsCheck('Bluesky repost credits original author, not reposter',
+    bskyPost.replace('<a href=', '<a href="https://bsky.app/profile/reposter.example">Reposted by Someone</a><a href='),
+    bskyUrl, {posting_account:'@reporter.bsky.social'});
+  detailsCheck('Bluesky DID profile remains an observed identity without inventing a handle',
+    bskyPost.replaceAll('reporter.bsky.social','did:plc:abc123'),
+    bskyUrl.replace('reporter.bsky.social','did:plc:abc123'), {posting_account:'did:plc:abc123'});
+  detailsCheck('Bluesky missing author link does not infer account from post URL',
+    bskyPost.replaceAll(`href="${bskyProfile}"`, 'href="https://example.com"'),
+    bskyUrl, {posting_account:undefined,publication_date_text:bskyDate});
+  detailsCheck('Bluesky body mention cannot establish posting account',
+    bskyPost.replaceAll(`href="${bskyProfile}"`, 'href="https://example.com"').replace('Post text', `<a href="${bskyProfile}">@reporter.bsky.social</a>`),
+    bskyUrl, {posting_account:undefined});
+  check('Bluesky lookalike domain is rejected', post(bskyUrl.replace('bsky.app/','bsky.app.attacker.test/')), 'none', '');
+  check('Bluesky engagement subpage is not normalized into a post', post(bskyUrl+'/liked-by'), 'none', '');
+  check('Bluesky profile is not a post', post(bskyProfile), 'none', '');
+  check('Bluesky credentials and nonstandard ports are rejected', post(bskyUrl.replace('https://','https://user@')) + post(bskyUrl.replace('bsky.app/','bsky.app:8443/')), 'none', '');
+  check('Two Bluesky posts stay ambiguous', bskyPost + bskyPost.replace('top:20px','top:340px').replace('3l6oveex3ii2l','3other').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  const bskyQuote = bskyPost.replace('data-testid="feedItem-by-', 'id="bsky-outer" data-testid="feedItem-by-').replace('Post text', 'Enclosing post').replace('</div></div>', `</div>
+    <div id="quote" role="link" aria-label="Post by source.example" style="position:absolute;left:15px;top:160px;width:360px;height:100px;background:white">
+      <div data-tooltip="October 16, 2024 at 8:00 AM">1d</div><div id="quote-body" dir="auto">Unlinked quoted text</div>
+    </div></div>`);
+  check('Bluesky unlinked quote-only crop never adopts enclosing source', bskyQuote, 'ambiguous','',()=>crop('quote'));
+  detailsCheck('Bluesky full unlinked quote keeps enclosing date separate', bskyQuote, bskyUrl,
+    {publication_date_text:bskyDate,posting_account:'@reporter.bsky.social'},()=>crop('bsky-outer'));
+  const linkedBskyQuote = quotePost.replaceAll('https://x.com/reporter/status/123',bskyUrl)
+    .replaceAll('https://x.com/reporter',bskyProfile).replaceAll('@reporter','@reporter.bsky.social')
+    .replaceAll('https://x.com/quoted/status/456','https://bsky.app/profile/source.example/post/3quoted')
+    .replaceAll('https://x.com/quoted','https://bsky.app/profile/source.example');
+  quoteCheck('Bluesky linked quotes keep separate author and date', linkedBskyQuote, 'outer', 'preferred',bskyUrl,'@reporter.bsky.social','2026-10-15T22:57:00Z');
+  quoteCheck('Bluesky linked quote-only crop prefers quoted source', linkedBskyQuote,'quote','preferred',
+    'https://bsky.app/profile/source.example/post/3quoted','@source.example','2026-10-15T14:00:00Z');
+  const bskyCanonical = document.createElement('link');
+  bskyCanonical.rel = 'canonical'; bskyCanonical.href = bskyUrl;
+  document.head.append(bskyCanonical);
+  const bskyDetail = `<div data-testid="postThreadItem-by-reporter.bsky.social" style="position:absolute;left:20px;top:20px;width:400px;height:300px">
+    <div><a href="${bskyProfile}">Reporter</a></div><div>
+      <div id="crop" class="body" style="top:40px" data-word-wrap="1" dir="auto">Body mentions 2026 and 12:00 without being a date</div>
+      <div style="position:absolute;top:150px"><div><div dir="auto">9:06 AM · Oct 17, 2024</div><button>Everybody can reply</button></div></div>
+      <div style="position:absolute;top:200px"><div data-testid="likeCount-expanded">42 likes</div></div>
+    </div></div>`;
+  detailsCheck('Bluesky expanded date is scoped to its footer, not body text', bskyDetail, bskyUrl,
+    {posting_account:'@reporter.bsky.social',publication_date_text:'9:06 AM · Oct 17, 2024',date_evidence:'bluesky_detail_footer'});
+  detailsCheck('Bluesky absent date structure leaves date blank', bskyDetail.replace('data-testid="likeCount-expanded"',''),
+    bskyUrl, {publication_date_text:undefined});
+  detailsCheck('Bluesky canonical page URL cannot be assigned to a lone reply',
+    bskyPost.replace('feedItem-by-', 'postThreadItem-by-').replace('3l6oveex3ii2l','3reply'),
+    bskyUrl.replace('3l6oveex3ii2l','3reply'), {publication_date_text:bskyDate});
+  bskyCanonical.remove();
+  const liUrl = 'https://www.linkedin.com/feed/update/urn:li:activity:7080179061443977217/';
+  const liObserved = 'https://www.linkedin.com/posts/example_topic-activity-7080179061443977217-ABcd?utm_source=share';
+  const liProfile = 'https://www.linkedin.com/company/example';
+  const liCanonical = document.createElement('link');liCanonical.rel='canonical';liCanonical.href=liObserved;document.head.append(liCanonical);
+  const liPost = `<article data-activity-urn="urn:li:activity:7080179061443977217" data-featured-activity-urn="urn:li:activity:7080179061443977217"
+      data-attributed-urn="urn:li:share:7080179060747685888" style="width:400px;height:300px">
+    <div data-test-id="main-feed-activity-card__entity-lockup"><a href="${liProfile}?trk=public_post_feed-actor-name" data-tracking-control-name="public_post_feed-actor-name">Example Company</a><time>3y</time></div>
+    <div id="crop" class="body" data-test-id="main-feed-activity-card__commentary">Post body</div></article>`;
+  detailsCheck('LinkedIn public company post retains its own observed author and relative date',liPost,liUrl,
+    {posting_account:'Example Company',account_profile_url:liProfile,publication_date_text:'3y',date_evidence:'linkedin_public_actor_time'});
+  results[results.length-1].passed &&= results[results.length-1].actual.candidates[0].original_url === liObserved;
+  detailsCheck('LinkedIn localized person profile uses observed display name, not a guessed handle',
+    liPost.replace(liProfile,'https://ie.linkedin.com/in/reporter').replace('Example Company','Reporter'),liUrl,
+    {posting_account:'Reporter',account_profile_url:'https://www.linkedin.com/in/reporter'});
+  detailsCheck('LinkedIn edited publication label remains displayed',liPost.replace('3y','11mo Edited'),liUrl,
+    {publication_date_text:'11mo Edited',publication_date_hover_target:undefined});
+  detailsCheck('LinkedIn explicit machine timestamp remains site reported',liPost.replace('<time>','<time datetime="2026-10-16T10:11:12Z">'),liUrl,
+    {publication_date_text:'2026-10-16T10:11:12Z',publication_date_displayed:'3y',publication_datetime_attribute:'2026-10-16T10:11:12Z'});
+  detailsCheck('LinkedIn ID is never decoded into an unobserved date',liPost.replace('<time>3y</time>',''),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn body and comment dates cannot replace missing author-row date',liPost.replace('<time>3y</time>','')
+    .replace('Post body','Post body <time datetime="2000-01-01T00:00:00Z">Jan 1, 2000</time>'),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn conflicting date elements leave publication date unset',liPost.replace('</time>','</time><time>2h</time>'),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn hidden date cannot supply publication time',liPost.replace('<time>','<time hidden>'),liUrl,{publication_date_text:undefined});
+  detailsCheck('LinkedIn profile mentions cannot establish a missing author',liPost.replace('data-tracking-control-name="public_post_feed-actor-name"','')
+    .replace('Post body',`Post body <a href="${liProfile}" data-tracking-control-name="public_post_feed-actor-name">Example Company</a>`),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn hidden actor name cannot establish account',liPost.replace('data-tracking-control-name="public_post_feed-actor-name"','hidden data-tracking-control-name="public_post_feed-actor-name"'),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn multiple actor profiles leave account blank',liPost.replace('<time>',`<a href="https://www.linkedin.com/in/other" data-tracking-control-name="public_post_feed-actor-name">Other</a><time>`),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn profile lookalike host is rejected',liPost.replace(liProfile,liProfile.replace('linkedin.com','linkedin.com.attacker.test')),liUrl,{posting_account:undefined});
+  detailsCheck('LinkedIn encoded profile separator is rejected',liPost.replace(liProfile,'https://www.linkedin.com/in/bad%2Fname'),liUrl,{posting_account:undefined});
+  check('LinkedIn stale canonical cannot bind a different activity',liPost.replaceAll('activity:7080179061443977217','activity:999'),'none','');
+  check('LinkedIn missing activity ID cannot use page metadata',liPost.replace('data-activity-urn="urn:li:activity:7080179061443977217"',''),'none','');
+  check('LinkedIn attributed share ID cannot establish an activity permalink',liPost.replaceAll('activity:7080179061443977217','share:7080179060747685888'),'none','');
+  check('LinkedIn differing featured activity does not inherit reposter attribution',liPost.replace('data-featured-activity-urn="urn:li:activity:7080179061443977217"','data-featured-activity-urn="urn:li:activity:999"'),'none','');
+  const liComment = `<section class="comment" id="li-comment" style="position:absolute;left:15px;top:150px;width:350px;height:90px;background:#faf2d4">
+    <div class="comment__header"><a class="comment__author" href="https://www.linkedin.com/in/reader">Reader</a><span class="comment__duration-since">1h</span></div>
+    <p id="li-comment-body" style="margin:10px">Separate comment</p></section>`;
+  const liWithComment = liPost.replace('</article>',liComment+'</article>');
+  check('LinkedIn comment-only crop cannot inherit post permalink or author',liWithComment,'none','',()=>crop('li-comment-body'));
+  check('LinkedIn comment crop with margins cannot inherit enclosing source',liWithComment,'ambiguous','',
+    ()=>({x:25,y:160,width:380,height:110,view_width:innerWidth,view_height:innerHeight}));
+  check('LinkedIn full post with unsupported comment requires review',liWithComment,'ambiguous','',()=>{
+    const r=document.querySelector('article').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  detailsCheck('LinkedIn post body crop excludes an off-crop comment',liWithComment,liUrl,{posting_account:'Example Company'});
+  const liOther='https://www.linkedin.com/feed/update/urn:li:activity:999/';
+  check('LinkedIn selected body reference stays reviewable without borrowed attribution',liPost.replace('Post body',`Post body <a href="${liOther}">Another post</a>`),'ambiguous','');
+  detailsCheck('LinkedIn off-crop reference cannot replace selected post source',liPost.replace('Post body',`Post body <a href="${liOther}">Another post</a>`),liUrl,
+    {posting_account:'Example Company'},()=>({x:40,y:130,width:250,height:20,view_width:innerWidth,view_height:innerHeight}));
+  check('LinkedIn cross-platform references require review',liPost.replace('Post body','Post body <a href="https://x.com/reporter/status/123">A tweet</a>'),'ambiguous','');
+  check('LinkedIn covering modal cannot inherit post source',liPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Sign in</div>','none','');
+  for (const url of ['https://www.linkedin.com/in/reporter','https://www.linkedin.com/company/example',
+      'https://lnkd.in/sharecode','https://www.linkedin.com/pulse/an-article','https://www.linkedin.com/feed/update/urn:li:share:123/',
+      'https://www.linkedin.com/feed/update/urn:li:ugcPost:123/',liUrl.replace('/feed/','/%66eed/'),
+      liUrl.replace('/update/','%2Fupdate/'),liUrl+'comments/',liUrl+'?commentUrn=urn%3Ali%3Acomment%3A123',
+      liUrl+'?replyUrn=123',liUrl+'?commentId=123',liUrl+'#comment',liUrl.replace('7080179061443977217','abc'),
+      liUrl.replace('linkedin.com','linkedin.com.attacker.test'),liUrl.replace('https://','https://user@'),liUrl.replace('linkedin.com','linkedin.com:8443')]) {
+    liCanonical.href=url;check('LinkedIn rejects unsupported source '+url,liPost,'none','');
+  }
+  for (const url of [liUrl,liObserved,'https://www.linkedin.com/feed/update/urn%3Ali%3Aactivity%3A7080179061443977217',
+      liObserved.replace('www.linkedin.com','de.linkedin.com')]) {
+    liCanonical.href=url;detailsCheck('LinkedIn explicit permalink form preserves activity identity '+url,liPost,liUrl,{posting_account:'Example Company'});
+  }
+  liCanonical.href=liObserved;
+  check('LinkedIn two selected posts cannot autofill its only discoverable permalink',liPost+liPost.replaceAll('7080179061443977217','999').replace('width:400px;height:300px','width:400px;height:300px;top:340px').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  liCanonical.remove();
+  check('LinkedIn activity URN alone never manufactures a permalink',liPost,'none','');
+  document.head.append(liCanonical);
+  const liUnlinkedQuote=liPost.replace('</article>','<article id="li-quote" style="position:absolute;left:10px;top:145px;width:360px;height:120px;background:white"><p>Unlinked nested post</p></article></article>');
+  check('LinkedIn unlinked nested post crop cannot inherit the enclosing source',liUnlinkedQuote,'none','',()=>crop('li-quote'));
+  check('LinkedIn full post including unlinked nested content requires review',liUnlinkedQuote,'ambiguous','',()=>{
+    const r=document.querySelector('article').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  liCanonical.remove();
+  const tgUrl='https://t.me/Example_channel/123';
+  const tgPost=`<div class="tgme_widget_message" data-post="Example_channel/123" id="tg-post" style="position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div class="tgme_widget_message_author"><a class="tgme_widget_message_owner_name" href="https://t.me/Example_channel"><span>Example Channel</span></a></div>
+    <div class="tgme_widget_message_text body" id="crop">Message body</div>
+    <a class="tgme_widget_message_video_player" href="${tgUrl}" style="position:absolute;top:150px"><time>0:14</time>Video duration</a>
+    <div class="tgme_widget_message_footer" style="position:absolute;top:260px"><span>edited</span><a class="tgme_widget_message_date" href="${tgUrl}"><time datetime="2026-10-15T18:37:11+00:00">20:37</time></a></div></div>`;
+  const tgDetails={posting_account:'@Example_channel',account_display_name:'Example Channel',account_profile_url:'https://t.me/Example_channel',publication_date_text:'2026-10-15T18:37:11+00:00',publication_date_displayed:'20:37',date_evidence:'telegram_message_permalink_time'};
+  detailsCheck('Telegram body crop owns footer timestamp outside selection',tgPost,tgUrl,tgDetails);
+  detailsCheck('Telegram embed displayed full date retains original datetime',tgPost.replace('>20:37<','>Oct 15 at 20:37<'),tgUrl,{...tgDetails,publication_date_displayed:'Oct 15 at 20:37'});
+  detailsCheck('Telegram public preview permalink normalizes s prefix',tgPost.replaceAll(tgUrl,tgUrl.replace('t.me/','t.me/s/')),tgUrl,tgDetails);
+  detailsCheck('Telegram tracking and embed parameters retain explicit post identity',tgPost.replaceAll(tgUrl,tgUrl+'?embed=1&mode=tme&single&utm_source=share'),tgUrl,tgDetails);
+  detailsCheck('Telegram missing datetime retains observed time without inventing date',tgPost.replace(' datetime="2026-10-15T18:37:11+00:00"',''),tgUrl,{publication_date_text:'20:37'});
+  for(const [label,html] of [
+    ['missing channel header',tgPost.replace('tgme_widget_message_owner_name','unrelated')],
+    ['mismatched channel header',tgPost.replace('href="https://t.me/Example_channel"','href="https://t.me/Other_channel"')],
+    ['hidden channel header',tgPost.replace('class="tgme_widget_message_author"','class="tgme_widget_message_author" style="display:none"')]]) {
+    check('Telegram '+label+' cannot invent account',html,'unique',tgUrl);
+    results.at(-1).passed &&= !results.at(-1).actual.candidates[0].site_details.posting_account;
+  }
+  for(const [label,html] of [
+    ['data-post ID alone',tgPost.replaceAll(tgUrl,'https://example.com/unavailable')],
+    ['footer timestamp missing',tgPost.replace('tgme_widget_message_date','unrelated')],
+    ['mismatched data-post',tgPost.replace('data-post="Example_channel/123"','data-post="Example_channel/999"')],
+    ['mismatched footer',tgPost.replace('class="tgme_widget_message_date" href="'+tgUrl+'"','class="tgme_widget_message_date" href="https://t.me/Other_channel/999"')]]) {
+    check('Telegram '+label+' cannot associate body',html,'none','');
+  }
+  check('Telegram duplicate footer timestamps require direct review',tgPost.replace('</div></div>','<a class="tgme_widget_message_date" href="'+tgUrl+'"><time>20:37</time></a></div></div>'),'none','');
+  check('Telegram selected body reference requires review without borrowed author',tgPost.replace('Message body','Message <a href="https://t.me/Other_channel/456">Other post</a>'),'ambiguous','');
+  const tgForward=tgPost.replace('<div class="tgme_widget_message_text body"','<div class="tgme_widget_message_forwarded_from" id="tg-forward" style="position:absolute;top:30px;height:20px">Forwarded from <a href="https://t.me/Original_channel">Original Channel</a></div><div class="tgme_widget_message_text body"');
+  detailsCheck('Telegram forwarded message retains posting channel and own publication time',tgForward,tgUrl,tgDetails);
+  check('Telegram forwarded-source-only crop cannot autofill hosting account',tgForward,'ambiguous','',()=>crop('tg-forward'));
+  const tgReply=tgPost.replace('</div></div>','</div><div class="tgme_widget_message_reply" id="tg-reply" style="position:absolute;top:180px;left:10px;width:360px;height:60px">Reply to <a href="https://t.me/Original_channel/456">Original message</a></div></div>');
+  check('Telegram reply-only crop cannot inherit hosting message',tgReply,'ambiguous','',()=>crop('tg-reply'));
+  check('Telegram full reply context requires review',tgReply,'ambiguous','',()=>crop('tg-post'));
+  detailsCheck('Telegram body excluding reply retains own source',tgReply,tgUrl,tgDetails);
+  check('Telegram two selected posts require review',tgPost+tgPost.replaceAll('/123','/456').replace('top:20px','top:340px').replace('id="crop"','id="second"'),'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  check('Telegram covering overlay hides post',tgPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Cover</div>','none','');
+  for(const url of ['https://t.me/Example_channel','https://t.me/s/Example_channel',
+      'https://t.me/c/123/456','https://t.me/+invitecode','https://t.me/share/123',
+      'https://t.me/Example_channel/0','https://t.me/Example_channel/0123','https://t.me/12345/123',
+      'https://t.me/Example_channel/123?comment=456','https://t.me/Example_channel/123?thread=456',
+      'https://t.me/Example_channel/123#reply','https://t.me/Example_channel/123/456',
+      'https://www.t.me/Example_channel/123','https://t.me.attacker.test/Example_channel/123',
+      'https://user@t.me/Example_channel/123','https://t.me:8443/Example_channel/123']) {
+    check('Telegram rejects unsupported permalink '+url,tgPost.replaceAll(tgUrl,url),'none','');
+  }
+  const tgCanonical=document.createElement('link');tgCanonical.rel='canonical';tgCanonical.href=tgUrl;document.head.append(tgCanonical);
+  check('Telegram page canonical cannot manufacture item source',tgPost.replaceAll(tgUrl,'https://example.com/unavailable'),'none','');
+  tgCanonical.remove();
+  const mUrl = 'https://www.example.social/@reporter/123';
+  const mPost = `<div id="mastodon"><div class="status" data-id="999" id="m-post" style="position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div class="status__info"><a class="status__display-name" href="https://www.example.social/@reporter"><span class="display-name__html">Reporter</span><span class="display-name__account">@reporter</span></a>
+    <a class="status__relative-time" href="${mUrl}?utm_source=share"><time datetime="2026-10-15T12:34:56Z" title="Oct 15, 2026, 14:34">1d</time><abbr title="Last edited Oct 16, 2026, 10:00"> *</abbr></a></div>
+    <div id="crop" class="body">Post body</div></div></div>`;
+  const mDetails={posting_account:'@reporter',account_display_name:'Reporter',account_profile_url:'https://www.example.social/@reporter',publication_date_text:'2026-10-15T12:34:56Z',publication_date_displayed:'1d',date_evidence:'mastodon_permalink_time'};
+  detailsCheck('Mastodon scoped header preserves www instance and original publication date',mPost,mUrl,mDetails);
+  results.at(-1).passed &&= results.at(-1).actual.candidates[0].mastodon_ownership?.timestamp_url===mUrl;
+  detailsCheck('Mastodon detailed status owns its footer timestamp',mPost.replaceAll('status__display-name','detailed-status__display-name').replaceAll('status__relative-time','detailed-status__datetime').replace('class="status"','class="detailed-status"'),mUrl,mDetails);
+  for(const host of ['m.example.social','mobile.example.social','social.example.net']) {
+    detailsCheck('Mastodon preserves exact instance '+host,mPost.replaceAll('www.example.social',host),mUrl.replace('www.example.social',host),{posting_account:'@reporter'});
+  }
+  const mRemote=mPost.replaceAll('@reporter','@reporter@home.example');
+  detailsCheck('Mastodon remote proxy ID and qualified observed account are preserved',mRemote,mUrl.replace('@reporter','@reporter@home.example'),{posting_account:'@reporter@home.example'});
+  detailsCheck('Mastodon account domain may differ from profile web domain',mPost.replace('>@reporter<','>@reporter@identity.example<'),mUrl,{posting_account:'@reporter@identity.example'});
+  detailsCheck('Mastodon boost actor cannot replace original author',mPost.replace('<div class="status__info">','<div class="status__prepend"><a href="https://www.example.social/@booster">Booster boosted</a></div><div class="status__info">'),mUrl,mDetails);
+  check('Mastodon boost-banner-only crop cannot autofill original author',mPost.replace('<div class="status__info">','<div class="status__prepend" id="boost-only" style="height:25px">Booster boosted</div><div class="status__info">'),'ambiguous','',()=>crop('boost-only'));
+  detailsCheck('Mastodon displayed relative date remains observed text without machine date',mPost.replace(' datetime="2026-10-15T12:34:56Z"',''),mUrl,{publication_date_text:'1d'});
+  for(const [label,html] of [
+    ['no app fingerprint',mPost.replace('id="mastodon"','id="generic-blog"')],
+    ['missing own timestamp',mPost.replace('status__relative-time','unrelated-time')],
+    ['missing own author',mPost.replace('status__display-name','unrelated-author')],
+    ['wrong author profile',mPost.replace('href="https://www.example.social/@reporter"','href="https://www.example.social/@other"')],
+    ['wrong profile host',mPost.replace('href="https://www.example.social/@reporter"','href="https://other.social/@reporter"')],
+    ['wrong observed account',mPost.replace('>@reporter<','>@other<')],
+    ['hidden author',mPost.replace('class="status__display-name"','class="status__display-name" style="display:none"')],
+    ['ID alone',mPost.replace(mUrl+'?utm_source=share','https://www.example.social/unavailable')],
+    ['ActivityPub URI',mPost.replace(mUrl+'?utm_source=share','https://www.example.social/users/reporter/statuses/123')],
+    ['covering overlay',mPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Sign in</div>']]) {
+    check('Mastodon rejects '+label,html,'none','');
+  }
+  check('Mastodon selected unknown body reference requires review',mPost.replace('Post body','Post body <a href="https://other.social/@other/456">Other post</a>'),'ambiguous','');
+  detailsCheck('Mastodon off-crop reference cannot replace owner',mPost.replace('</div></div></div>','</div><a style="position:absolute;top:230px" href="https://other.social/@other/456">Other post</a></div></div>'),mUrl,mDetails);
+  const mQuote=mPost.replace('</div></div></div>','</div><div class="status__quote" style="position:absolute;left:10px;top:150px;width:370px;height:140px"><div class="status status--is-quote" id="m-quote" style="width:370px;height:140px;background:white"><a class="status__display-name" href="https://www.example.social/@quoted@remote.example"><span class="display-name__html">Quoted</span><span class="display-name__account">@quoted@remote.example</span></a><a class="status__relative-time" href="https://www.example.social/@quoted@remote.example/456"><time datetime="2026-10-14T01:02:03Z">2d</time></a><p id="m-quote-body">Quoted text</p></div></div></div></div>');
+  quoteCheck('Mastodon full quote prefers enclosing source',mQuote,'m-post','preferred',mUrl,'@reporter','2026-10-15T12:34:56Z');
+  quoteCheck('Mastodon isolated quote uses remote quoted author',mQuote,'m-quote','preferred','https://www.example.social/@quoted@remote.example/456','@quoted@remote.example','2026-10-14T01:02:03Z');
+  check('Mastodon unlinked quote prevents enclosing autofill',mQuote.replace('https://www.example.social/@quoted@remote.example/456','https://www.example.social/unavailable'),'ambiguous','',()=>crop('m-post'));
+  check('Mastodon separate selected posts require review',mPost+mPost.replace('left:20px;top:20px','left:20px;top:340px').replaceAll('/123','/456').replaceAll('id="crop"','id="second"'),'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  const ytUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
+  const ytOther = 'https://www.youtube.com/watch?v=otherId1234';
+  const ytComment = ytUrl+'&lc=UgABC_123.reply-2';
+  const ytCanonical = document.createElement('link');ytCanonical.rel='canonical';ytCanonical.href=ytUrl;
+  document.head.append(ytCanonical);
+  const ytPost = `<ytd-watch-flexy video-id="jNQXAC9IVRw" style="display:block;position:absolute;left:20px;top:20px;width:600px;height:600px;background:#eee">
+    <div id="movie_player" style="position:absolute;left:0;top:0;width:400px;height:160px;background:#dce7ed">
+      <div id="crop" class="body">Video crop</div></div>
+    <ytd-watch-metadata style="display:block;position:absolute;left:0;top:180px;width:400px;height:150px">
+      <ytd-video-owner-renderer><a href="https://www.youtube.com/@reporter">Reporter</a></ytd-video-owner-renderer>
+      <ytd-watch-info-text><div id="info"><span>1,234 views</span><span> </span><span>Oct 16, 2026</span></div></ytd-watch-info-text>
+      <div id="description">Description</div></ytd-watch-metadata></ytd-watch-flexy>`;
+  detailsCheck('YouTube video crop retains scoped owner and publication label',ytPost,ytUrl,
+    {posting_account:'@reporter',publication_date_text:'Oct 16, 2026',date_evidence:'youtube_watch_info_date'});
+  detailsCheck('YouTube relative publication date remains relative',ytPost.replace('Oct 16, 2026','2 hours ago'),ytUrl,
+    {publication_date_text:'2 hours ago',publication_date_hover_target:undefined});
+  detailsCheck('YouTube missing owner never infers uploader from description mentions',ytPost.replace('<ytd-video-owner-renderer><a href="https://www.youtube.com/@reporter">Reporter</a></ytd-video-owner-renderer>','')
+    .replace('Description','Description <a href="https://www.youtube.com/@reporter">@reporter</a>'),ytUrl,{posting_account:undefined});
+  detailsCheck('YouTube observed channel ID profile keeps its display name, not a fabricated handle',ytPost.replace('/@reporter','/channel/UC1234567890123456789012'),ytUrl,
+    {posting_account:'Reporter',account_profile_url:'https://www.youtube.com/channel/UC1234567890123456789012'});
+  detailsCheck('YouTube conflicting owners leave posting account unset',ytPost.replace('</ytd-video-owner-renderer>','<a href="https://www.youtube.com/@other">Other</a></ytd-video-owner-renderer>'),ytUrl,
+    {posting_account:undefined});
+  detailsCheck('YouTube hidden owner links cannot establish account',ytPost.replace('<ytd-video-owner-renderer>','<ytd-video-owner-renderer hidden>'),ytUrl,{posting_account:undefined});
+  detailsCheck('YouTube missing info date does not use description dates or generic time',ytPost.replace('<span>Oct 16, 2026</span>','').replace('Description','Description <time datetime="2000-01-01T00:00:00Z">Jan 1, 2000</time>'),ytUrl,
+    {publication_date_text:undefined});
+  detailsCheck('YouTube unexpected info-row structure leaves date blank',ytPost.replace('Oct 16, 2026</span>','Oct 16, 2026</span><span>Another label</span>'),ytUrl,{publication_date_text:undefined});
+  check('YouTube stale page canonical cannot bind another video',ytPost.replace('video-id="jNQXAC9IVRw"','video-id="otherId1234"'),'none','');
+  check('YouTube missing video ID cannot use page metadata',ytPost.replace('video-id="jNQXAC9IVRw"',''),'none','');
+  check('YouTube active advertisement requires review',ytPost.replace('id="movie_player"','id="movie_player" class="ad-showing"'),'ambiguous','');
+  const ytAdResult=results[results.length-1];ytAdResult.passed &&= ytAdResult.actual.candidates.every(c=>!c.site_details.posting_account && !c.site_details.publication_date_text);
+  const ytCommentHtml = `<ytd-comment-view-model style="display:block;position:absolute;left:0;top:350px;width:400px;height:160px;background:#faf2d4">
+    <div id="header-author"><a href="https://www.youtube.com/@reader">@reader</a></div>
+    <span id="published-time-text"><a href="${ytComment}&pp=tracking">2 hours ago (edited)</a></span>
+    <div id="comment-body" style="position:absolute;left:15px;top:55px;width:300px;height:70px">Comment text</div></ytd-comment-view-model>`;
+  const ytWithComment = ytPost.replace('</ytd-watch-flexy>',ytCommentHtml+'</ytd-watch-flexy>');
+  detailsCheck('YouTube comment crop uses its own lc ID, author and displayed date',ytWithComment,ytComment,
+    {posting_account:'@reader',publication_date_text:'2 hours ago (edited)',date_evidence:'youtube_comment_timestamp_link'},()=>crop('comment-body'));
+  detailsCheck('YouTube comment by the uploader keeps its own date',ytWithComment.replaceAll('/@reader','/@reporter'),ytComment,
+    {posting_account:'@reporter',publication_date_text:'2 hours ago (edited)'},()=>crop('comment-body'));
+  check('YouTube unlinked comment cannot inherit the video',ytWithComment.replace(`href="${ytComment}&pp=tracking"`,'href="https://example.com/"'),
+    'none','',()=>crop('comment-body'));
+  check('YouTube video and comment together require review',ytWithComment,'ambiguous','',()=>({x:20,y:20,width:400,height:510,view_width:innerWidth,view_height:innerHeight}));
+  const ytReco = `<ytd-compact-video-renderer style="display:block;position:absolute;left:420px;top:0;width:160px;height:150px;background:#faf2d4">
+    <a href="${ytOther}">Recommended video</a><div id="recommendation-body" style="height:100px">Preview</div></ytd-compact-video-renderer>`;
+  const ytWithReco = ytPost.replace('</ytd-watch-flexy>',ytReco+'</ytd-watch-flexy>');
+  check('YouTube unlinked recommendation crop never inherits current uploader',ytWithReco,'none','',()=>crop('recommendation-body'));
+  const recoResult=results[results.length-1];recoResult.passed &&= recoResult.actual.candidates.every(c=>!c.site_details.posting_account);
+  check('YouTube directly selected recommendation requires review',ytWithReco,'ambiguous','',()=>{
+    const r=document.querySelector('ytd-compact-video-renderer').getBoundingClientRect();
+    return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  detailsCheck('YouTube off-crop recommendation does not compete with video',ytWithReco,ytUrl,
+    {posting_account:'@reporter'});
+  const ytReference = ytPost.replace('Video crop',`Video crop <a href="${ytOther}">Reference</a>`);
+  check('YouTube reference captured inside player requires review',ytReference,'ambiguous','');
+  check('YouTube reference on another site is reviewable without author inference',post(ytUrl),'ambiguous','',
+    ()=>{const r=document.querySelector('header a').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  for (const url of ['https://www.youtube.com/playlist?list=PL123','https://www.youtube.com/@reporter',
+      ytUrl+'&v=otherId1234',ytUrl+'&lc=',ytUrl+'&lc=bad%2Fid','https://www.youtube.com/watch?v=short',
+      'https://www.youtube.com.attacker.test/watch?v=jNQXAC9IVRw','https://user@www.youtube.com/watch?v=jNQXAC9IVRw',
+      'https://www.youtube.com:8443/watch?v=jNQXAC9IVRw','https://www.youtube.com/embed/jNQXAC9IVRw',
+      'https://youtu.be/jNQXAC9IVRw/extra']) check('YouTube rejects unsupported link '+url,post(url),'none','');
+  for (const url of ['https://youtu.be/jNQXAC9IVRw?t=20&si=share','https://m.youtube.com/watch?v=jNQXAC9IVRw',
+      'https://www.youtube.com/shorts/jNQXAC9IVRw','https://www.youtube.com/live/jNQXAC9IVRw']) {
+    detailsCheck('YouTube observed URL form normalizes video identity '+url,ytPost,ytUrl,{posting_account:'@reporter'});
+    ytCanonical.href=url;
+    detailsCheck('YouTube canonical URL form normalizes video identity '+url,ytPost,ytUrl,{posting_account:'@reporter'});
+  }
+  ytCanonical.href=ytUrl+'&lc=UgHighlighted';
+  detailsCheck('YouTube highlighted page comment never labels the player',ytPost,ytUrl,{posting_account:'@reporter'});
+  ytCanonical.href=ytUrl;
+  const ytShort = `<ytd-reel-video-renderer style="display:block;position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div id="shorts-player"><a class="ytp-title-link" href="https://www.youtube.com/shorts/jNQXAC9IVRw" style="display:none">Video title</a></div>
+    <div class="ytReelChannelBarViewModelChannelName"><a href="https://www.youtube.com/@shortcreator/shorts">@shortcreator</a></div>
+    <div id="crop" class="body">Short video</div></ytd-reel-video-renderer>`;
+  detailsCheck('YouTube Short binds observed player permalink and its own channel bar',ytShort,ytUrl,
+    {posting_account:'@shortcreator',publication_date_text:undefined});
+  check('YouTube Short without player identity does not use page metadata',ytShort.replace('class="ytp-title-link"','class="other-link"'),'none','');
+  detailsCheck('YouTube adjacent preloaded Short retains its own observed identity',ytShort.replaceAll('jNQXAC9IVRw','otherId1234'),ytOther,
+    {posting_account:'@shortcreator'});
+  check('YouTube two selected Shorts remain ambiguous',ytShort+ytShort.replaceAll('jNQXAC9IVRw','otherId1234').replace('top:20px','top:340px').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  detailsCheck('YouTube untrusted channel host cannot supply uploader',ytPost.replace('https://www.youtube.com/@reporter','https://www.youtube.com.attacker.test/@reporter'),ytUrl,
+    {posting_account:undefined});
+  detailsCheck('YouTube Unicode handles retain observed identity',ytPost.replace('/@reporter','/@r%C3%A6porter'),ytUrl,{posting_account:'@ræporter'});
+  detailsCheck('YouTube encoded slash cannot be an account handle',ytPost.replace('/@reporter','/@bad%2Fhandle'),ytUrl,{posting_account:undefined});
+  detailsCheck('YouTube hidden date cannot supply publication label',ytPost.replace('<span>Oct 16, 2026</span>','<span hidden>Oct 16, 2026</span>'),ytUrl,{publication_date_text:undefined});
+  const ytOg=document.createElement('meta');ytOg.setAttribute('property','og:url');ytOg.content=ytOther;document.head.append(ytOg);
+  check('YouTube conflicting page video identities never choose one',ytPost,'none','');ytOg.remove();
+  ytCanonical.href=ytUrl+'&t=30&list=PLfixture&si=share';
+  detailsCheck('YouTube playback and playlist context are retained only as provenance',ytPost,ytUrl,{posting_account:'@reporter'});
+  results[results.length-1].passed &&= results[results.length-1].actual.candidates[0].original_url === ytCanonical.href;
+  ytCanonical.href=ytUrl;
+  const ytOverlay=ytPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Login overlay</div>';
+  check('YouTube modal covering video cannot inherit its source',ytOverlay,'none','');
+  check('YouTube known but unlinked selected comment prevents video autofill',ytWithComment.replace(`href="${ytComment}&pp=tracking"`,'href="https://example.com/"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:510,view_width:innerWidth,view_height:innerHeight}));
+  ytCanonical.remove();
+  const rdUrl = 'https://www.reddit.com/r/news/comments/abc123/';
+  const rdComment = rdUrl + 'comment/def456/';
+  const rdProfile = 'https://www.reddit.com/user/Reporter/';
+  const rdPost = `<shreddit-post id="t3_abc123" author="Reporter" created-timestamp="2026-10-16T10:11:12.000000+0000" permalink="${rdUrl}a_title/?utm_source=share"
+      style="display:block;position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div slot="credit-bar"><a href="${rdProfile}">u/Reporter</a><faceplate-timeago ts="2026-10-16T10:11:12Z"><time datetime="2026-10-16T10:11:12Z">2h ago</time></faceplate-timeago></div>
+    <h2><a href="${rdUrl}a_title/">A news post</a></h2>
+    <div id="crop" class="body" slot="text-body">Post body</div></shreddit-post>`;
+  const rdReply = `<shreddit-comment thingid="t1_def456" postid="t3_abc123" author="Reader" created="2026-10-16T11:22:33.000000+0000" permalink="${rdComment}"
+      style="display:block;position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <details role="article" open><summary><div slot="commentMeta"><a href="https://www.reddit.com/user/Reader/">Reader</a>
+      <a href="${rdComment}"><faceplate-timeago><time datetime="2026-10-16T11:22:33Z">1h ago</time></faceplate-timeago></a></div></summary>
+    <div id="crop" class="body" slot="comment">Comment body</div></details></shreddit-comment>`;
+  detailsCheck('Reddit feed body keeps its own author and datetime',rdPost,rdUrl,
+    {posting_account:'u/Reporter',account_profile_url:rdProfile,publication_date_text:'2026-10-16T10:11:12Z'});
+  detailsCheck('Reddit comment internal article wrapper retains comment ownership',rdReply,rdComment,
+    {posting_account:'u/Reader',publication_date_text:'2026-10-16T11:22:33Z'});
+  check('Reddit legacy comment URL retains comment identity',post('https://old.reddit.com/r/news/comments/abc123/title/def456/?context=3'), 'ambiguous','',
+    ()=>{const r=document.querySelector('header a').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  detailsCheck('Reddit comment legacy permalink normalizes to its own comment',
+    rdReply.replaceAll(rdComment,'https://old.reddit.com/r/news/comments/abc123/title/def456/'),rdComment,
+    {posting_account:'u/Reader',publication_date_text:'2026-10-16T11:22:33Z'});
+  detailsCheck('Reddit profile mentions cannot replace a missing author link',rdPost.replace(`<a href="${rdProfile}">u/Reporter</a>`,'')
+      .replace('Post body',`Post body <a href="${rdProfile}">u/Reporter</a>`),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit mismatched credit profile leaves author blank',rdPost.replace(rdProfile,rdProfile.replace('Reporter','Other')),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit subreddit link never becomes author',rdPost.replace(rdProfile,'https://www.reddit.com/r/Reporter/'),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit deleted author stays absent',rdPost.replace('author="Reporter"','author="[deleted]"')
+      .replace(`<a href="${rdProfile}">u/Reporter</a>`,'<span>[deleted]</span>'),rdUrl,{posting_account:undefined});
+  detailsCheck('Reddit body time cannot supply a missing publication date',rdPost.replace('<time datetime="2026-10-16T10:11:12Z">2h ago</time>','')
+      .replace('Post body','Post body <time datetime="2020-01-01T00:00:00Z">Old event</time>'),rdUrl,{publication_date_text:undefined});
+  detailsCheck('Reddit relative date remains exactly displayed',rdPost.replace(' datetime="2026-10-16T10:11:12Z"',''),rdUrl,
+    {publication_date_text:'2h ago',publication_date_hover_target:undefined});
+  detailsCheck('Reddit multiple credit timestamps do not choose one',rdPost.replace('</faceplate-timeago>',
+    '</faceplate-timeago><faceplate-timeago ts="2026-10-16T10:11:12Z"><time>Duplicate time</time></faceplate-timeago>'),rdUrl,{publication_date_text:undefined});
+  detailsCheck('Reddit edited timestamp cannot replace publication time',rdPost.replace('datetime="2026-10-16T10:11:12Z"','datetime="2026-10-16T11:00:00Z"'),rdUrl,
+    {publication_date_text:undefined});
+  detailsCheck('Reddit missing creation evidence leaves date unset',rdPost.replace('created-timestamp="2026-10-16T10:11:12.000000+0000"',''),rdUrl,
+    {publication_date_text:undefined});
+  check('Reddit stale item ID cannot bind a permalink',rdPost.replace('id="t3_abc123"','id="t3_zzz"'),'none','');
+  check('Reddit comment missing post ID cannot inherit a page source',rdReply.replace('postid="t3_abc123"',''),'none','');
+  check('Reddit comment missing permalink cannot become the post',rdReply.replace(`permalink="${rdComment}"`,'').replace(`href="${rdComment}"`,'href="https://example.com/"'),'none','');
+  const rdReference = rdPost.replace('Post body',`Post body <a href="${rdUrl.replace('abc123','xyz789')}">Another post</a>`);
+  check('Reddit directly captured reference requires review',rdReference,'ambiguous','');
+  detailsCheck('Reddit off-crop body references cannot compete with the selected post',rdReference,rdUrl,
+    {posting_account:'u/Reporter'},()=>({x:40,y:130,width:250,height:25,view_width:innerWidth,view_height:innerHeight}));
+  check('Reddit two selected posts remain ambiguous',rdPost+rdPost.replaceAll('abc123','xyz789').replace('top:20px','top:340px').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  for (const url of ['https://www.reddit.com/r/news/s/sharecode/','https://redd.it/abc123','https://www.reddit.com/user/Reporter/',
+      'https://www.reddit.com/r/news/','https://www.reddit.com.attacker.test/r/news/comments/abc123/',
+      'https://user@www.reddit.com/r/news/comments/abc123/','https://www.reddit.com:8443/r/news/comments/abc123/',
+      rdUrl+'title/def456/extra',rdUrl+'comment/',rdUrl+'title.json']) {
+    check('Reddit rejects unsupported source '+url,post(url),'none','');
+  }
+  const rdNested = rdReply.replace('height:300px','height:390px').replace('id="crop"','id="parent-body"')
+    .replace('</details>',rdReply.replace('left:20px;top:20px;width:400px;height:300px','left:25px;top:160px;width:350px;height:180px')
+      .replaceAll('def456','ghi789').replaceAll('Reader','NestedReader')+'</details>');
+  detailsCheck('Reddit isolated nested reply keeps its own date and account',rdNested,rdUrl+'comment/ghi789/',
+    {posting_account:'u/NestedReader',publication_date_text:'2026-10-16T11:22:33Z'});
+  check('Reddit full thread with two comments requires review',rdNested,'ambiguous','',()=>
+    ({x:20,y:20,width:400,height:390,view_width:innerWidth,view_height:innerHeight}));
+  check('Reddit body links to other social platforms require review',
+    rdPost.replace('Post body','Post body <a href="https://x.com/reporter/status/123">Referenced tweet</a>'),'ambiguous','');
+  detailsCheck('Reddit off-crop references to another platform cannot claim the crop',
+    rdPost.replace('Post body','Post body <a href="https://x.com/reporter/status/123">Referenced tweet</a>'),rdUrl,
+    {posting_account:'u/Reporter'},()=>({x:40,y:130,width:250,height:25,view_width:innerWidth,view_height:innerHeight}));
+  check('Reddit crosspost media without an exposed original link requires review',rdPost.replace('<shreddit-post ', '<shreddit-post is-crosspost '),'ambiguous','');
+  check('Reddit crosspost type without the boolean attribute requires review',rdPost.replace('<shreddit-post ', '<shreddit-post post-type="crosspost" '),'ambiguous','');
+  detailsCheck('Reddit hidden credit time cannot supply publication date',rdPost.replace('<faceplate-timeago ', '<faceplate-timeago hidden '),rdUrl,
+    {publication_date_text:undefined});
+  const rdCanonical=document.createElement('link');rdCanonical.rel='canonical';rdCanonical.href=rdUrl;document.head.append(rdCanonical);
+  check('Reddit page canonical cannot label an unrelated article',post('https://example.com/'),'none','');
+  rdCanonical.remove();
+  const ttUrl = 'https://www.tiktok.com/@reporter/video/6718335390845095173';
+  const ttProfile = 'https://www.tiktok.com/@reporter';
+  const ttPost = `<article data-e2e="recommend-list-item-container" style="height:260px">
+    <section data-e2e="feed-video"><div><a href="${ttProfile}">Reporter</a><span>· 2019-7-27</span></div>
+      <div id="crop" class="body" data-e2e="video-desc">Caption without a linked timestamp</div>
+      <button data-e2e="more-menu-icon" data-more-menu-item-id="6718335390845095173" style="position:absolute;top:230px">More</button>
+    </section></article>`;
+  check('TikTok video path strips tracking and preserves post identity', post(ttUrl+'/?is_from_webapp=1'), 'unique',ttUrl);
+  check('TikTok photo path is a distinct observed post', post(ttUrl.replace('/video/','/photo/')+'?photo_id=4'), 'unique',ttUrl.replace('/video/','/photo/'));
+  check('TikTok profiles, music and shortened links are not post permalinks',
+    post(ttProfile, '<a href="https://www.tiktok.com/music/sound-123">Music</a><a href="https://vm.tiktok.com/ABC/">Short link</a>'), 'none','');
+  check('TikTok lookalike hosts are rejected',post(ttUrl.replace('tiktok.com/','tiktok.com.attacker.test/')), 'none','');
+  check('TikTok credentials and ports are rejected',post(ttUrl.replace('https://','https://user@'))+post(ttUrl.replace('tiktok.com/','tiktok.com:8443/')), 'none','');
+  check('TikTok nonnumeric IDs and extra path components are rejected',post(ttUrl.replace('6718335390845095173','oops'))+post(ttUrl+'/comments'), 'none','');
+  const ttCanonical = document.createElement('link');ttCanonical.rel='canonical';ttCanonical.href=ttUrl;document.head.append(ttCanonical);
+  detailsCheck('TikTok exact item ID binds page permalink, author and creator date',ttPost,ttUrl,
+    {posting_account:'@reporter',account_display_name:'Reporter',publication_date_text:'· 2019-7-27',date_evidence:'tiktok_creator_date_row'});
+  detailsCheck('TikTok relative date is preserved without inventing a year or timezone',ttPost.replace('2019-7-27','12h ago'),ttUrl,
+    {publication_date_text:'· 12h ago',publication_datetime_attribute:undefined});
+  detailsCheck('TikTok incomplete calendar date stays incomplete',ttPost.replace('2019-7-27','10-7'),ttUrl,
+    {publication_date_text:'· 10-7'});
+  detailsCheck('TikTok tracked profile links still establish creator date ownership',ttPost.replace(ttProfile,ttProfile+'/?lang=en'),ttUrl,
+    {posting_account:'@reporter',publication_date_text:'· 2019-7-27'});
+  detailsCheck('TikTok caption mentions do not establish an author or publication date',
+    ttPost.replace(ttProfile,'https://example.com').replace('Caption without a linked timestamp',`<a href="${ttProfile}">Reporter</a><span>· 2026-10-16</span>`),ttUrl,
+    {posting_account:undefined,publication_date_text:undefined});
+  detailsCheck('TikTok comment times cannot replace a missing creator date',
+    ttPost.replace('<span>· 2019-7-27</span>','').replace('</section>', '<div data-e2e="comment-level-1"><a href="https://www.tiktok.com/@reader">Reader</a><time datetime="2026-10-16T12:00:00Z">1h ago</time></div></section>'),
+    ttUrl,{publication_date_text:undefined});
+  detailsCheck('TikTok conflicting creator date rows stay unset',ttPost.replace('</section>',`<div><a href="${ttProfile}">Reporter</a><span>· 2026-10-16</span></div></section>`),
+    ttUrl,{posting_account:'@reporter',publication_date_text:undefined});
+  check('TikTok stale canonical cannot label another video from the same creator',ttPost.replace('data-more-menu-item-id="6718335390845095173"','data-more-menu-item-id="999"'), 'none','');
+  check('TikTok missing item ID cannot bind page metadata',ttPost.replace('data-more-menu-item-id="6718335390845095173"',''), 'none','');
+  check('TikTok multiple item IDs cannot bind page metadata',ttPost.replace('</section>','<button data-e2e="more-menu-icon" data-more-menu-item-id="999">Other</button></section>'), 'none','');
+  check('TikTok unrelated article cannot inherit page URL',post('https://example.com/unlinked'), 'none','');
+  detailsCheck('TikTok ID is never decoded into an unobserved date',ttPost.replace('<span>· 2019-7-27</span>',''),ttUrl,
+    {publication_date_text:undefined,posting_account:'@reporter'});
+  check('TikTok crop confined to an unlinked comment cannot adopt post source',
+    ttPost.replace('</section>','<div id="comment-crop" data-e2e="comment-level-1" style="position:absolute;left:20px;top:150px;width:300px;height:40px;background:white"><a href="https://www.tiktok.com/@reader">Reader</a><time datetime="2026-10-16T12:00:00Z">1h ago</time></div></section>'),
+    'ambiguous','',()=>crop('comment-crop'));
+  const commentPost = ttPost.replace('</section>','<div id="comment-margin" data-e2e="comment-level-1" style="position:absolute;left:20px;top:150px;width:300px;height:40px;background:white">Reader: separate comment</div></section>');
+  check('TikTok comment crop with margins cannot inherit enclosing source',commentPost,
+    'ambiguous','',()=>{const r=crop('comment-margin');return {...r,x:r.x-5,y:r.y-5,width:r.width+10,height:r.height+10};});
+  check('TikTok full post with an unsupported comment requires source review',commentPost,
+    'ambiguous','',()=>({x:20,y:20,width:360,height:260,view_width:innerWidth,view_height:innerHeight}));
+  detailsCheck('TikTok linked caption timestamp cannot become the post date',
+    ttPost.replace('<span>· 2019-7-27</span>','').replace('Caption without a linked timestamp',`<a href="${ttUrl}"><time datetime="2026-10-16T12:00:00Z">Caption reference</time></a>`),
+    ttUrl,{publication_date_text:undefined});
+  ttCanonical.href=ttUrl.replace('/video/','/photo/');
+  detailsCheck('TikTok exact photo item retains its observed photo URL',ttPost,ttCanonical.href,
+    {posting_account:'@reporter',publication_date_text:'· 2019-7-27'});
+  const observedPhotoUrl = ttCanonical.href + '?image_index=3';
+  check('TikTok photo slide URL normalizes only the post link',post(observedPhotoUrl), 'unique',ttCanonical.href);
+  results[results.length-1].passed &&= results[results.length-1].actual.candidates[0]?.original_url === observedPhotoUrl;
+  ttCanonical.href = 'https://www.tiktok.com/@qq.mm.pp/photo/7479037796326362385';
+  detailsCheck('TikTok live photo creator markup keeps its own date and handle',
+    ttPost.replaceAll('reporter','qq.mm.pp').replaceAll('6718335390845095173','7479037796326362385').replace('Reporter','ً').replace('2019-7-27','2025-3-7')
+      .replace('</section>',`<a href="https://www.tiktok.com/@qq.mm.pp" data-e2e="video-author-avatar"><img alt="qq.mm.pp" width="30" height="30"></a></section>`),
+    'https://www.tiktok.com/@qq.mm.pp/photo/7479037796326362385',
+    {posting_account:'@qq.mm.pp',publication_date_text:'· 2025-3-7'});
+  ttCanonical.href = ttUrl;
+  detailsCheck('TikTok hidden creator link cannot establish date despite a visible avatar',
+    ttPost.replace(`<a href="${ttProfile}">Reporter</a>`,`<a href="${ttProfile}" hidden>Reporter</a>`)
+      .replace('</section>',`<a href="${ttProfile}" data-e2e="video-author-avatar"><span style="display:inline-block;width:30px;height:30px">R</span></a></section>`),
+    ttUrl,{posting_account:'@reporter',publication_date_text:undefined});
+  detailsCheck('TikTok zero-width name without visible identity leaves attribution blank',
+    ttPost.replace('Reporter','ً'),ttUrl,{posting_account:undefined,publication_date_text:undefined});
+  const referenceCaption = ttPost.replace('Caption without a linked timestamp',`<a href="${ttUrl.replace('6718335390845095173','999')}">Another post</a>`);
+  check('TikTok referenced post cannot replace an unlinked enclosing source',
+    referenceCaption.replace('data-more-menu-item-id="6718335390845095173"',''), 'ambiguous','');
+  const referenceResult = results[results.length-1];
+  referenceResult.passed &&= referenceResult.actual.candidates[0]?.evidence === 'referenced_post_link' &&
+    referenceResult.actual.candidates[0]?.site_details.posting_account === undefined;
+  check('TikTok own source plus a caption reference remains reviewable',referenceCaption,'ambiguous','');
+  const adjacentPosts = ttPost.replace('id="crop"','id="first-crop"') +
+    ttPost.replace('height:260px','height:260px;top:300px').replaceAll('6718335390845095173','999').replace('2019-7-27','2026-10-10');
+  ttCanonical.href = ttUrl.replace('6718335390845095173','999');
+  detailsCheck('TikTok selected item keeps its source with an adjacent visible preload',adjacentPosts,ttCanonical.href,
+    {posting_account:'@reporter',publication_date_text:'· 2026-10-10'});
+  check('TikTok current page URL cannot label the adjacent item of the same creator',adjacentPosts,
+    'none','',()=>crop('first-crop'));
+  check('TikTok two selected native items cannot silently fill the one known source',adjacentPosts,
+    'ambiguous','',()=>({x:20,y:20,width:360,height:540,view_width:innerWidth,view_height:innerHeight}));
+  ttCanonical.href = ttUrl;
+  detailsCheck('TikTok media crop ignores caption references outside the selection',
+    referenceCaption.replace('</section>','<div id="media-crop" style="position:absolute;left:15px;top:170px;width:300px;height:40px">Media</div></section>'),
+    ttUrl,{posting_account:'@reporter',publication_date_text:'· 2019-7-27'},()=>crop('media-crop'));
+  ttCanonical.href = ttUrl.replace('6718335390845095173','999');
+  const foreignHeaderLink = ttPost.replace('</section>',`<a id="foreign-link" style="position:absolute;left:15px;top:180px" href="${ttCanonical.href}"><time datetime="2026-10-17T10:00:00Z">Referenced header post</time></a></section>`);
+  check('TikTok mismatched header permalink cannot replace the selected item',foreignHeaderLink,
+    'ambiguous','',()=>crop('foreign-link'));
+  check('TikTok off-crop mismatched header link is not a source candidate',foreignHeaderLink,
+    'none','');
+  ttCanonical.remove();
+  check('Two selected TikTok posts stay ambiguous',
+    post(ttUrl)+post(ttUrl.replace('6718335390845095173','999')).replace('<article>','<article style="top:195px">').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:360,height:335,view_width:innerWidth,view_height:innerHeight}));
   const trigger = '<a href="https://x.com/reporter/status/123" data-base-ui-tooltip-trigger data-popup-open>9m</a>';
   const portal = '<div data-base-ui-portal><div data-open data-base-ui-focusable class="bg-(--x-tooltip-bg)">11:57 PM · Oct 15, 2026</div></div>';
   const tooltipCheck = (name, html, expected) => {

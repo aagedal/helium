@@ -1,0 +1,23 @@
+<!doctype html>
+<!-- Copyright 2026 The Helium Authors.
+You can use, redistribute, and/or modify this source code under
+ the terms of the GPL-3.0 license that can be found in the LICENSE file. -->
+<meta charset="utf-8">
+<title>Telegram source capture fixture</title>
+<style>
+body { margin: 28px; color: #202124; background: #f5f5f5; font: 16px system-ui; }
+.tgme_widget_message { width: 600px; background: white; padding: 20px; }
+.tgme_widget_message_author { padding-bottom: 20px; }
+#media { height: 200px; display: grid; place-items: center; background: #dce7ed; font-size: 28px; }
+.tgme_widget_message_footer { padding-top: 20px; }
+.tgme_widget_message_reply { margin-top: 20px; padding: 20px; background: #faf2d4; }
+</style>
+<h1>Local Telegram attribution fixture</h1>
+<p>This is controlled test content. Capture the blue message body or the separate reply preview.</p>
+<div class="tgme_widget_message" data-post="Example_channel/123">
+  <div class="tgme_widget_message_author"><a class="tgme_widget_message_owner_name" href="https://t.me/Example_channel">Example Channel</a></div>
+  <div class="tgme_widget_message_text" id="media">Message crop target</div>
+  <div class="tgme_widget_message_footer"><span>edited</span> <a class="tgme_widget_message_date" href="https://t.me/Example_channel/123?embed=1&amp;utm_source=share"><time datetime="2026-10-15T18:37:11+00:00">20:37</time></a></div>
+  <div class="tgme_widget_message_reply">Reply preview: <a href="https://t.me/Original_channel/456">Original message</a></div>
+</div>
+<p>Expected body: @Example_channel, 2026-10-15T18:37:11+00:00 and Telegram credit. Reply-only and mixed crops require review.</p>

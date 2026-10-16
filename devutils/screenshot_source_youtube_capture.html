@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Copyright 2026 The Helium Authors.
+You can use, redistribute, and/or modify this source code under
+ the terms of the GPL-3.0 license that can be found in the LICENSE file. -->
+<meta charset="utf-8">
+<title>YouTube source capture fixture</title>
+<link rel="canonical" href="https://www.youtube.com/watch?v=jNQXAC9IVRw&t=30&list=PLfixture">
+<style>
+body { margin: 28px; color: #202124; background: #f5f5f5; font: 16px system-ui; }
+ytd-watch-flexy { display: block; width: 600px; background: #fff; padding: 20px; }
+#movie_player { height: 200px; display: grid; place-items: center; background: #dce7ed; font-size: 28px; }
+ytd-watch-metadata { display: block; padding: 20px 0; }
+ytd-video-owner-renderer, ytd-watch-info-text { display: block; margin: 10px 0; }
+ytd-comment-view-model { display: block; padding: 20px; background: #faf2d4; }
+#comment-body { margin-top: 16px; padding: 20px 0; }
+a { color: #202124; }
+</style>
+<h1>Local YouTube attribution fixture</h1>
+<p>This is controlled test content, not a YouTube video. Capture the blue player or yellow comment body.</p>
+<ytd-watch-flexy video-id="jNQXAC9IVRw">
+  <div id="movie_player">Video crop target</div>
+  <ytd-watch-metadata>
+    <ytd-video-owner-renderer><a href="https://www.youtube.com/@reporter">Fixture Reporter</a></ytd-video-owner-renderer>
+    <ytd-watch-info-text><div id="info"><span>1,234 views</span><span> </span><span>Oct 16, 2026</span></div></ytd-watch-info-text>
+  </ytd-watch-metadata>
+  <ytd-comment-view-model>
+    <div id="header-author"><a href="https://www.youtube.com/@reader">@reader</a></div>
+    <span id="published-time-text"><a href="https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=UgFixture.reply-2&pp=tracking">2 hours ago (edited)</a></span>
+    <div id="comment-body">Separate comment crop target</div>
+  </ytd-comment-view-model>
+</ytd-watch-flexy>
+<p>Expected video: @reporter, Oct 16, 2026. Expected comment: @reader, 2 hours ago (edited), with its own lc permalink. A crop containing both requires review.</p>

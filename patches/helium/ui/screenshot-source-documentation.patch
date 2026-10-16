@@ -1007,15 +1007,19 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,689 @@
+@@ -0,0 +1,1429 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
 +
 +#include "chrome/browser/image_editor/screenshot_source.h"
 +
++#include <string_view>
++
 +#include "base/json/json_writer.h"
 +#include "base/strings/strcat.h"
++#include "base/strings/string_split.h"
++#include "base/strings/string_util.h"
 +#include "base/strings/utf_string_conversions.h"
 +#include "url/gurl.h"
 +
@@ -1024,19 +1028,83 @@
 +
 +// Keep the function expression self-contained for repeatable real-DOM tests.
 +constexpr char kSourceScript[] = R"JS((region => {
++  // Mastodon runs on independent hosts. URL shape alone never identifies one.
++  const mastodonSources = new Map();
++  const mastodonUrl = raw => {
++    try {
++      const u = new URL(raw, document.baseURI);
++      if (u.protocol !== 'https:' || u.username || u.password || u.port || u.href.length > 2048) return null;
++      const match = u.pathname.match(/^\/@([A-Za-z0-9_]+(?:@[A-Za-z0-9.-]+)?)\/(\d+)\/?$/);
++      if (!match) return null;
++      return {url:u.origin + '/@' + match[1] + '/' + match[2],
++        original_url:u.href, profile_url:u.origin + '/@' + match[1], route_account:'@' + match[1]};
++    } catch { return null; }
++  };
 +  const normalize = raw => {
 +    try {
 +      const u = new URL(raw, document.baseURI);
 +      if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password ||
 +          u.port || u.href.length > 2048) return null;
++      const mastodon = mastodonUrl(raw);
++      if (mastodon && mastodonSources.has(mastodon.url))
++        return {url:mastodon.url, original_url:u.href, platform:'mastodon',
++          mastodon_ownership:mastodonSources.get(mastodon.url).proof};
 +      const host = u.hostname.replace(/^(www|mobile|m|mbasic)\./, '');
 +      let path = u.pathname, platform, match, account_hint;
++      if (u.hostname === 't.me') {
++        if (u.hash || [...u.searchParams.keys()].some(key => /comment|thread|reply/i.test(key))) return null;
++        match = path.match(/^\/(?:s\/)?([A-Za-z][A-Za-z0-9_]{0,31})\/([1-9]\d*)\/?$/);
++        if (!match || ['s','c','joinchat','share','addstickers','addemoji','proxy','socks','login','iv','boost','contact','invoice','giftcode'].includes(match[1].toLowerCase())) return null;
++        return {url:'https://t.me/' + match[1] + '/' + match[2], original_url:u.href, platform:'telegram'};
++      }
 +      if (host === 'x.com' || host === 'twitter.com') {
 +        match = path.match(/^\/(?:[A-Za-z0-9_]+|i\/web|i)\/status\/(\d+)(?:\/.*)?$/);
 +        if (!match) return null;
 +        // Use the observed account path; strip photo/video suffixes and tracking.
 +        path = path.slice(0, path.indexOf('/status/') + 8) + match[1];
 +        platform = 'twitter_x';
++      } else if (host === 'linkedin.com' || /^[a-z]{2}\.linkedin\.com$/.test(host)) {
++        if ([...u.searchParams.keys()].some(key => /comment|reply/i.test(key)) || u.hash) return null;
++        const feed = path.match(/^\/feed\/update\/([^/]+)\/?$/);
++        match = (feed && decodeURIComponent(feed[1]).match(/^urn:li:activity:(\d+)$/)) ||
++            path.match(/^\/posts\/[A-Za-z0-9_-]+-activity-(\d+)-[A-Za-z0-9_-]+\/?$/);
++        if (!match) return null;
++        // Only explicit activity permalinks establish a URL. Share/UGC URNs
++        // are different identities; do not build a link from a container ID.
++        path = '/feed/update/urn:li:activity:' + match[1] + '/';
++        platform = 'linkedin';
++      } else if (host === 'youtube.com' || host === 'youtu.be') {
++        const video = host === 'youtu.be' ? u.pathname.match(/^\/([A-Za-z0-9_-]{11})\/?$/)?.[1] :
++            path === '/watch' && u.searchParams.getAll('v').length === 1 ? u.searchParams.get('v') :
++            path.match(/^\/(?:shorts|live)\/([A-Za-z0-9_-]{11})\/?$/)?.[1];
++        const comments = u.searchParams.getAll('lc');
++        if (!/^[A-Za-z0-9_-]{11}$/.test(video || '') || comments.length > 1 ||
++            (comments.length && !/^[A-Za-z0-9_.-]{1,128}$/.test(comments[0]))) return null;
++        // Retain explicit comment identity. Playback time, playlists and share
++        // tracking remain in original_url, never in the suggested permalink.
++        path = '/watch?v=' + video + (comments.length ? '&lc=' + comments[0] : '');
++        platform = 'youtube';
++      } else if (['reddit.com','old.reddit.com','new.reddit.com'].includes(host)) {
++        // The title slug is not identity. Keep comment IDs distinct from posts,
++        // including legacy /title/comment-id and current /comment/comment-id.
++        match = path.match(/^\/(r\/[A-Za-z0-9_]+\/)?comments\/([a-z0-9]+)(?:\/([^/]+)(?:\/([a-z0-9]+))?)?\/?$/i);
++        if (!match || /\.(?:json|rss)$/i.test(match[3] || '') ||
++            (match[3] === 'comment' && !match[4])) return null;
++        path = '/' + (match[1] || '') + 'comments/' + match[2] + '/' +
++            (match[4] ? 'comment/' + match[4] + '/' : '');
++        platform = 'reddit';
++      } else if (host === 'tiktok.com') {
++        match = path.match(/^\/@([A-Za-z0-9_.]+)\/(video|photo)\/(\d+)\/?$/);
++        if (!match) return null;
++        path = '/@' + match[1] + '/' + match[2] + '/' + match[3];
++        platform = 'tiktok';
++      } else if (host === 'bsky.app') {
++        // Preserve the observed handle or DID. Never resolve identity aliases
++        // or manufacture a permalink for an unlinked quoted post.
++        match = path.match(/^\/profile\/([A-Za-z0-9.:-]+)\/post\/([A-Za-z0-9_-]+)\/?$/);
++        if (!match) return null;
++        path = '/profile/' + match[1] + '/post/' + match[2];
++        platform = 'bluesky';
 +      } else if (host === 'truthsocial.com') {
 +        match = path.match(/^\/@([A-Za-z0-9_.-]+)\/(?:posts\/)?(\d+)\/?$/);
 +        if (!match) return null;
@@ -1079,6 +1147,11 @@
 +        }
 +      } else return null;
 +      const targetHost = platform === 'twitter_x' ? 'x.com' :
++          platform === 'linkedin' ? 'www.linkedin.com' :
++          platform === 'youtube' ? 'www.youtube.com' :
++          platform === 'reddit' ? 'www.reddit.com' :
++          platform === 'tiktok' ? 'www.tiktok.com' :
++          platform === 'bluesky' ? 'bsky.app' :
 +          platform === 'threads' ? 'www.threads.com' :
 +          platform === 'instagram' ? 'www.instagram.com' :
 +          platform === 'truth_social' ? 'truthsocial.com' : 'www.facebook.com';
@@ -1098,13 +1171,13 @@
 +    top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom)});
 +  const viewport = {left: vv ? vv.offsetLeft : 0, top: vv ? vv.offsetTop : 0,
 +    right: (vv ? vv.offsetLeft : 0) + width, bottom: (vv ? vv.offsetTop : 0) + height};
-+  const visible = (element, requireInViewport = true) => {
++  const visible = (element, requireInViewport = true, allowEmpty = false) => {
 +    for (let node = element; node; node = node.parentElement) {
 +      if (Number(getComputedStyle(node).opacity) === 0) return false;
 +    }
 +    const style = getComputedStyle(element);
 +    return style.display !== 'none' && style.visibility === 'visible' && Number(style.opacity) > 0 &&
-+        area(element.getBoundingClientRect()) > 0 &&
++        (allowEmpty || area(element.getBoundingClientRect()) > 0) &&
 +        (!requireInViewport || area(intersection(element.getBoundingClientRect(), viewport)) > 0) &&
 +        !element.closest('[hidden],[inert],[aria-hidden="true"]');
 +  };
@@ -1118,7 +1191,15 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
-+  const postSelector = 'article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus';
++  const telegramSelector = '.tgme_widget_message,.tgme_widget_message_reply';
++  const mastodonSelector = '#mastodon .status,#mastodon .detailed-status,#mastodon .status__quote';
++  const linkedinSelector = 'article[data-activity-urn],section.comment';
++  const youtubeCommentSelector = 'ytd-comment-view-model,ytd-comment-renderer';
++  const youtubeSelector = 'ytd-watch-flexy,ytd-reel-video-renderer,' + youtubeCommentSelector +
++      ',ytd-compact-video-renderer,ytd-video-renderer,ytd-rich-grid-media,yt-lockup-view-model,' +
++      '.ytp-suggestion-set,.ytp-autonav-endscreen-link-container,ytd-live-chat-frame';
++  const redditSelector = 'shreddit-post,shreddit-comment';
++  const postSelector = telegramSelector + ',' + mastodonSelector + ',' + linkedinSelector + ',' + youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1142,11 +1223,291 @@
 +      }
 +    }
 +  }
++  // Bluesky quote cards and its quotes list omit post test IDs. A timestamp
++  // scoped to a link container still establishes ownership, even when the card
++  // exposes no URL. Such a card must never inherit its enclosing post's date.
++  {
++    for (const stamp of [...document.querySelectorAll('[data-tooltip]')].slice(0, 10000)) {
++      const root = stamp.closest('div[role="link"]');
++      if (root && (location.hostname === 'bsky.app' ||
++          stamp.closest('[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"]') ||
++          normalize(stamp.closest('a[href]')?.href)?.platform === 'bluesky')) metaPosts.add(root);
++    }
++  }
 +  const postFor = element => {
++    const youtube = element?.closest(youtubeSelector);
++    if (youtube) return youtube;
++    const reddit = element?.closest(redditSelector);
++    if (reddit) return reddit;  // Ignore a comment's internal article wrapper.
 +    for (let node = element; node; node = node.parentElement) {
 +      if (metaPosts.has(node) || node.matches(postSelector)) return node;
 +    }
 +    return null;
++  };
++  const tiktokPostMatches = (post, raw) => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'tiktok' ||
++        !post.matches('article[data-e2e="recommend-list-item-container"]')) return false;
++    const id = new URL(parsed.url).pathname.split('/').pop();
++    const ids = new Set([...post.querySelectorAll('[data-e2e="more-menu-icon"][data-more-menu-item-id]')]
++        .filter(node => postFor(node) === post)
++        .map(node => node.getAttribute('data-more-menu-item-id')));
++    // The address/canonical can lag behind a scrolled feed. Match the item's
++    // own ID before using page metadata; never derive a date from this ID.
++    return ids.size === 1 && ids.has(id);
++  };
++  const redditIdentity = raw => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'reddit') return null;
++    const parts = new URL(parsed.url).pathname.match(/\/comments\/([a-z0-9]+)\/(?:comment\/([a-z0-9]+)\/)?$/i);
++    return parts ? {post:parts[1].toLowerCase(), comment:parts[2]?.toLowerCase()} : null;
++  };
++  const redditPostMatches = (post, raw) => {
++    const id = redditIdentity(raw);
++    if (!id || !post?.matches(redditSelector)) return false;
++    const own = redditIdentity(post.getAttribute('permalink'));
++    if (!own || own.post !== id.post || own.comment !== id.comment) return false;
++    return post.matches('shreddit-comment')
++        ? !!id.comment && post.getAttribute('thingid')?.toLowerCase() === 't1_' + id.comment &&
++            post.getAttribute('postid')?.toLowerCase() === 't3_' + id.post
++        : !id.comment && post.id.toLowerCase() === 't3_' + id.post;
++  };
++  const redditSelectedChild = post => [...post.querySelectorAll(redditSelector)].some(child =>
++      visible(child) && exposed(child, child.getBoundingClientRect()) &&
++      area(intersection(child.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const youtubeId = raw => {
++    const parsed = normalize(raw);
++    return parsed?.platform === 'youtube' ? new URL(parsed.url).searchParams.get('v') : null;
++  };
++  const youtubePageSources = [location.href,
++      document.querySelector('link[rel="canonical"]')?.href,
++      document.querySelector('meta[property="og:url"]')?.content].filter(raw => youtubeId(raw));
++  const youtubeMatches = (post, raw) => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'youtube' || !post) return false;
++    const url = new URL(parsed.url), id = url.searchParams.get('v');
++    if (post.matches(youtubeCommentSelector)) {
++      // A comment's own timestamp link establishes identity, not the page's lc
++      // parameter or a body mention. Distinct replies keep their full lc ID.
++      const times = [...post.querySelectorAll('#published-time-text a[href]')]
++          .filter(a => postFor(a) === post && visible(a, false));
++      return url.searchParams.has('lc') && times.length === 1 &&
++          normalize(times[0].href)?.url === parsed.url &&
++          post.closest('ytd-watch-flexy')?.getAttribute('video-id') === id;
++    }
++    if (url.searchParams.has('lc')) return false;
++    if (post.matches('ytd-watch-flexy')) {
++      return post.getAttribute('video-id') === id && youtubePageSources.length > 0 &&
++          youtubePageSources.every(source => youtubeId(source) === id);
++    }
++    if (post.matches('ytd-reel-video-renderer')) {
++      const links = [...post.querySelectorAll('#shorts-player a.ytp-title-link[href]')]
++          .filter(a => postFor(a) === post);
++      return links.length === 1 && youtubeId(links[0].href) === id;
++    }
++    return false;
++  };
++  const youtubeVideoSelected = post => {
++    const roots = post.matches('ytd-watch-flexy')
++        ? [...post.querySelectorAll('#movie_player,ytd-watch-metadata')].filter(e => postFor(e) === post)
++        : [post];
++    return roots.some(root => visible(root) && exposed(root, root.getBoundingClientRect()) &&
++        area(intersection(root.getBoundingClientRect(), selected)) >= 0.25 *
++            Math.min(area(selected), area(intersection(root.getBoundingClientRect(), viewport))));
++  };
++  const youtubeDetails = (post, parsed) => {
++    if (!youtubeMatches(post, parsed.url)) return {};
++    const comment = post.matches(youtubeCommentSelector), shorts = post.matches('ytd-reel-video-renderer');
++    const selector = comment ? '#header-author a[href]' : shorts ?
++        '.ytReelChannelBarViewModelChannelName a[href]' : 'ytd-video-owner-renderer a[href]';
++    const profiles = new Map();
++    for (const link of post.querySelectorAll(selector)) {
++      if (postFor(link) !== post || !visible(link, false)) continue;
++      try {
++        const u = new URL(link.href), host = u.hostname.replace(/^(www|m)\./, '');
++        if (host !== 'youtube.com' || !['http:','https:'].includes(u.protocol) ||
++            u.username || u.password || u.port) continue;
++        const path = u.pathname.replace(/\/$/, '').replace(shorts ? /\/shorts$/ : /$^/, '');
++        const handle = path.match(/^\/@([^/]+)$/), legacy = path.match(/^\/(?:channel|user|c)\/([A-Za-z0-9_-]+)$/);
++        const name = handle ? '@' + decodeURIComponent(handle[1]) : legacy ? text(link) : '';
++        if (!name || /[\s\u0000-\u001f/?#]/.test(handle ? name : '') || name.length > 256) continue;
++        const profile = 'https://www.youtube.com' + path;
++        const display = text(link);
++        if (!profiles.has(profile) || display) profiles.set(profile,
++            {account:name, profile_url:profile, display_name:display});
++      } catch { /* No usable observed channel identity. */ }
++    }
++    const details = {}, accounts = [...profiles.values()];
++    if (accounts.length) details.account_candidates = accounts.slice(0, 8);
++    if (accounts.length === 1) {
++      details.posting_account = accounts[0].account;
++      details.account_profile_url = accounts[0].profile_url;
++      details.account_display_name = accounts[0].display_name;
++      details.account_evidence = comment ? 'youtube_comment_author_link' : 'youtube_video_owner_link';
++    }
++    let date = null;
++    if (comment) {
++      date = [...post.querySelectorAll('#published-time-text a[href]')]
++          .find(a => postFor(a) === post && normalize(a.href)?.url === parsed.url);
++    } else if (!shorts) {
++      // The observed watch info row has two nonempty leaf spans: view count
++      // and publication label. Description text and hidden tooltips are excluded.
++      const rows = [...post.querySelectorAll('ytd-watch-metadata ytd-watch-info-text #info')]
++          .filter(e => postFor(e) === post && visible(e, false));
++      if (rows.length === 1) {
++        const spans = [...rows[0].children].filter(e => e.matches('span') && text(e) && visible(e, false));
++        if (spans.length === 2 && spans.every(e => !e.children.length)) date = spans[1];
++      }
++    }
++    if (date && visible(date, false) && text(date)) {
++      details.publication_date_text = text(date);
++      details.publication_date_displayed = text(date);
++      details.date_evidence = comment ? 'youtube_comment_timestamp_link' : 'youtube_watch_info_date';
++    }
++    return details;
++  };
++  const linkedinMatches = (post, raw) => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'linkedin' || !post?.matches('article[data-activity-urn]')) return false;
++    const urn = 'urn:li:activity:' + new URL(parsed.url).pathname.split(':').pop().replace(/\/$/, '');
++    const featured = post.getAttribute('data-featured-activity-urn');
++    return post.getAttribute('data-activity-urn') === urn && (!featured || featured === urn);
++  };
++  const linkedinSelectedChild = post => [...post.querySelectorAll('article,section.comment')].some(child =>
++      visible(child) && exposed(child, child.getBoundingClientRect()) &&
++      area(intersection(child.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const linkedinDetails = (post, parsed) => {
++    if (!linkedinMatches(post, parsed.url)) return {};
++    const owns = node => postFor(node) === post;
++    const headers = [...post.querySelectorAll('[data-test-id="main-feed-activity-card__entity-lockup"]')]
++        .filter(owns);
++    if (headers.length !== 1) return {};
++    const header = headers[0], details = {}, profiles = new Map();
++    for (const link of header.querySelectorAll('a[href][data-tracking-control-name$="feed-actor-name"]')) {
++      if (!owns(link) || !visible(link, false) || !text(link)) continue;
++      try {
++        const u = new URL(link.href), host = u.hostname.replace(/^www\./, '');
++        if (!['http:','https:'].includes(u.protocol) || u.username || u.password || u.port ||
++            !(host === 'linkedin.com' || /^[a-z]{2}\.linkedin\.com$/.test(host))) continue;
++        const path = u.pathname.replace(/\/$/, '');
++        if (!/^\/(?:in|company|school)\/[A-Za-z0-9_%.-]+$/.test(path) ||
++            /[\s\u0000-\u001f/?#]/.test(decodeURIComponent(path.split('/').pop()))) continue;
++        const profile = 'https://www.linkedin.com' + path, name = text(link);
++        profiles.set(profile.toLowerCase() + '\n' + name,
++            {account:name, display_name:name, profile_url:profile});
++      } catch { /* No usable observed author profile. */ }
++    }
++    const accounts = [...profiles.values()];
++    if (accounts.length) details.account_candidates = accounts.slice(0, 8);
++    if (accounts.length === 1) {
++      details.posting_account = accounts[0].account;
++      details.account_display_name = accounts[0].display_name;
++      details.account_profile_url = accounts[0].profile_url;
++      details.account_evidence = 'linkedin_public_actor_name_link';
++    }
++    const times = [...header.querySelectorAll('time')].filter(node => owns(node) && visible(node, false));
++    if (times.length === 1) {
++      const date = times[0], displayed = text(date), machine = (date.getAttribute('datetime') || '').slice(0, 256);
++      if (machine || displayed) {
++        details.publication_date_text = machine || displayed;
++        details.publication_date_displayed = displayed;
++        if (machine) details.publication_datetime_attribute = machine;
++        details.date_evidence = 'linkedin_public_actor_time';
++      }
++    }
++    return details;
++  };
++  const telegramStamp = (post, parsed) => {
++    if (!post?.matches('.tgme_widget_message') || parsed?.platform !== 'telegram') return null;
++    const id = post.getAttribute('data-post') || '';
++    if (id.toLowerCase() !== new URL(parsed.url).pathname.slice(1).toLowerCase()) return null;
++    const stamps = [...post.querySelectorAll('a.tgme_widget_message_date[href]')].filter(a =>
++        postFor(a) === post && visible(a, false) &&
++        normalize(a.href)?.url.toLowerCase() === parsed.url.toLowerCase() &&
++        a.querySelector('time'));
++    return stamps.length === 1 ? stamps[0] : null;
++  };
++  const telegramDetails = (post, parsed) => {
++    const stamp = telegramStamp(post, parsed), details = {};
++    if (!stamp) return details;
++    const account = new URL(parsed.url).pathname.split('/')[1];
++    const authors = [...post.querySelectorAll('.tgme_widget_message_author a.tgme_widget_message_owner_name[href]')]
++        .filter(a => postFor(a) === post && visible(a, false) && text(a));
++    if (authors.length === 1) {
++      try {
++        const u = new URL(authors[0].href);
++        if (u.protocol === 'https:' && u.hostname === 't.me' && !u.username && !u.password && !u.port &&
++            u.pathname.replace(/\/$/, '').toLowerCase() === '/' + account.toLowerCase()) {
++          // The handle comes from an observed, matching profile link, never
++          // from the message URL or data-post attribute alone.
++          details.posting_account = '@' + u.pathname.split('/')[1];
++          details.account_profile_url = 'https://t.me/' + u.pathname.split('/')[1];
++          details.account_display_name = text(authors[0]);
++          details.account_evidence = 'telegram_message_owner_link';
++        }
++      } catch { /* No usable observed channel profile. */ }
++    }
++    const time = stamp.querySelector('time');
++    if (postFor(time) === post && visible(time, false)) {
++      const displayed = text(time), machine = (time.getAttribute('datetime') || '').slice(0,256);
++      if (machine || displayed) {
++        details.publication_date_text = machine || displayed;
++        details.publication_date_displayed = displayed;
++        if (machine) details.publication_datetime_attribute = machine;
++        details.date_evidence = 'telegram_message_permalink_time';
++      }
++    }
++    return details;
++  };
++  const mastodonPosts = [...document.querySelectorAll('#mastodon .status,#mastodon .detailed-status')];
++  for (const post of mastodonPosts.slice(0, 1000)) {
++    const owns = node => postFor(node) === post;
++    const detailed = post.matches('.detailed-status');
++    const stamps = [...post.querySelectorAll(detailed ? 'a.detailed-status__datetime[href]' : 'a.status__relative-time[href]')]
++        .filter(a => owns(a) && visible(a, false) && a.querySelector('time'));
++    const authors = [...post.querySelectorAll(detailed ? 'a.detailed-status__display-name[href]' : 'a.status__display-name[href]')]
++        .filter(a => owns(a) && visible(a, false));
++    if (stamps.length !== 1 || authors.length !== 1 || !visible(post, false)) continue;
++    const parsed = mastodonUrl(stamps[0].href), author = authors[0];
++    if (!parsed) continue;
++    try {
++      const profile = new URL(author.href);
++      if (profile.protocol !== 'https:' || profile.username || profile.password || profile.port ||
++          profile.origin + profile.pathname.replace(/\/$/, '') !== parsed.profile_url) continue;
++      const accountNode = author.querySelector('.display-name__account');
++      if (!accountNode || !visible(accountNode, false)) continue;
++      const account = text(accountNode), route = parsed.route_account;
++      const match = account.match(/^@([A-Za-z0-9_]+)(?:@([A-Za-z0-9.-]+))?$/);
++      if (!match || account.length > 256 ||
++          !(account.toLowerCase() === route.toLowerCase() ||
++            (!route.slice(1).includes('@') && account.toLowerCase().startsWith(route.toLowerCase() + '@')))) continue;
++      const time = stamps[0].querySelector('time');
++      if (!owns(time) || !visible(time, false)) continue;
++      const proof = {layout:'mastodon_status_header_v1', timestamp_url:parsed.url,
++        profile_url:parsed.profile_url, account};
++      // Duplicate URL observations retain separate owners; conflicting details
++      // are handled by the existing candidate merge rather than picking one.
++      if (!mastodonSources.has(parsed.url)) mastodonSources.set(parsed.url, {proof, observations:[]});
++      mastodonSources.get(parsed.url).observations.push({post, author, time, proof});
++    } catch { /* Not a matching observed profile. */ }
++  }
++  const mastodonDetails = (post, parsed) => {
++    const matches = mastodonSources.get(parsed.url)?.observations.filter(item => item.post === post) || [];
++    if (matches.length !== 1) return {};
++    const {author, time, proof} = matches[0], details = {
++      posting_account:proof.account, account_profile_url:proof.profile_url,
++      account_display_name:text(author.querySelector('.display-name__html')),
++      account_evidence:'mastodon_status_author_header'};
++    const displayed = text(time), machine = (time.getAttribute('datetime') || '').slice(0, 256);
++    if (machine || displayed) {
++      details.publication_date_text = machine || displayed;
++      details.publication_date_displayed = displayed;
++      if (machine) details.publication_datetime_attribute = machine;
++      const title = (time.getAttribute('title') || '').slice(0,256);
++      if (title) details.publication_date_tooltip = title;
++      details.date_evidence = 'mastodon_permalink_time';
++    }
++    return details;
 +  };
 +  const fullTimestamp = value => /\d{4}/.test(value) && /\d[:.]\d{2}/.test(value);
 +  const compactTimestamp = value => /^(?:\d+\s*[a-zæøå]{1,3}|yesterday|today|i går|i dag)$/i.test(value);
@@ -1162,31 +1523,67 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'telegram') return telegramDetails(post, parsed);
++    if (parsed.platform === 'mastodon') return mastodonDetails(post, parsed);
++    if (parsed.platform === 'linkedin') return linkedinDetails(post, parsed);
++    if (parsed.platform === 'youtube') return youtubeDetails(post, parsed);
++    if (parsed.platform === 'reddit' && !redditPostMatches(post, parsed.url)) return {};
++    if (parsed.platform === 'tiktok' &&
++        post.matches('article[data-e2e="recommend-list-item-container"]') &&
++        !tiktokPostMatches(post, parsed.url)) return {};
 +    const owns = node => !!node && postFor(node) === post;
 +    const details = {};
 +    const postUrl = new URL(parsed.url);
 +    const handleMatch = parsed.platform === 'twitter_x'
 +        ? postUrl.pathname.match(/^\/(?!i\/)([^/]+)\/status\//)
++        : parsed.platform === 'tiktok' ? postUrl.pathname.match(/^\/@([^/]+)\/(?:video|photo)\//)
++        : parsed.platform === 'bluesky' ? postUrl.pathname.match(/^\/profile\/([^/]+)\/post\//)
 +        : parsed.platform === 'threads' ? postUrl.pathname.match(/^\/@([^/]+)\/post\//)
 +        : parsed.platform === 'truth_social' ? postUrl.pathname.match(/^\/@([^/]+)\/posts\//) : null;
 +    const expectedHandle = handleMatch ? handleMatch[1].toLowerCase() : parsed.account_hint?.toLowerCase();
 +    const profiles = new Map();
++    const authorLinks = new Set();
 +    for (const link of post.querySelectorAll('a[href]')) {
-+      if (!owns(link) || !visible(link, false)) continue;
++      if (!owns(link)) continue;
++      const profileVisible = visible(link, false);
++      // Some TikTok display names contain only zero-width combining marks.
++      // Their rendered creator link can still own an adjacent visible date,
++      // provided another visible profile link (e.g. the avatar) identifies it.
++      if (!profileVisible && !(parsed.platform === 'tiktok' && visible(link, false, true))) continue;
 +      // A URL's account name alone is not an observed posting account. Require
 +      // a matching profile link in the post, or a scoped author/header link.
-+      if (!expectedHandle && !link.closest('header,h2,h3,[data-testid="User-Name"],[data-testid="account"]')) continue;
++      if (parsed.platform !== 'reddit' && !expectedHandle &&
++          !link.closest('header,h2,h3,[data-testid="User-Name"],[data-testid="account"]')) continue;
 +      try {
 +        const u = new URL(link.href), host = u.hostname.replace(/^(www|mobile|m|mbasic)\./, '');
 +        if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password || u.port) continue;
 +        let match, account, profileUrl;
-+        if (parsed.platform === 'truth_social' && host === 'truthsocial.com') {
++        if (parsed.platform === 'reddit' && ['reddit.com','old.reddit.com','new.reddit.com'].includes(host)) {
++          match = u.pathname.match(/^\/(?:user|u)\/([A-Za-z0-9_-]+)\/?$/);
++          const credit = link.closest('[slot="credit-bar"],[slot="commentMeta"]');
++          const author = post.getAttribute('author') || '';
++          if (match && credit && owns(credit) &&
++              match[1].toLowerCase() === author.toLowerCase()) {
++            account = 'u/' + match[1]; profileUrl = 'https://www.reddit.com/user/' + match[1] + '/';
++          }
++        } else if (parsed.platform === 'truth_social' && host === 'truthsocial.com') {
 +          match = u.pathname.match(/^\/@([A-Za-z0-9_.-]+)\/?$/);
 +          if (match) { account = '@' + match[1]; profileUrl = 'https://truthsocial.com/@' + match[1]; }
 +        } else if (parsed.platform === 'twitter_x' && ['x.com','twitter.com'].includes(host)) {
 +          match = u.pathname.match(/^\/([A-Za-z0-9_]+)\/?$/);
 +          if (match && !['home','explore','search','notifications','messages','settings','i'].includes(match[1].toLowerCase())) {
 +            account = '@' + match[1]; profileUrl = 'https://x.com/' + match[1];
++          }
++        } else if (parsed.platform === 'tiktok' && host === 'tiktok.com') {
++          match = u.pathname.match(/^\/@([A-Za-z0-9_.]+)\/?$/);
++          if (match && !link.closest('[data-e2e="video-desc"],[data-e2e="browse-video-desc"],[data-e2e^="comment-"]')) {
++            account = '@' + match[1]; profileUrl = 'https://www.tiktok.com/@' + match[1];
++          }
++        } else if (parsed.platform === 'bluesky' && host === 'bsky.app') {
++          match = u.pathname.match(/^\/profile\/([A-Za-z0-9.:-]+)\/?$/);
++          if (match && !link.closest('[data-testid="postText"],[data-word-wrap]')) {
++            account = match[1].startsWith('did:') ? match[1] : '@' + match[1];
++            profileUrl = 'https://bsky.app/profile/' + match[1];
 +          }
 +        } else if (parsed.platform === 'threads' && ['threads.com','threads.net'].includes(host)) {
 +          match = u.pathname.match(/^\/@([A-Za-z0-9_.]+)\/?$/);
@@ -1204,9 +1601,11 @@
 +            account = text(link); profileUrl = 'https://www.facebook.com/profile.php?id=' + u.searchParams.get('id');
 +          }
 +        }
-+        if (!account || !profileUrl || (expectedHandle && account.slice(1).toLowerCase() !== expectedHandle)) continue;
++        if (!account || !profileUrl || (expectedHandle && (account.startsWith('@') ? account.slice(1) : account).toLowerCase() !== expectedHandle)) continue;
++        authorLinks.add(link);
++        if (!profileVisible) continue;
 +        const key = profileUrl.toLowerCase(), display = text(link);
-+        if (!profiles.has(key) || display) profiles.set(key, {account, profile_url:profileUrl, display_name:display});
++        if (!profiles.has(key) || (display && (parsed.platform !== 'bluesky' || !display.startsWith('@')))) profiles.set(key, {account, profile_url:profileUrl, display_name:display});
 +      } catch { /* Not a usable profile link. */ }
 +    }
 +    const accounts = [...profiles.values()];
@@ -1221,11 +1620,47 @@
 +    // posts. Keep the site's text/attributes verbatim; never date-parse relative
 +    // labels or guess a timezone that the page did not provide.
 +    let dateNode = anchor?.querySelector('time,abbr[data-utime]');
++    if (parsed.platform === 'reddit') {
++      // Only the selected item's credit row reports its publication time.
++      // Edited labels, body timestamps, nested replies and quotes do not count.
++      const row = post.matches('shreddit-comment') ? '[slot="commentMeta"]' : '[slot="credit-bar"]';
++      const created = post.getAttribute(post.matches('shreddit-comment') ? 'created' : 'created-timestamp');
++      const createdTime = Date.parse(created || '');
++      const times = [...post.querySelectorAll(row + ' faceplate-timeago time')]
++          .filter(node => owns(node) && visible(node, false) && Number.isFinite(createdTime) &&
++              Date.parse(node.getAttribute('datetime') || node.parentElement.getAttribute('ts') || '') === createdTime);
++      dateNode = times.length === 1 ? times[0] : null;
++    }
 +    if (!owns(dateNode)) dateNode = null;
 +    // X's public web view may render a plain permalink label such as "17h"
 +    // in its timestamp row, without a <time> or exact datetime attribute.
 +    if (!dateNode && parsed.platform === 'twitter_x' && owns(anchor) &&
 +        anchor.closest('.x-middot-group') && anchor.hasAttribute('data-base-ui-tooltip-trigger')) dateNode = anchor;
++    if (!dateNode && parsed.platform === 'bluesky' && owns(anchor) &&
++        (fullTimestamp(anchor.getAttribute('data-tooltip') || '') ||
++         fullTimestamp(anchor.getAttribute('aria-label') || ''))) dateNode = anchor;
++    if (!dateNode && parsed.platform === 'bluesky' && !anchor &&
++        post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])')) {
++      // The expanded post has a plain date row immediately before engagement
++      // counts. Require that structure, a single leaf date and its own scope.
++      const rows = [...post.querySelectorAll(':scope > div > div')].filter(row =>
++          row.nextElementSibling?.querySelector('[data-testid$="Count-expanded"]'));
++      const dates = rows.flatMap(row => [...row.querySelectorAll(
++          ':scope > [dir="auto"],:scope > div > [dir="auto"]')]).filter(node =>
++          owns(node) && node.matches('div[dir="auto"]') && !node.children.length &&
++          fullTimestamp(text(node)) && visible(node, false));
++      if (dates.length === 1) dateNode = dates[0];
++    }
++    if (!dateNode && parsed.platform === 'tiktok' && profiles.size === 1) {
++      // Current feed/detail markup puts the date in a leaf span immediately
++      // after the creator profile link. Caption and comment dates do not count.
++      const dates = [...post.querySelectorAll('a[href]')].filter(link =>
++          authorLinks.has(link)).map(link => link.nextElementSibling)
++          .filter(node => owns(node) && visible(node, false) && node.matches('span') &&
++              !node.children.length &&
++              /^[·•]\s*(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}-\d{1,2}|\d+\s*[\p{L} .]+)$/u.test(text(node)));
++      if (dates.length === 1) dateNode = dates[0];
++    }
 +    if (!dateNode && parsed.platform === 'facebook' && owns(anchor) &&
 +        !anchor.querySelector('img,video') &&
 +        (compactTimestamp(text(anchor)) ||
@@ -1239,14 +1674,15 @@
 +      dateNode = post.querySelector(':scope > div:last-child > span');
 +      if (!owns(dateNode)) dateNode = null;
 +    }
-+    if (!dateNode) {
++    if (!dateNode && !['tiktok','reddit'].includes(parsed.platform)) {
 +      const times = [...post.querySelectorAll('time,abbr[data-utime]')].filter(owns);
 +      if (times.length === 1) dateNode = times[0];
 +    }
 +    if (dateNode) {
 +      const displayed = text(dateNode), machine = (dateNode.getAttribute('datetime') || '').slice(0, 256);
 +      const tooltip = (dateNode.getAttribute('title') || anchor?.getAttribute('title') ||
-+          dateNode.parentElement?.getAttribute('title') || dateNode.getAttribute('data-tooltip-content') || '').slice(0, 256);
++          dateNode.parentElement?.getAttribute('title') || dateNode.getAttribute('data-tooltip-content') ||
++          (parsed.platform === 'bluesky' ? dateNode.getAttribute('data-tooltip') : '') || '').slice(0, 256);
 +      const aria = (dateNode.getAttribute('aria-label') || anchor?.getAttribute('aria-label') || '').slice(0, 256);
 +      const epoch = (dateNode.getAttribute('data-utime') || '').slice(0, 64);
 +      const seconds = /^\d{9,10}$/.test(epoch) ? Number(epoch) : 0;
@@ -1259,7 +1695,9 @@
 +        if (aria) details.publication_date_aria_label = aria;
 +        if (epochUtc) details.publication_datetime_from_epoch_utc = epochUtc;
 +        const hoverNode = dateNode;
-+        if (!machine && !epochUtc && !fullTimestamp(tooltip) && !fullTimestamp(aria) &&
++        if (!['tiktok','reddit'].includes(parsed.platform) &&
++            !(parsed.platform === 'bluesky' && fullTimestamp(displayed)) &&
++            !machine && !epochUtc && !fullTimestamp(tooltip) && !fullTimestamp(aria) &&
 +            normalize(parsed.url) && visible(hoverNode) &&
 +            exposed(post, post.getBoundingClientRect())) {
 +          const r = hoverNode.getBoundingClientRect();
@@ -1278,7 +1716,9 @@
 +        if (tooltip) details.publication_date_tooltip = tooltip;
 +        if (epoch) details.publication_epoch_attribute = epoch;
 +        details.date_evidence = dateNode.matches('time') ? 'time_element_in_post' :
-+            epoch ? 'timestamp_element_in_post' : dateNode.matches('a') ? 'post_permalink_timestamp_text' : 'truth_social_detail_footer';
++            epoch ? 'timestamp_element_in_post' : dateNode.matches('a') ? 'post_permalink_timestamp_text' :
++            parsed.platform === 'tiktok' ? 'tiktok_creator_date_row' :
++            parsed.platform === 'bluesky' ? 'bluesky_detail_footer' : 'truth_social_detail_footer';
 +      }
 +    }
 +    return details;
@@ -1289,11 +1729,83 @@
 +  const postSources = new Map();
 +  const facebookMedia = new Map();
 +  let truncated = false;
-+  const add = (raw, evidence, post = null, anchor = null) => {
++  const add = (raw, evidence, post = null, anchor = null, observedRaw = raw) => {
 +    const parsed = normalize(raw);
 +    if (!parsed) return;
-+    const details = siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook'].includes(parsed.platform)) {
++    parsed.original_url = new URL(observedRaw, document.baseURI).href;
++    if (parsed.platform === 'telegram' || post?.matches(telegramSelector)) {
++      if (!telegramStamp(post, parsed)) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'telegram_reference_link';
++      }
++    }
++    if (parsed.platform === 'mastodon' || post?.matches(mastodonSelector)) {
++      const own = parsed.platform === 'mastodon' &&
++          mastodonSources.get(parsed.url)?.observations.some(item => item.post === post);
++      if (!own) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'mastodon_reference_link';
++      }
++    }
++    if (parsed.platform === 'linkedin' || post?.matches(linkedinSelector)) {
++      if (post?.matches('article[data-activity-urn]') && linkedinSelectedChild(post)) return;
++      if (parsed.platform !== 'linkedin' || !linkedinMatches(post, raw)) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'linkedin_reference_link';
++      }
++    }
++    if (parsed.platform === 'youtube' || post?.matches(youtubeSelector)) {
++      const own = parsed.platform === 'youtube' && youtubeMatches(post, raw) && youtubeVideoSelected(post);
++      if (!own) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'youtube_reference_link';
++      }
++    }
++    if (parsed.platform === 'bluesky' && anchor?.closest('[data-testid="postText"],[data-word-wrap]')) {
++      post = null;
++      anchor = null;
++    }
++    if (post?.matches(redditSelector) && parsed.platform !== 'reddit') {
++      if (evidence !== 'link_in_selection') return;
++      post = null;
++      anchor = null;
++      evidence = 'reddit_reference_link';
++    }
++    const tiktokTextLink = parsed.platform === 'tiktok' &&
++        anchor?.closest('[data-e2e="video-desc"],[data-e2e="browse-video-desc"],[data-e2e^="comment-"]');
++    if (parsed.platform === 'tiktok' && anchor &&
++        (tiktokTextLink || post?.matches('article[data-e2e="recommend-list-item-container"]'))) {
++      // A link to a different ID is a reference, wherever it appears inside
++      // the item. Only keep it when the link itself is visibly selected.
++      if (!post || !tiktokPostMatches(post, parsed.url)) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'referenced_post_link';
++      } else if (tiktokTextLink) {
++        anchor = null;  // Caption text cannot supply a publication timestamp.
++      }
++    }
++    if (parsed.platform === 'reddit' && post?.matches(redditSelector) && redditSelectedChild(post)) return;
++    if (parsed.platform === 'reddit' && !redditPostMatches(post, raw)) {
++      // Body links and crosspost references never borrow the enclosing author
++      // or date. Preserve directly selected references for explicit review.
++      if (evidence !== 'link_in_selection') return;
++      post = null;
++      anchor = null;
++      evidence = 'referenced_post_link';
++    }
++    const details = post?.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
++        post.querySelector('.ad-showing,.ad-interrupting') ? {} : siteDetails(post, anchor, parsed);
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube','linkedin','mastodon','telegram'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1323,10 +1835,13 @@
 +    candidates.set(parsed.url, {...parsed, evidence, site_details:details});
 +  };
 +  const anchors = document.querySelectorAll('a[href]');
-+  if (anchors.length > 10000) truncated = true;
++  if (anchors.length > 10000 || mastodonPosts.length > 1000) truncated = true;
++  let mastodonReference = false;
 +  for (let i = 0; i < Math.min(anchors.length, 10000); ++i) {
 +    const a = anchors[i];
 +    if ((a.getAttribute('href') || '').trim().startsWith('#')) continue;
++    if (a.closest(mastodonSelector) && mastodonUrl(a.href) && !normalize(a.href) &&
++        visible(a, false) && exposed(a, a.getBoundingClientRect())) mastodonReference = true;
 +    if (!normalize(a.href) || !visible(a, false)) continue;
 +    const direct = exposed(a, a.getBoundingClientRect());
 +    const post = postFor(a) || a.closest('[role="dialog"]');
@@ -1365,13 +1880,75 @@
 +    const post = topPosts[0], rect = intersection(post.getBoundingClientRect(), viewport);
 +    if (area(intersection(rect, selected)) >= 0.5 * area(selected) && exposed(post, rect)) {
 +      const address = normalize(location.href);
-+      if (address) add(location.href, 'post_page_address', post);
++      const pageSourceAllowed = raw => {
++        const platform = normalize(raw)?.platform;
++        if (platform === 'mastodon' || platform === 'telegram') return false;  // Only the status's own timestamp establishes its URL.
++        if (platform === 'linkedin') return false;  // Match the card's own activity URN below.
++        if (platform === 'youtube') return false;  // Match explicit video/comment ownership below.
++        if (platform === 'reddit') return false;  // Require the item's own ID/permalink.
++        if (platform === 'tiktok') return false;  // Matched per item below.
++        return platform !== 'bluesky' ||
++            post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])');
++      };
++      if (address) {
++        if (pageSourceAllowed(location.href)) add(location.href, 'post_page_address', post);
++      }
 +      else {
 +        const canonical = document.querySelector('link[rel="canonical"]');
-+        if (canonical) add(canonical.href, 'post_page_canonical', post);
++        if (canonical && pageSourceAllowed(canonical.href)) add(canonical.href, 'post_page_canonical', post);
 +        const og = document.querySelector('meta[property="og:url"]');
-+        if (og) add(og.content, 'post_page_metadata', post);
++        if (og && pageSourceAllowed(og.content)) add(og.content, 'post_page_metadata', post);
 +      }
++    }
++  }
++  // Replies remain separate posts even while the expanded page is visible.
++  // Only the unique expanded thread item can use this page's exact post URL.
++  const address = normalize(location.href);
++  if (address?.platform === 'bluesky') {
++    const expanded = visiblePosts.filter(post =>
++        post.matches('[data-testid^="postThreadItem-by-"]:not([role="link"])'));
++    if (expanded.length === 1 && overlapping.includes(expanded[0]))
++      add(location.href, 'post_page_address', expanded[0]);
++  }
++  // TikTok preloads adjacent items. A second visible article must not prevent
++  // attribution to the selected item when its ID matches an observed page URL.
++  const tiktokPageSources = [
++    [location.href, 'post_page_address'],
++    [document.querySelector('link[rel="canonical"]')?.href, 'post_page_canonical'],
++    [document.querySelector('meta[property="og:url"]')?.content, 'post_page_metadata']];
++  for (const post of overlapping) {
++    const rect = intersection(post.getBoundingClientRect(), viewport);
++    if (area(intersection(rect, selected)) < 0.5 * Math.min(area(selected), area(rect))) continue;
++    for (const [raw, evidence] of tiktokPageSources) {
++      if (tiktokPostMatches(post, raw)) add(raw, evidence, post);
++    }
++  }
++  // Reddit's detail view need not expose a clickable post timestamp. Use
++  // only the item's observed permalink, with matching post/comment IDs.
++  for (const post of overlapping) {
++    const raw = post.getAttribute('permalink');
++    if (redditPostMatches(post, raw)) add(raw, 'reddit_item_permalink', post);
++  }
++  for (const post of overlapping) {
++    if (!post.matches('ytd-watch-flexy,ytd-reel-video-renderer') || !youtubeVideoSelected(post)) continue;
++    const sources = post.matches('ytd-watch-flexy') ? youtubePageSources :
++        [...post.querySelectorAll('#shorts-player a.ytp-title-link[href]')].map(a => a.href);
++    for (const raw of sources) {
++      const parsed = normalize(raw);
++      if (!parsed) continue;
++      // A page opened from a highlighted comment still has an independent
++      // video. Drop lc only after matching its explicit video ID to this root.
++      const u = new URL(parsed.url);
++      u.searchParams.delete('lc');
++      if (youtubeMatches(post, u.href)) add(u.href, 'youtube_video_identity', post, null, raw);
++    }
++  }
++  const linkedinPageSources = [location.href,
++      document.querySelector('link[rel="canonical"]')?.href,
++      document.querySelector('meta[property="og:url"]')?.content];
++  for (const post of overlapping) {
++    for (const raw of linkedinPageSources) {
++      if (linkedinMatches(post, raw)) add(raw, 'linkedin_activity_permalink', post);
 +    }
 +  }
 +  const list = [...candidates.values()];
@@ -1387,7 +1964,7 @@
 +    return posts?.size === 1 ? [...posts][0] : null;
 +  });
 +  let preferred = null, selectionReason = '', unlinkedEnclosingPost = false;
-+  if (!truncated && list.length && list.every(c => ['twitter_x','threads'].includes(c.platform)) &&
++  if (!truncated && list.length && list.every(c => ['twitter_x','threads','bluesky','mastodon'].includes(c.platform)) &&
 +      contexts.every(Boolean) && new Set(contexts).size === list.length) {
 +    // A crop contained within a quote belongs to that quote. Otherwise prefer
 +    // an enclosing post only when its own header/comment is visibly selected.
@@ -1455,8 +2032,55 @@
 +      }
 +    }
 +  }
++  // A crop inside an unlinked Bluesky quote has no attributable source. Keep
++  // an enclosing candidate available for review without filling it as primary.
++  const unlinkedBlueskyQuote = list.some(c => c.platform === 'bluesky') &&
++      overlapping.some(post => metaPosts.has(post) && !contexts.includes(post) &&
++          contexts.some(parent => parent?.contains(post)) &&
++          area(intersection(post.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  if (unlinkedBlueskyQuote) preferred = null;
++  // TikTok comments currently lack a supported permalink. Even a crop with
++  // margins, or one including both the post and a comment, needs source review.
++  const unlinkedTikTokComment = list.some(c => c.platform === 'tiktok') &&
++      overlapping.some(post => post.matches('[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]') &&
++          contexts.some(parent => parent?.contains(post)));
++  const unattributedTikTokReference = list.some((candidate, i) =>
++      candidate.platform === 'tiktok' && candidate.evidence === 'referenced_post_link' && !contexts[i]);
++  const unattributedRedditItem = list.some(c => c.platform === 'reddit') &&
++      (list.some((c, i) => c.platform === 'reddit' && !contexts[i]) ||
++       overlapping.some(post => post.matches(redditSelector) && !contexts.includes(post) && !redditSelectedChild(post)));
++  // Current Reddit crossposts embed another post's media inside the reposter's
++  // container, without an independent author/ID scope. Require explicit review.
++  const redditCrosspost = overlapping.some(post =>
++      post.matches('shreddit-post[is-crosspost],shreddit-post[post-type="crosspost"]') &&
++      !redditSelectedChild(post));
++  const redditReference = list.some(c => c.evidence === 'reddit_reference_link');
++  const youtubeReview = list.some(c => c.evidence === 'youtube_reference_link') ||
++      (list.some(c => c.platform === 'youtube') && overlapping.some(post =>
++          post.matches(youtubeSelector) && !post.matches('ytd-watch-flexy') && !contexts.includes(post))) ||
++      overlapping.some(post => post.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
++          [...post.querySelectorAll('.ad-showing,.ad-interrupting')].some(e => visible(e) &&
++              exposed(e, e.getBoundingClientRect())));
++  const linkedinReview = list.some(c => c.evidence === 'linkedin_reference_link') ||
++      (list.some(c => c.platform === 'linkedin') && overlapping.some(post =>
++          !contexts.includes(post) && contexts.some(parent => parent?.contains(post))));
++  const mastodonUnlinked = list.some(c => c.platform === 'mastodon') &&
++      overlapping.some(post => post.matches(mastodonSelector) && !contexts.includes(post) &&
++          !contexts.some(child => post.contains(child)) && contexts.some(parent => parent?.contains(post)));
++  const mastodonBoostOnly = [...document.querySelectorAll('#mastodon .status__prepend')]
++      .some(node => visible(node, false) &&
++          area(intersection(node.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const telegramChildSelected = [...document.querySelectorAll('.tgme_widget_message_forwarded_from,.tgme_widget_message_reply,.tgme_widget_message_link_preview')]
++      .some(node => visible(node, false) &&
++          area(intersection(node.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const telegramReview = telegramChildSelected || list.some(c => c.evidence === 'telegram_reference_link') ||
++      overlapping.some(post => post.matches('.tgme_widget_message_reply'));
++  if (telegramReview) preferred = null;
++  const mastodonReview = mastodonReference || mastodonUnlinked || mastodonBoostOnly ||
++      list.some(c => c.evidence === 'mastodon_reference_link');
++  if (mastodonReview) preferred = null;
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || linkedinReview || mastodonReview || telegramReview || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -1545,9 +2169,121 @@
 +  if (!url.is_valid() || !url.SchemeIs("https") || url.has_username() ||
 +      url.has_password() || url.has_port() || raw.size() > 2048)
 +    return false;
++  if (url.host() == "t.me") {
++    const auto parts = base::SplitStringPiece(
++        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    if (url.has_query() || url.has_ref() || parts.size() != 3 ||
++        !parts[0].empty() || parts[1].empty() || parts[1].size() > 32 ||
++        !base::IsAsciiAlpha(parts[1][0]) ||
++        !base::ContainsOnlyChars(parts[1],
++            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") ||
++        parts[2].empty() || parts[2][0] == '0' ||
++        !base::ContainsOnlyChars(parts[2], "0123456789"))
++      return false;
++    const std::string name = base::ToLowerASCII(parts[1]);
++    return name != "s" && name != "c" && name != "joinchat" && name != "share" &&
++           name != "addstickers" && name != "addemoji" && name != "proxy" &&
++           name != "socks" && name != "login" && name != "iv" && name != "boost" &&
++           name != "contact" && name != "invoice" && name != "giftcode";
++  }
++  if (url.host() == "www.linkedin.com") {
++    constexpr std::string_view prefix = "/feed/update/urn:li:activity:";
++    const std::string_view path = url.path();
++    if (url.has_query() || url.has_ref() || !path.starts_with(prefix) ||
++        !path.ends_with('/') || path.size() <= prefix.size() + 1)
++      return false;
++    return base::ContainsOnlyChars(
++        path.substr(prefix.size(), path.size() - prefix.size() - 1), "0123456789");
++  }
++  if (url.host() == "www.youtube.com") {
++    const auto parts = base::SplitStringPiece(
++        url.query(), "&", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    const auto identifier = [](std::string_view value) {
++      return !value.empty() && base::ContainsOnlyChars(
++          value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.");
++    };
++    return url.path() == "/watch" && !url.has_ref() &&
++           (parts.size() == 1 || parts.size() == 2) &&
++           parts[0].starts_with("v=") && parts[0].size() == 13 &&
++           base::ContainsOnlyChars(parts[0].substr(2),
++               "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") &&
++           (parts.size() == 1 || (parts[1].starts_with("lc=") &&
++               parts[1].size() <= 131 && identifier(parts[1].substr(3))));
++  }
++  if (url.host() == "www.reddit.com") {
++    const auto parts = base::SplitStringPiece(
++        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    const size_t start = parts.size() > 2 && parts[1] == "r" ? 3 : 1;
++    const auto id = [](std::string_view value) {
++      return !value.empty() && base::ContainsOnlyChars(
++          value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
++    };
++    return !url.has_query() && !url.has_ref() && parts[0].empty() &&
++           (start == 1 || (!parts[2].empty() && base::ContainsOnlyChars(
++               parts[2], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"))) &&
++           (parts.size() == start + 3 || parts.size() == start + 5) &&
++           parts[start] == "comments" && id(parts[start + 1]) && parts.back().empty() &&
++           (parts.size() == start + 3 ||
++            (parts[start + 2] == "comment" && id(parts[start + 3])));
++  }
++  if (url.host() == "www.tiktok.com") {
++    const auto parts = base::SplitStringPiece(
++        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    return !url.has_query() && !url.has_ref() && parts.size() == 4 &&
++           parts[0].empty() && parts[1].size() > 1 && parts[1].front() == '@' &&
++           base::ContainsOnlyChars(parts[1].substr(1),
++                                   "abcdefghijklmnopqrstuvwxyz"
++                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.") &&
++           (parts[2] == "video" || parts[2] == "photo") && !parts[3].empty() &&
++           base::ContainsOnlyChars(parts[3], "0123456789");
++  }
 +  return url.host() == "x.com" || url.host() == "www.instagram.com" ||
 +         url.host() == "www.facebook.com" || url.host() == "truthsocial.com" ||
-+         url.host() == "www.threads.com";
++         url.host() == "www.threads.com" || url.host() == "bsky.app";
++}
++
++bool ValidMastodonCandidate(const base::DictValue& candidate) {
++  const auto* platform = candidate.FindString("platform");
++  const auto* raw = candidate.FindString("url");
++  const auto* proof = candidate.FindDict("mastodon_ownership");
++  if (!platform || *platform != "mastodon" || !raw || raw->size() > 2048 || !proof)
++    return false;
++  const GURL url(*raw);
++  if (!url.is_valid() || !url.SchemeIs("https") || url.host().empty() ||
++      url.has_username() || url.has_password() || url.has_port() ||
++      url.has_query() || url.has_ref())
++    return false;
++  const auto parts = base::SplitStringPiece(
++      url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++  if (parts.size() != 3 || !parts[0].empty() || parts[1].size() < 2 ||
++      parts[1].front() != '@' || parts[2].empty() ||
++      !base::ContainsOnlyChars(parts[2], "0123456789"))
++    return false;
++  const auto identity = base::SplitStringPiece(
++      parts[1].substr(1), "@", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++  if (identity.empty() || identity.size() > 2 || identity[0].empty() ||
++      !base::ContainsOnlyChars(identity[0],
++          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") ||
++      (identity.size() == 2 && (identity[1].empty() || !base::ContainsOnlyChars(
++          identity[1], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-"))))
++    return false;
++  const auto* layout = proof->FindString("layout");
++  const auto* timestamp = proof->FindString("timestamp_url");
++  const auto* profile = proof->FindString("profile_url");
++  const auto* account = proof->FindString("account");
++  const std::string expected_profile = url.GetWithEmptyPath().spec() + std::string(parts[1]);
++  if (!layout || *layout != "mastodon_status_header_v1" || !timestamp ||
++      *timestamp != *raw || !profile || *profile != expected_profile ||
++      !account || account->size() > 256)
++    return false;
++  if (base::EqualsCaseInsensitiveASCII(*account, parts[1]))
++    return true;
++  if (identity.size() != 1 || !base::StartsWith(
++          *account, std::string(parts[1]) + "@", base::CompareCase::INSENSITIVE_ASCII))
++    return false;
++  const auto domain = std::string_view(*account).substr(parts[1].size() + 1);
++  return !domain.empty() && base::ContainsOnlyChars(
++      domain, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-");
 +}
 +
 +}  // namespace
@@ -1645,7 +2381,11 @@
 +    if (!candidate.is_dict())
 +      return unavailable();
 +    const auto* url = candidate.GetDict().FindString("url");
-+    if (!url || !SupportedUrl(*url))
++    const auto& fields = candidate.GetDict();
++    const auto* platform = fields.FindString("platform");
++    if (!url || ((platform && *platform == "mastodon")
++                     ? !ValidMastodonCandidate(fields)
++                     : !SupportedUrl(*url)))
 +      return unavailable();
 +  }
 +  const auto* suggested = dict.FindString("suggested_permalink");
@@ -1734,12 +2474,14 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,250 @@
+@@ -0,0 +1,487 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
 +
 +#include "chrome/browser/image_editor/screenshot_source.h"
++
++#include <utility>
 +
 +#include "testing/gtest/include/gtest/gtest.h"
 +
@@ -1760,10 +2502,241 @@
 +                   "https://www.instagram.com/p/ABC_12/",
 +                   "https://www.facebook.com/reporter/posts/pfbid123",
 +                   "https://truthsocial.com/@reporter/posts/123",
-+                   "https://www.threads.com/@reporter/post/ABC_12"}) {
++                   "https://www.threads.com/@reporter/post/ABC_12",
++                   "https://bsky.app/profile/reporter.bsky.social/post/3l6oveex3ii2l",
++                   "https://bsky.app/profile/did:plc:abc123/post/3l6oveex3ii2l",
++                   "https://www.tiktok.com/@reporter/video/123",
++                   "https://www.tiktok.com/@reporter/photo/456",
++                   "https://www.reddit.com/r/news/comments/abc123/",
++                   "https://www.reddit.com/r/news/comments/abc123/comment/def456/",
++                   "https://www.reddit.com/comments/abc123/",
++                   "https://www.youtube.com/watch?v=jNQXAC9IVRw",
++                   "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=UgABC_123.reply-2",
++                   "https://t.me/Example_channel/1",
++                   "https://t.me/Example_channel/123456789",
++                   "https://www.linkedin.com/feed/update/urn:li:activity:7080179061443977217/"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsNonCanonicalTelegramMessageSuggestions) {
++  for (const char* url : {
++           "http://t.me/channel/123",
++           "https://user:pass@t.me/channel/123",
++           "https://t.me:8443/channel/123",
++           "https://www.t.me/channel/123",
++           "https://sub.t.me/channel/123",
++           "https://t.me.attacker.example/channel/123",
++           "https://telegram.me/channel/123",
++           "https://t.me/s/channel/123",
++           "https://t.me/c/123/456",
++           "https://t.me/+privateInvite",
++           "https://t.me/joinchat/invite",
++           "https://t.me/channel",
++           "https://t.me/channel/",
++           "https://t.me/channel/0",
++           "https://t.me/channel/0123",
++           "https://t.me/channel/-1",
++           "https://t.me/channel/abc",
++           "https://t.me/channel/123/",
++           "https://t.me/channel/123/456",
++           "https://t.me/channel/123?single",
++           "https://t.me/channel/123?comment=456",
++           "https://t.me/channel/123#reply",
++           "https://t.me/1channel/123",
++           "https://t.me/_channel/123",
++           "https://t.me/channel-name/123",
++           "https://t.me/abcdefghijklmnopqrstuvwxyzABCDEFG/123"}) {
++    EXPECT_EQ(*ValidateScreenshotSources(Sources(url)).FindString("status"),
++              "unavailable") << url;
++  }
++  for (const char* name : {"s", "c", "joinchat", "share", "addstickers",
++                           "addemoji", "proxy", "socks", "login", "iv",
++                           "boost", "contact", "invoice", "giftcode",
++                           "Share", "JOINCHAT"}) {
++    const std::string url = std::string("https://t.me/") + name + "/123";
++    EXPECT_EQ(*ValidateScreenshotSources(Sources(url)).FindString("status"),
++              "unavailable") << url;
++  }
++}
++
++base::Value MastodonSources(const std::string& url,
++                            const std::string& profile,
++                            const std::string& account) {
++  auto value = Sources(url);
++  auto& candidate = value.GetDict().FindList("candidates")->front().GetDict();
++  candidate.Set("platform", "mastodon");
++  candidate.Set("mastodon_ownership",
++                base::DictValue()
++                    .Set("layout", "mastodon_status_header_v1")
++                    .Set("timestamp_url", url)
++                    .Set("profile_url", profile)
++                    .Set("account", account));
++  return value;
++}
++
++TEST(ScreenshotSourceTest, AcceptsOwnedMastodonStatusAcrossInstances) {
++  for (const char* host : {"independent.example", "www.community.example",
++                           "m.community.example"}) {
++    const std::string profile = std::string("https://") + host + "/@Reporter";
++    const std::string url = profile + "/123456";
++    auto result = ValidateScreenshotSources(
++        MastodonSources(url, profile, "@Reporter@identity.example"));
++    EXPECT_EQ(*result.FindString("status"), "unique");
++    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++  // A local proxy's numeric ID and fully qualified account remain observed;
++  // neither is rewritten to an inferred URL on the originating server.
++  const std::string proxy = "https://view.example/@alice@origin.example";
++  const std::string url = proxy + "/987654";
++  auto result = ValidateScreenshotSources(
++      MastodonSources(url, proxy, "@alice@origin.example"));
++  EXPECT_EQ(*result.FindString("status"), "unique");
++  EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++}
++
++TEST(ScreenshotSourceTest, RejectsMastodonUrlWithoutOwnership) {
++  const std::string url = "https://unrelated.example/@alice/123";
++  EXPECT_EQ(*ValidateScreenshotSources(Sources(url)).FindString("status"),
++            "unavailable");
++  auto value = Sources(url);
++  value.GetDict().FindList("candidates")->front().GetDict().Set("platform",
++                                                               "mastodon");
++  EXPECT_EQ(*ValidateScreenshotSources(std::move(value)).FindString("status"),
++            "unavailable");
++  auto complete = MastodonSources(url, "https://unrelated.example/@alice",
++                                   "@alice");
++  complete.GetDict().FindList("candidates")->front().GetDict().Remove("platform");
++  EXPECT_EQ(*ValidateScreenshotSources(std::move(complete)).FindString("status"),
++            "unavailable");
++}
++
++TEST(ScreenshotSourceTest, RejectsMismatchedMastodonOwnership) {
++  const std::string url = "https://community.example/@alice/123";
++  const auto valid = [&] {
++    return MastodonSources(url, "https://community.example/@alice", "@alice");
++  };
++  for (const char* field : {"layout", "timestamp_url", "profile_url", "account"}) {
++    auto value = valid();
++    auto* proof = value.GetDict().FindList("candidates")->front().GetDict()
++                      .FindDict("mastodon_ownership");
++    proof->Remove(field);
++    EXPECT_EQ(*ValidateScreenshotSources(std::move(value)).FindString("status"),
++              "unavailable") << field;
++  }
++  for (const auto& change : {
++           std::pair{"layout", "generic_article"},
++           std::pair{"timestamp_url", "https://community.example/@alice/456"},
++           std::pair{"profile_url", "https://other.example/@alice"},
++           std::pair{"profile_url", "https://community.example/@bob"},
++           std::pair{"account", "@bob"},
++           std::pair{"account", "@alice@"},
++           std::pair{"account", "@alice@identity.example/path"}}) {
++    auto value = valid();
++    value.GetDict().FindList("candidates")->front().GetDict()
++        .FindDict("mastodon_ownership")->Set(change.first, change.second);
++    EXPECT_EQ(*ValidateScreenshotSources(std::move(value)).FindString("status"),
++              "unavailable") << change.first << ": " << change.second;
++  }
++  auto proxy = MastodonSources("https://view.example/@alice@origin.example/123",
++                               "https://view.example/@alice@origin.example",
++                               "@alice@other.example");
++  EXPECT_EQ(*ValidateScreenshotSources(std::move(proxy)).FindString("status"),
++            "unavailable");
++}
++
++TEST(ScreenshotSourceTest, RejectsMalformedMastodonPermalinksWithProof) {
++  for (const char* url : {
++           "http://community.example/@alice/123",
++           "https://user:pass@community.example/@alice/123",
++           "https://community.example:8443/@alice/123",
++           "https://community.example/@alice/123?tracking=1",
++           "https://community.example/@alice/123#reply",
++           "https://community.example/@alice/123/",
++           "https://community.example/@alice/abc",
++           "https://community.example/@alice/",
++           "https://community.example/@/123",
++           "https://community.example/@alice@/123",
++           "https://community.example/@alice@origin.example@other.example/123",
++           "https://community.example/users/alice/statuses/123"}) {
++    EXPECT_EQ(*ValidateScreenshotSources(MastodonSources(
++                  url, "https://community.example/@alice", "@alice"))
++                   .FindString("status"),
++              "unavailable") << url;
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsLinkedInNonActivitySuggestions) {
++  for (const char* url : {
++           "https://www.linkedin.com/in/reporter",
++           "https://www.linkedin.com/company/example",
++           "https://www.linkedin.com/posts/example-activity-123-ABcd",
++           "https://www.linkedin.com/feed/update/urn:li:share:123/",
++           "https://www.linkedin.com/feed/update/urn:li:ugcPost:123/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:abc/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123/comments/",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123/?commentUrn=456",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123/#comment",
++           "https://www.linkedin.com/feed/update/urn:li:activity:123",
++           "https://www.linkedin.com.attacker.test/feed/update/urn:li:activity:123/"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsYouTubeNonNormalizedSuggestions) {
++  for (const char* url : {
++           "https://www.youtube.com/@reporter",
++           "https://www.youtube.com/playlist?list=PL123",
++           "https://youtu.be/jNQXAC9IVRw",
++           "https://www.youtube.com/shorts/jNQXAC9IVRw",
++           "https://www.youtube.com/watch?v=short",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&t=30",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=bad%2Fid",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=one&lc=two",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw#comment",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&v=otherId1234",
++           "https://www.youtube.com.attacker.test/watch?v=jNQXAC9IVRw"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsRedditNonPostSuggestions) {
++  for (const char* url : {
++           "https://www.reddit.com/r/news/",
++           "https://www.reddit.com/user/reporter/",
++           "https://www.reddit.com/r/news/s/sharecode/",
++           "https://www.reddit.com/r/news/comments//",
++           "https://www.reddit.com/r/news/comments/abc/title/",
++           "https://www.reddit.com/r/news/comments/abc/comment/",
++           "https://www.reddit.com/r/news/comments/abc/?context=3",
++           "https://www.reddit.com/r/news/comments/abc/#comment",
++           "https://old.reddit.com/r/news/comments/abc/",
++           "https://www.reddit.com/r/news/comments/abc/comment/bad!id/"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsTikTokNonPostSuggestions) {
++  for (const char* url : {
++           "https://www.tiktok.com/@reporter",
++           "https://www.tiktok.com/@reporter/live",
++           "https://www.tiktok.com/@/video/123",
++           "https://www.tiktok.com/@bad!handle/video/123",
++           "https://www.tiktok.com/@reporter/video/not-an-id",
++           "https://www.tiktok.com/@reporter/video/123/comments",
++           "https://www.tiktok.com/@reporter/photo/123?image_index=2",
++           "https://www.tiktok.com/@reporter/video/123#comments",
++           "https://www.tiktok.com/music/sound-123",
++           "https://www.tiktok.com/t/share-code"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
 +  }
 +}
 +
@@ -1773,7 +2746,11 @@
 +        "http://x.com/reporter/status/1", "https://x.com:8443/a",
 +        "https://password@x.com/reporter/status/1",
 +        "https://truthsocial.com.attacker.example/@reporter/posts/123",
-+        "https://attacker@truthsocial.com/@reporter/posts/123"}) {
++        "https://attacker@truthsocial.com/@reporter/posts/123",
++        "https://bsky.app.attacker.test/profile/a/post/123",
++        "https://user@bsky.app/profile/a/post/123",
++        "https://www.tiktok.com.attacker.test/@reporter/video/123",
++        "https://user@www.tiktok.com/@reporter/video/123"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unavailable");
 +    EXPECT_FALSE(result.FindString("suggested_permalink"));
@@ -2393,7 +3370,7 @@
 +}
 --- a/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
-@@ -3,242 +3,527 @@
+@@ -3,242 +3,531 @@
  // found in the LICENSE file.
  
  #include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h"
@@ -2894,6 +3871,10 @@
 +    return;
 +  base::DictValue automatic, user;
 +  automatic.Set("page_url", capture_.page_url.spec());
++  auto sources = base::JSONReader::ReadDict(capture_.source_suggestions_json,
++                                            base::JSON_PARSE_RFC);
++  if (sources)
++    automatic.Set("permalink_suggestions", std::move(*sources));
 +  user.Set("posting_account", base::UTF16ToUTF8(account_->GetText()));
 +  user.Set("post_permalink", base::UTF16ToUTF8(permalink_->GetText()));
 +  const auto notice = ScreenshotCopyrightNotice(
@@ -3242,7 +4223,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,453 @@
+@@ -0,0 +1,484 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -3541,12 +4522,43 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.host() == "t.me")
++      return "Telegram";
++    if (url.DomainIs("linkedin.com"))
++      return "LinkedIn";
++    if (url.DomainIs("youtube.com") || url.DomainIs("youtu.be"))
++      return "YouTube";
++    if (url.DomainIs("reddit.com"))
++      return "Reddit";
++    if (url.DomainIs("tiktok.com"))
++      return "TikTok";
++    if (url.DomainIs("bsky.app"))
++      return "Bluesky";
 +    if (url.DomainIs("truthsocial.com"))
 +      return "Truth Social";
 +    return {};
 +  };
 +  // Prefer the reviewed post link. Otherwise use the captured page's platform.
 +  std::string source = platform(user_provided.FindString("post_permalink"));
++  if (source.empty()) {
++    const auto* reviewed = user_provided.FindString("post_permalink");
++    const auto* suggestions = automatic.FindDict("permalink_suggestions");
++    const auto* candidates = suggestions ? suggestions->FindList("candidates") : nullptr;
++    if (reviewed && candidates) {
++      for (const auto& value : *candidates) {
++        if (!value.is_dict())
++          continue;
++        const auto& candidate = value.GetDict();
++        const auto* link = candidate.FindString("url");
++        const auto* site = candidate.FindString("platform");
++        if (link && *link == *reviewed && site && *site == "mastodon" &&
++            candidate.FindDict("mastodon_ownership")) {
++          source = "Mastodon";
++          break;
++        }
++      }
++    }
++  }
 +  if (source.empty())
 +    source = platform(automatic.FindString("page_url"));
 +  if (source.empty()) {
@@ -3746,7 +4758,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,486 @@
+@@ -0,0 +1,553 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4085,7 +5097,13 @@
 +           {"https://www.facebook.com/source/posts/123", "Facebook"},
 +           {"https://truthsocial.com/@source/posts/123", "Truth Social"},
 +           {"https://www.threads.com/@source/post/ABC_12", "Threads"},
-+           {"https://www.threads.net/@source/post/ABC_12", "Threads"}}) {
++           {"https://www.threads.net/@source/post/ABC_12", "Threads"},
++           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"},
++           {"https://www.tiktok.com/@source/video/123", "TikTok"},
++           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"},
++           {"https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube"},
++           {"https://t.me/source_channel/123", "Telegram"},
++           {"https://www.linkedin.com/feed/update/urn:li:activity:123/", "LinkedIn"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");
@@ -4116,6 +5134,67 @@
 +  EXPECT_TRUE(ScreenshotCopyrightNotice(automatic, user,
 +                                        ScreenshotTextLanguage::kEnglish)
 +                  .empty());
++}
++
++TEST(ScreenshotDocumentationTest, TelegramCreditRequiresExactDomain) {
++  base::DictValue automatic, user;
++  automatic.Set("page_url", "https://example.com/feed");
++  user.Set("posting_account", "@source_channel");
++  user.Set("post_permalink", "https://t.me/source_channel/123");
++  EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
++                                      ScreenshotTextLanguage::kEnglish),
++            "Screenshot / @source_channel / Telegram");
++  for (const char* url : {"https://www.t.me/source_channel/123",
++                           "https://sub.t.me/source_channel/123",
++                           "https://t.me.attacker.example/source_channel/123"}) {
++    user.Set("post_permalink", url);
++    EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
++                                        ScreenshotTextLanguage::kEnglish),
++              "Screenshot / @source_channel / example.com") << url;
++  }
++}
++
++TEST(ScreenshotDocumentationTest, MastodonCreditRequiresSelectedOwnedCandidate) {
++  const std::string url = "https://community.example/@alice/123";
++  base::DictValue automatic, user;
++  automatic.Set("page_url", "https://view.example/timelines/public");
++  user.Set("posting_account", "@alice@identity.example");
++  user.Set("post_permalink", url);
++  auto credit = [&] {
++    return ScreenshotCopyrightNotice(automatic, user,
++                                     ScreenshotTextLanguage::kEnglish);
++  };
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  base::ListValue candidates;
++  candidates.Append(base::DictValue()
++                        .Set("url", url)
++                        .Set("platform", "mastodon")
++                        .Set("mastodon_ownership",
++                             base::DictValue()
++                                 .Set("layout", "mastodon_status_header_v1")
++                                 .Set("timestamp_url", url)
++                                 .Set("profile_url", "https://community.example/@alice")
++                                 .Set("account", "@alice@identity.example")));
++  automatic.Set("permalink_suggestions",
++                base::DictValue().Set("candidates", std::move(candidates)));
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / Mastodon");
++  EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
++                                      ScreenshotTextLanguage::kNorwegian),
++            "Skjermbilde / @alice@identity.example / Mastodon");
++  // A manually entered or different status URL does not inherit the label
++  // from another candidate, even if its URL resembles a Mastodon permalink.
++  user.Set("post_permalink", "https://community.example/@alice/456");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  user.Set("post_permalink", url);
++  auto& candidate = automatic.FindDict("permalink_suggestions")
++                        ->FindList("candidates")->front().GetDict();
++  candidate.Set("platform", "other");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  candidate.Set("platform", "mastodon");
++  candidate.Remove("mastodon_ownership");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
++  user.Remove("post_permalink");
++  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
 +}
 +
 +TEST(ScreenshotDocumentationTest,

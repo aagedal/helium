@@ -74,8 +74,9 @@ The review dialog records the page URL, title, capture times in UTC, selection
 bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
-post permalink for Twitter/X, Instagram, Facebook, Threads and Truth Social using
-visible links and the post container overlapping your selection. One clear match fills the field;
+post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky,
+TikTok, Reddit, YouTube, LinkedIn, Mastodon and Telegram using visible links and the post container overlapping your
+selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
 heuristics, not verified attribution. Posting account and publication date can
@@ -94,6 +95,46 @@ original. Both links remain available in the source chooser, and the embedded
 record preserves their relationship and separate source details. Facebook photo
 posts prefer the enclosing post's permalink, account and date; attached photo
 links remain available as secondary sources, including for a photo-only crop.
+
+Bluesky feed posts, reposts and thread replies use their own observed permalink,
+matching profile link and timestamp. Expanded posts use their scoped date footer;
+the displayed time is preserved without assuming a timezone. A crop confined to
+a quoted post with no exposed permalink stays ambiguous instead of filling the
+enclosing post's source. Linked quotes keep their separate source details.
+
+TikTok recognizes explicit video and photo permalinks. Its current article layout
+can use the page URL only when the article's own item ID matches that URL. The
+matching creator profile and adjacent date label provide attribution, including
+when adjacent posts are preloaded. A capture including an unsupported comment or
+a caption link to another post requires source review. Relative
+dates and dates without a year stay as displayed. Captions and comment dates do
+not supply publication dates. Shortened share links are not resolved.
+
+Reddit's current layout keeps posts, comments and nested replies separate. Each
+item needs an observed permalink and matching item IDs. Author profile links
+must agree with that item's author, and its credit-row timestamp must match its
+reported creation time. Capturing multiple items, crossposts or a reference link requires
+source review. Deleted authors and missing dates stay blank. Shortened share
+links are not resolved; Old Reddit layouts are not yet supported.
+
+YouTube recognizes video, Shorts, live and `youtu.be` links. Watch-page video
+crops require the page URL and the rendered video's ID to agree; Shorts use their
+own player link and channel bar. Comment crops keep their own `lc` permalink,
+author and displayed date. Relative labels and “edited” markers stay as shown;
+Shorts dates remain blank when no scoped date is exposed. Captures including
+multiple sources, reference links, recommendations or known active ads require
+review. Channel names and profile URLs stay as observed, without resolving
+channel IDs into guessed handles. Playlists and playback times remain in the
+original observed URL, separate from the normalized video permalink.
+
+LinkedIn support currently targets public activity cards. An explicit post URL
+must match the card's own activity ID; the author's linked display name and the
+header's date label provide attribution. Relative labels and “Edited” markers
+stay as shown. Comments without exposed permalinks need manual attribution, and
+captures including both a post and comments require review. Share IDs, profile
+slugs and numeric activity IDs are not used to guess authors, URLs or dates.
+Authenticated layouts, articles and shortened `lnkd.in` links are not supported
+by this addition. Live capture verification remains limited by sign-in overlays.
 
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image
@@ -258,3 +299,20 @@ repositories is licensed under GPL-3.0. See [LICENSE](LICENSE).
 Any content imported from other projects retains its original license (for
 example, any original unmodified code imported from ungoogled-chromium remains
 licensed under their [BSD 3-Clause license](LICENSE.ungoogled_chromium)).
+
+Mastodon support targets the standard web app's timeline and detailed status
+layouts across instances. It requires a post's own matching author profile and
+timestamp link. Remote accounts retain their observed handle and instance-local
+permalink; status IDs are never translated into home-instance URLs. Boost actors,
+mentions and edited labels do not replace the original author or publication time.
+Other clients, ActivityPub URI-only layouts and missing ownership evidence require
+manual attribution. These DOM observations remain unverified.
+
+Telegram supports public channel message previews and standalone message widgets
+on `t.me`. The message's own timestamp permalink must match its `data-post`
+identity; account suggestions require its matching channel header link. Video
+durations and edited labels do not supply publication dates. Forwarded messages
+retain the publishing channel and its message time, without claiming original
+authorship. Reply previews and selected references require review. Private channels,
+chat clients, invitation links and channel landing pages without visible messages
+are not supported.
