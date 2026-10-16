@@ -997,3 +997,55 @@ header. The credit preview shows Mastodon. ExifTool inspection of a saved PNG
 confirmed Mastodon credit, reviewed-field origins, observed tracked URL, ownership
 record, exact instance hostname and separate capture timestamp. The edited label
 was excluded. This remains a controlled local export test.
+
+
+### Telegram public channel messages
+
+The standard public `t.me/s/<channel>` timeline and standalone `?embed=1` message
+widget expose `.tgme_widget_message[data-post]`, an own footer
+`a.tgme_widget_message_date` and an own channel header link. The observed footer
+permalink must match data-post before a body crop can inherit it. The matching
+visible `.tgme_widget_message_owner_name` supplies the handle and display name;
+missing or conflicting headers leave the account blank. No URL is synthesized
+from data-post alone, page canonical metadata or a channel sidebar.
+
+Explicit `https://t.me/<channel>/<positive-message-id>` links and `/s/` equivalents
+normalize to the public message permalink. Original query parameters remain in
+`original_url`; comment/thread/reply parameters and fragments are rejected so
+separate identities are not collapsed. Native validation accepts only canonical
+public message URLs, with a bounded ASCII username, no reserved service routes,
+credentials, ports, query or fragment. Subdomains, private `/c/` links, invites,
+`tg:` links and `telegram.me` aliases remain unsupported.
+
+The footer time's datetime attribute and displayed text are preserved separately.
+Absent machine dates remain observed text, without invented dates or zones.
+Video duration, views, edited labels, forwarded-source names and reply previews
+cannot supply the hosting message's author or publication time. A forwarded
+message is attributed to its publishing channel and message timestamp, not its
+original author. Forwarded-banner-only, reply-only and link-preview-only crops
+require review; selected references and full reply context remain ambiguous.
+Media albums with distinct selected message links also require review.
+
+Live inspection of https://t.me/s/V_Zelenskiy_official and the standalone
+https://t.me/V_Zelenskiy_official/21387?embed=1&mode=tme confirmed these selectors.
+The production detector returned the exact message permalink, observed
+`@V_Zelenskiy_official` header, displayed time and datetime for body-only crops in
+both layouts. This tests public message content; private chats and Telegram Web's
+authenticated UI are not supported. Standalone widgets are supported when loaded
+as the captured top-level document; iframe-contained embeds are not traversed.
+
+The `/telegram-capture` route serves controlled local content for native export
+QA, including a tracked permalink, original timestamp, edited label and separate
+reply preview. It is not a live Telegram message.
+
+Validation: 344 production-script browser fixtures, 18 native source tests and
+11 native export tests passed. The persistent macOS build, both GN header checks,
+patch lint, patch-file checks, existing devutils tests and the strict no-fuzz
+reverse/apply round trip for all four changed Chromium files passed.
+
+Native QA at `http://127.0.0.1:8238/telegram-capture` verified body-only account,
+permalink, original publication timestamp and Telegram credit preview. Reply-only
+and full-page mixed captures offered review with blank permalink/account/date.
+ExifTool inspection of a saved body PNG verified Telegram credit, tracked original
+URL, normalized permalink, exact datetime offset and displayed time, reviewed-field
+origins and separate capture timestamps. This is controlled local export QA.

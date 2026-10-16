@@ -1007,7 +1007,7 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,1348 @@
+@@ -0,0 +1,1429 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1051,6 +1051,12 @@
 +          mastodon_ownership:mastodonSources.get(mastodon.url).proof};
 +      const host = u.hostname.replace(/^(www|mobile|m|mbasic)\./, '');
 +      let path = u.pathname, platform, match, account_hint;
++      if (u.hostname === 't.me') {
++        if (u.hash || [...u.searchParams.keys()].some(key => /comment|thread|reply/i.test(key))) return null;
++        match = path.match(/^\/(?:s\/)?([A-Za-z][A-Za-z0-9_]{0,31})\/([1-9]\d*)\/?$/);
++        if (!match || ['s','c','joinchat','share','addstickers','addemoji','proxy','socks','login','iv','boost','contact','invoice','giftcode'].includes(match[1].toLowerCase())) return null;
++        return {url:'https://t.me/' + match[1] + '/' + match[2], original_url:u.href, platform:'telegram'};
++      }
 +      if (host === 'x.com' || host === 'twitter.com') {
 +        match = path.match(/^\/(?:[A-Za-z0-9_]+|i\/web|i)\/status\/(\d+)(?:\/.*)?$/);
 +        if (!match) return null;
@@ -1185,6 +1191,7 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
++  const telegramSelector = '.tgme_widget_message,.tgme_widget_message_reply';
 +  const mastodonSelector = '#mastodon .status,#mastodon .detailed-status,#mastodon .status__quote';
 +  const linkedinSelector = 'article[data-activity-urn],section.comment';
 +  const youtubeCommentSelector = 'ytd-comment-view-model,ytd-comment-renderer';
@@ -1192,7 +1199,7 @@
 +      ',ytd-compact-video-renderer,ytd-video-renderer,ytd-rich-grid-media,yt-lockup-view-model,' +
 +      '.ytp-suggestion-set,.ytp-autonav-endscreen-link-container,ytd-live-chat-frame';
 +  const redditSelector = 'shreddit-post,shreddit-comment';
-+  const postSelector = mastodonSelector + ',' + linkedinSelector + ',' + youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
++  const postSelector = telegramSelector + ',' + mastodonSelector + ',' + linkedinSelector + ',' + youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1410,6 +1417,48 @@
 +    }
 +    return details;
 +  };
++  const telegramStamp = (post, parsed) => {
++    if (!post?.matches('.tgme_widget_message') || parsed?.platform !== 'telegram') return null;
++    const id = post.getAttribute('data-post') || '';
++    if (id.toLowerCase() !== new URL(parsed.url).pathname.slice(1).toLowerCase()) return null;
++    const stamps = [...post.querySelectorAll('a.tgme_widget_message_date[href]')].filter(a =>
++        postFor(a) === post && visible(a, false) &&
++        normalize(a.href)?.url.toLowerCase() === parsed.url.toLowerCase() &&
++        a.querySelector('time'));
++    return stamps.length === 1 ? stamps[0] : null;
++  };
++  const telegramDetails = (post, parsed) => {
++    const stamp = telegramStamp(post, parsed), details = {};
++    if (!stamp) return details;
++    const account = new URL(parsed.url).pathname.split('/')[1];
++    const authors = [...post.querySelectorAll('.tgme_widget_message_author a.tgme_widget_message_owner_name[href]')]
++        .filter(a => postFor(a) === post && visible(a, false) && text(a));
++    if (authors.length === 1) {
++      try {
++        const u = new URL(authors[0].href);
++        if (u.protocol === 'https:' && u.hostname === 't.me' && !u.username && !u.password && !u.port &&
++            u.pathname.replace(/\/$/, '').toLowerCase() === '/' + account.toLowerCase()) {
++          // The handle comes from an observed, matching profile link, never
++          // from the message URL or data-post attribute alone.
++          details.posting_account = '@' + u.pathname.split('/')[1];
++          details.account_profile_url = 'https://t.me/' + u.pathname.split('/')[1];
++          details.account_display_name = text(authors[0]);
++          details.account_evidence = 'telegram_message_owner_link';
++        }
++      } catch { /* No usable observed channel profile. */ }
++    }
++    const time = stamp.querySelector('time');
++    if (postFor(time) === post && visible(time, false)) {
++      const displayed = text(time), machine = (time.getAttribute('datetime') || '').slice(0,256);
++      if (machine || displayed) {
++        details.publication_date_text = machine || displayed;
++        details.publication_date_displayed = displayed;
++        if (machine) details.publication_datetime_attribute = machine;
++        details.date_evidence = 'telegram_message_permalink_time';
++      }
++    }
++    return details;
++  };
 +  const mastodonPosts = [...document.querySelectorAll('#mastodon .status,#mastodon .detailed-status')];
 +  for (const post of mastodonPosts.slice(0, 1000)) {
 +    const owns = node => postFor(node) === post;
@@ -1474,6 +1523,7 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'telegram') return telegramDetails(post, parsed);
 +    if (parsed.platform === 'mastodon') return mastodonDetails(post, parsed);
 +    if (parsed.platform === 'linkedin') return linkedinDetails(post, parsed);
 +    if (parsed.platform === 'youtube') return youtubeDetails(post, parsed);
@@ -1683,6 +1733,14 @@
 +    const parsed = normalize(raw);
 +    if (!parsed) return;
 +    parsed.original_url = new URL(observedRaw, document.baseURI).href;
++    if (parsed.platform === 'telegram' || post?.matches(telegramSelector)) {
++      if (!telegramStamp(post, parsed)) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'telegram_reference_link';
++      }
++    }
 +    if (parsed.platform === 'mastodon' || post?.matches(mastodonSelector)) {
 +      const own = parsed.platform === 'mastodon' &&
 +          mastodonSources.get(parsed.url)?.observations.some(item => item.post === post);
@@ -1747,7 +1805,7 @@
 +    }
 +    const details = post?.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
 +        post.querySelector('.ad-showing,.ad-interrupting') ? {} : siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube','linkedin','mastodon'].includes(parsed.platform)) {
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube','linkedin','mastodon','telegram'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1824,7 +1882,7 @@
 +      const address = normalize(location.href);
 +      const pageSourceAllowed = raw => {
 +        const platform = normalize(raw)?.platform;
-+        if (platform === 'mastodon') return false;  // Only the status's own timestamp establishes its URL.
++        if (platform === 'mastodon' || platform === 'telegram') return false;  // Only the status's own timestamp establishes its URL.
 +        if (platform === 'linkedin') return false;  // Match the card's own activity URN below.
 +        if (platform === 'youtube') return false;  // Match explicit video/comment ownership below.
 +        if (platform === 'reddit') return false;  // Require the item's own ID/permalink.
@@ -2012,11 +2070,17 @@
 +  const mastodonBoostOnly = [...document.querySelectorAll('#mastodon .status__prepend')]
 +      .some(node => visible(node, false) &&
 +          area(intersection(node.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const telegramChildSelected = [...document.querySelectorAll('.tgme_widget_message_forwarded_from,.tgme_widget_message_reply,.tgme_widget_message_link_preview')]
++      .some(node => visible(node, false) &&
++          area(intersection(node.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const telegramReview = telegramChildSelected || list.some(c => c.evidence === 'telegram_reference_link') ||
++      overlapping.some(post => post.matches('.tgme_widget_message_reply'));
++  if (telegramReview) preferred = null;
 +  const mastodonReview = mastodonReference || mastodonUnlinked || mastodonBoostOnly ||
 +      list.some(c => c.evidence === 'mastodon_reference_link');
 +  if (mastodonReview) preferred = null;
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || linkedinReview || mastodonReview || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || linkedinReview || mastodonReview || telegramReview || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -2105,6 +2169,23 @@
 +  if (!url.is_valid() || !url.SchemeIs("https") || url.has_username() ||
 +      url.has_password() || url.has_port() || raw.size() > 2048)
 +    return false;
++  if (url.host() == "t.me") {
++    const auto parts = base::SplitStringPiece(
++        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    if (url.has_query() || url.has_ref() || parts.size() != 3 ||
++        !parts[0].empty() || parts[1].empty() || parts[1].size() > 32 ||
++        !base::IsAsciiAlpha(parts[1][0]) ||
++        !base::ContainsOnlyChars(parts[1],
++            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") ||
++        parts[2].empty() || parts[2][0] == '0' ||
++        !base::ContainsOnlyChars(parts[2], "0123456789"))
++      return false;
++    const std::string name = base::ToLowerASCII(parts[1]);
++    return name != "s" && name != "c" && name != "joinchat" && name != "share" &&
++           name != "addstickers" && name != "addemoji" && name != "proxy" &&
++           name != "socks" && name != "login" && name != "iv" && name != "boost" &&
++           name != "contact" && name != "invoice" && name != "giftcode";
++  }
 +  if (url.host() == "www.linkedin.com") {
 +    constexpr std::string_view prefix = "/feed/update/urn:li:activity:";
 +    const std::string_view path = url.path();
@@ -2393,7 +2474,7 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,444 @@
+@@ -0,0 +1,487 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -2431,10 +2512,53 @@
 +                   "https://www.reddit.com/comments/abc123/",
 +                   "https://www.youtube.com/watch?v=jNQXAC9IVRw",
 +                   "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=UgABC_123.reply-2",
++                   "https://t.me/Example_channel/1",
++                   "https://t.me/Example_channel/123456789",
 +                   "https://www.linkedin.com/feed/update/urn:li:activity:7080179061443977217/"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsNonCanonicalTelegramMessageSuggestions) {
++  for (const char* url : {
++           "http://t.me/channel/123",
++           "https://user:pass@t.me/channel/123",
++           "https://t.me:8443/channel/123",
++           "https://www.t.me/channel/123",
++           "https://sub.t.me/channel/123",
++           "https://t.me.attacker.example/channel/123",
++           "https://telegram.me/channel/123",
++           "https://t.me/s/channel/123",
++           "https://t.me/c/123/456",
++           "https://t.me/+privateInvite",
++           "https://t.me/joinchat/invite",
++           "https://t.me/channel",
++           "https://t.me/channel/",
++           "https://t.me/channel/0",
++           "https://t.me/channel/0123",
++           "https://t.me/channel/-1",
++           "https://t.me/channel/abc",
++           "https://t.me/channel/123/",
++           "https://t.me/channel/123/456",
++           "https://t.me/channel/123?single",
++           "https://t.me/channel/123?comment=456",
++           "https://t.me/channel/123#reply",
++           "https://t.me/1channel/123",
++           "https://t.me/_channel/123",
++           "https://t.me/channel-name/123",
++           "https://t.me/abcdefghijklmnopqrstuvwxyzABCDEFG/123"}) {
++    EXPECT_EQ(*ValidateScreenshotSources(Sources(url)).FindString("status"),
++              "unavailable") << url;
++  }
++  for (const char* name : {"s", "c", "joinchat", "share", "addstickers",
++                           "addemoji", "proxy", "socks", "login", "iv",
++                           "boost", "contact", "invoice", "giftcode",
++                           "Share", "JOINCHAT"}) {
++    const std::string url = std::string("https://t.me/") + name + "/123";
++    EXPECT_EQ(*ValidateScreenshotSources(Sources(url)).FindString("status"),
++              "unavailable") << url;
 +  }
 +}
 +
@@ -4099,7 +4223,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,482 @@
+@@ -0,0 +1,484 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4398,6 +4522,8 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.host() == "t.me")
++      return "Telegram";
 +    if (url.DomainIs("linkedin.com"))
 +      return "LinkedIn";
 +    if (url.DomainIs("youtube.com") || url.DomainIs("youtu.be"))
@@ -4632,7 +4758,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,534 @@
+@@ -0,0 +1,553 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4976,6 +5102,7 @@
 +           {"https://www.tiktok.com/@source/video/123", "TikTok"},
 +           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"},
 +           {"https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube"},
++           {"https://t.me/source_channel/123", "Telegram"},
 +           {"https://www.linkedin.com/feed/update/urn:li:activity:123/", "LinkedIn"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
@@ -5007,6 +5134,24 @@
 +  EXPECT_TRUE(ScreenshotCopyrightNotice(automatic, user,
 +                                        ScreenshotTextLanguage::kEnglish)
 +                  .empty());
++}
++
++TEST(ScreenshotDocumentationTest, TelegramCreditRequiresExactDomain) {
++  base::DictValue automatic, user;
++  automatic.Set("page_url", "https://example.com/feed");
++  user.Set("posting_account", "@source_channel");
++  user.Set("post_permalink", "https://t.me/source_channel/123");
++  EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
++                                      ScreenshotTextLanguage::kEnglish),
++            "Screenshot / @source_channel / Telegram");
++  for (const char* url : {"https://www.t.me/source_channel/123",
++                           "https://sub.t.me/source_channel/123",
++                           "https://t.me.attacker.example/source_channel/123"}) {
++    user.Set("post_permalink", url);
++    EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
++                                        ScreenshotTextLanguage::kEnglish),
++              "Screenshot / @source_channel / example.com") << url;
++  }
 +}
 +
 +TEST(ScreenshotDocumentationTest, MastodonCreditRequiresSelectedOwnedCandidate) {

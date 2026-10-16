@@ -75,7 +75,7 @@ bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
 post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky,
-TikTok, Reddit, YouTube, LinkedIn and Mastodon using visible links and the post container overlapping your
+TikTok, Reddit, YouTube, LinkedIn, Mastodon and Telegram using visible links and the post container overlapping your
 selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
@@ -307,3 +307,12 @@ permalink; status IDs are never translated into home-instance URLs. Boost actors
 mentions and edited labels do not replace the original author or publication time.
 Other clients, ActivityPub URI-only layouts and missing ownership evidence require
 manual attribution. These DOM observations remain unverified.
+
+Telegram supports public channel message previews and standalone message widgets
+on `t.me`. The message's own timestamp permalink must match its `data-post`
+identity; account suggestions require its matching channel header link. Video
+durations and edited labels do not supply publication dates. Forwarded messages
+retain the publishing channel and its message time, without claiming original
+authorship. Reply previews and selected references require review. Private channels,
+chat clients, invitation links and channel landing pages without visible messages
+are not supported.
