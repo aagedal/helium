@@ -271,15 +271,19 @@ build. See [developer notes and validation](devutils/README.md).
 
 This repository contains the fork's patches, resources, and build utilities.
 The latest release documented here is
-[Helium Neo 0.19.4.1 — Beta 5](https://github.com/aagedal/helium/releases/tag/v0.19.4.1-neo-beta.5),
+[Helium Neo 0.19.4.1](https://github.com/aagedal/helium/releases/tag/v0.19.4.1-neo),
 based on Chromium **155.0.8059.84**, for Apple Silicon Macs running macOS 13 or
 later. Download the
-[signed and notarized Beta 5 DMG](https://github.com/aagedal/helium/releases/download/v0.19.4.1-neo-beta.5/Helium-Neo-0.19.4.1-beta.5-macOS-arm64-signed.dmg)
+[signed and notarized DMG](https://github.com/aagedal/helium/releases/download/v0.19.4.1-neo/Helium-Neo-0.19.4.1-macOS-arm64-signed.dmg)
 and drag **Helium Neo** to Applications. The release includes `SHA256SUMS` for
-the final installer. Other betas are available on the
-[Helium Neo releases page](https://github.com/aagedal/helium/releases). These
-standalone beta packages include their runtime libraries. Automatic updates are
-disabled; install subsequent betas manually.
+the final installer. Previous releases are available on the
+[Helium Neo releases page](https://github.com/aagedal/helium/releases). Standalone
+packages include their runtime libraries. With browser updates enabled in Helium
+services settings, Neo checks on startup and daily and downloads signed updates
+from GitHub, falling back to independently hosted feeds and installers on
+aagedal.me. Install this release manually once if upgrading from a beta. See
+[release and update tooling](devutils/macos/README.md) for signing, validation,
+and mirror deployment.
 
 The [official Helium downloads](https://helium.computer/) distribute upstream
 Helium and do not include Helium Neo's custom features.

@@ -1,0 +1,106 @@
+--- a/chrome/browser/mac/sparkle_glue.mm
++++ b/chrome/browser/mac/sparkle_glue.mm
+@@ -57,6 +57,8 @@
+ 
+ @implementation SparkleObserver {
+   base::WeakPtr<Profile> profile_;
++  BOOL usingMirror_ = NO;
++  BOOL retryPending_ = NO;
+ }
+ 
+ @synthesize invocationBlock = invocationBlock_;
+@@ -145,14 +147,52 @@
+   [self updateStatus:VersionUpdater::UPDATED error_string:nil];
+ }
+ 
+-// Delegated method. Error handler for the Sparkle messages.
++// Retry availability failures once through the independently hosted mirror.
++// Validation, signature, extraction and installation failures must remain errors.
++- (BOOL)canRetryOnMirror:(NSError*)error {
++  return !usingMirror_ && [error.domain isEqualToString:SUSparkleErrorDomain] &&
++         (error.code == SUAppcastError || error.code == SUAppcastParseError ||
++          error.code == SUDownloadError) && [self shouldAccessUpdateService] &&
++         helium::GetBrowserUpdateURL(*profile_->GetPrefs(), true) !=
++             helium::GetDummyURL();
++}
++
+ - (void)updater:(SPUUpdater*)updater didAbortWithError:(NSError*)error {
+-  if (error.code == SUNoUpdateError) {
+-    // Handled by notifications
++  if ([error.domain isEqualToString:SUSparkleErrorDomain] &&
++      error.code == SUNoUpdateError) {
++    return;
++  }
++  if ([self canRetryOnMirror:error]) {
+     return;
+   }
+   [self updateStatus:VersionUpdater::FAILED
+         error_string:[error.localizedDescription copy]];
++}
++
++- (void)updater:(SPUUpdater*)updater
++    didFinishUpdateCycleForUpdateCheck:(SPUUpdateCheck)updateCheck
++                                error:(NSError*)error {
++  if (error && [self canRetryOnMirror:error]) {
++    usingMirror_ = YES;
++    retryPending_ = YES;
++    [self updateStatus:VersionUpdater::CHECKING error_string:nil];
++    // Sparkle finishes tearing down its driver after this delegate returns.
++    dispatch_async(dispatch_get_main_queue(), ^{
++      self->retryPending_ = NO;
++      if ([self shouldAccessUpdateService] && !updater.sessionInProgress) {
++        [updater checkForUpdatesInBackground];
++      } else {
++        self->usingMirror_ = NO;
++      }
++    });
++  } else {
++    // The next independent check always tries GitHub first.
++    usingMirror_ = NO;
++  }
++}
++
++- (BOOL)isRetryPending {
++  return retryPending_;
+ }
+ 
+ // Delegated method. Return the appcast URL for the installed channel.
+@@ -164,12 +204,7 @@
+   }
+ 
+   return base::SysUTF8ToNSString(
+-    helium::GetBrowserUpdateURL(*profile_->GetPrefs()).spec());
+-}
+-
+-- (void)updater:(SPUUpdater*)updater failedToDownloadUpdate:(NSError*)error {
+-  [self updateStatus:VersionUpdater::FAILED
+-        error_string:[error.localizedDescription copy]];
++    helium::GetBrowserUpdateURL(*profile_->GetPrefs(), usingMirror_).spec());
+ }
+ 
+ - (nonnull NSSet<NSString *> *)allowedChannelsForUpdater:
+@@ -300,7 +335,7 @@
+       // When updater already has update, don't interrupt it by new check,
+       // instead suggest user to "Relaunch" browser.
+       UpdateStatus(NEARLY_UPDATED, 0, nil);
+-    } else {
++    } else if (![observer isRetryPending]) {
+       // Set initial status to CHECKING, callback will advance that status as
+       // progress of updates continue.
+       UpdateStatus(CHECKING, 0, nil);
+@@ -372,12 +407,14 @@
+     return;
+   }
+ 
+-  if (updater) {
++  static bool updater_started = false;
++  if (updater && !updater_started) {
+     NSError* err = nullptr;
+     updater.automaticallyChecksForUpdates = YES;
+     updater.automaticallyDownloadsUpdates = YES;
+ 
+     if ([updater startUpdater:&err]) {
++      updater_started = true;
+       [updater checkForUpdatesInBackground];
+     } else if (err && observer) {
+       [observer updateStatus:VersionUpdater::FAILED

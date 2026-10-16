@@ -1,0 +1,69 @@
+--- a/components/helium_services/helium_services_helpers.cc
++++ b/components/helium_services/helium_services_helpers.cc
+@@ -28,10 +28,17 @@
+ #endif
+ 
+ #if defined(UPDATES_SUPPORTED)
++#if BUILDFLAG(IS_MAC)
++constexpr std::string_view kUpdateBaseUrl =
++    "https://github.com/aagedal/helium/releases/latest/download/";
++constexpr std::string_view kUpdateFallbackBaseUrl =
++    "https://aagedal.me/apps/appcast/";
++#else
+ constexpr std::string_view kUpdateBaseUrl = "https://updates.helium.computer/";
++#endif
+ constexpr const char kUpdatePath[] =
+ #if BUILDFLAG(IS_MAC)
+-    "mac/appcast-" CPU_ARCH_STR ".xml";
++    "helium-neo.xml";
+ #elif BUILDFLAG(IS_WIN)
+     "win/appcast.xml";
+ #endif
+@@ -138,7 +145,7 @@
+     return GetServicesBaseURL(prefs).Resolve("/dict/");
+ }
+ 
+-GURL GetBrowserUpdateURL(const PrefService& prefs) {
++GURL GetBrowserUpdateURL(const PrefService& prefs, bool fallback) {
+   if (!ShouldAccessUpdateService(prefs)) {
+     return GetDummyURL();
+   }
+@@ -146,11 +153,24 @@
+ #if defined(UPDATES_SUPPORTED)
+   const auto* command_line = base::CommandLine::ForCurrentProcess();
+   std::string baseUrl(kUpdateBaseUrl);
+-  if (command_line->HasSwitch(helium::kUpdateServerUrlCommandLine)) {
++#if BUILDFLAG(IS_MAC)
++  if (fallback) {
++    baseUrl = std::string(kUpdateFallbackBaseUrl);
++    if (command_line->HasSwitch(kUpdateServerUrlCommandLine)) {
++      // Custom feeds are isolated from production unless a fallback is explicit.
++      baseUrl = command_line->GetSwitchValueASCII("custom-update-fallback-url");
++      if (baseUrl.empty()) {
++        return GetDummyURL();
++      }
++    }
++  }
++#endif
++  if (!fallback && command_line->HasSwitch(helium::kUpdateServerUrlCommandLine)) {
+     baseUrl =
+         command_line->GetSwitchValueASCII(helium::kUpdateServerUrlCommandLine);
+   }
+-  return GURL(baseUrl).Resolve(kUpdatePath);
++  auto valid_url = GetValidUserOverridenURL(baseUrl);
++  return valid_url ? valid_url->Resolve(kUpdatePath) : GetDummyURL();
+ #else
+   return GetDummyURL();
+ #endif
+--- a/components/helium_services/helium_services_helpers.h
++++ b/components/helium_services/helium_services_helpers.h
+@@ -30,7 +30,8 @@
+ COMPONENT_EXPORT(HELIUM) GURL GetExtensionUpdateURL(const PrefService& prefs);
+ COMPONENT_EXPORT(HELIUM) GURL GetWebstoreSnippetURL(const PrefService& prefs, std::string_view id);
+ COMPONENT_EXPORT(HELIUM) GURL GetSpellcheckURL(const PrefService& prefs);
+-COMPONENT_EXPORT(HELIUM) GURL GetBrowserUpdateURL(const PrefService& prefs);
++COMPONENT_EXPORT(HELIUM) GURL GetBrowserUpdateURL(const PrefService& prefs,
++                                                         bool fallback = false);
+ COMPONENT_EXPORT(HELIUM) GURL GetComponentUpdateURL(const PrefService* prefs);
+ COMPONENT_EXPORT(HELIUM) GURL GetUBlockAssetsURL(const PrefService& prefs);
+ COMPONENT_EXPORT(HELIUM) std::optional<GURL> GetValidUserOverridenURL(std::string_view user_url_);
