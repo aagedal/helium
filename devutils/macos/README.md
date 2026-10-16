@@ -97,7 +97,7 @@ Existing betas need one manual installation to acquire the updater.
 The `Publish Neo update mirror` workflow runs when a stable release is published
 and can be rerun manually with a tag. Its `Aagedal Apps` environment needs:
 
-- `APPCAST_FTP_HOST`
+- `APPCAST_FTP_HOST` (hostname; a pasted FTP URL without credentials or a path is also accepted)
 - `APPCAST_FTP_PORT` (defaults to 21 when empty)
 - `APPCAST_FTP_USERNAME`
 - `APPCAST_FTP_PASSWORD`
@@ -111,6 +111,8 @@ downloads the public installer to verify SHA-256, then publishes/verifies the
 backup feed. It keeps the latest five installers plus anything newer than seven
 days, removes only matching Neo DMGs in its own directory, and refuses to replace
 a newer feed with an older release. Neither source trees nor keys are uploaded.
+The existing-feed check reads the authenticated FTP file directly, so a website's
+HTML fallback for missing URLs does not block first-time deployment.
 
 For manual deployment, the same script accepts the four variables in its
 environment: `python3 devutils/macos/deploy_mirror.py '<release>'`.

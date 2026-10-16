@@ -9,13 +9,14 @@ variables; they are never printed or stored in release artifacts.
 import argparse
 import ftplib
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import ssl
 from datetime import datetime, timezone, timedelta
-from urllib.error import HTTPError
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 import uuid
 import xml.etree.ElementTree as ET
@@ -23,6 +24,26 @@ import xml.etree.ElementTree as ET
 from make_appcast import SPARKLE, sha256_stream
 
 INSTALLER = re.compile(r'Helium-Neo-[0-9.]+-macOS-arm64-signed\.dmg')
+
+
+def ftp_endpoint(host_setting, port_setting):
+    """Accept a hostname or FTP URL without passing URL syntax to DNS lookup."""
+    value = host_setting.strip()
+    try:
+        parsed = urlsplit(value if '://' in value else '//' + value)
+        if parsed.scheme not in ('', 'ftp', 'ftps') or not parsed.hostname:
+            raise ValueError()
+        if parsed.path not in ('', '/') or parsed.query or parsed.fragment:
+            raise ValueError()
+        if parsed.username or parsed.password:
+            raise ValueError()
+        port = int(port_setting.strip()) if port_setting.strip() else (parsed.port or 21)
+        if not 1 <= port <= 65535 or (parsed.port and parsed.port != port):
+            raise ValueError()
+        return parsed.hostname, port
+    except ValueError:
+        raise ValueError('APPCAST_FTP_HOST must be a hostname or FTP URL without credentials '
+                         'or a directory; APPCAST_FTP_PORT must be its numeric port.') from None
 
 
 def validate_bundle(directory):
@@ -65,16 +86,26 @@ def verify_public(url, expected_hash):
         raise RuntimeError('Public mirror verification failed: ' + url)
 
 
-def check_not_older(manifest):
+def read_existing_feed(ftp, login_directory):
+    """Read the actual FTP file, avoiding websites that return HTML for missing URLs."""
+    ftp.cwd(login_directory)
+    directories = {name.rstrip('/').rsplit('/', 1)[-1] for name in ftp.nlst()}
+    if 'appcast' not in directories:
+        return None
+    ftp.cwd('appcast')
+    names = {name.rsplit('/', 1)[-1] for name in ftp.nlst()}
+    if 'helium-neo.xml' not in names:
+        return None
+    with io.BytesIO() as existing:
+        ftp.retrbinary('RETR helium-neo.xml', existing.write)
+        return existing.getvalue()
+
+
+def check_not_older(manifest, existing_feed):
     """A rerun of an older release must never roll the mirror feed backwards."""
-    try:
-        with urlopen(manifest['backup_feed'] + '?revision=' + uuid.uuid4().hex,
-                     timeout=30) as response:
-            current = ET.fromstring(response.read(1024 * 1024))
-    except HTTPError as error:
-        if error.code == 404:
-            return
-        raise
+    if existing_feed is None:
+        return
+    current = ET.fromstring(existing_feed)
 
     def version(value):
         if not value or not re.fullmatch(r'\d+(?:\.\d+)*', value):
@@ -117,13 +148,15 @@ def main():
     if args.validate_only:
         print('Release bundle and both feeds agree.')
         return
-    check_not_older(manifest)
     ftp = ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=120)
-    ftp.connect(os.environ['APPCAST_FTP_HOST'], int(os.environ.get('APPCAST_FTP_PORT') or '21'))
+    host, port = ftp_endpoint(os.environ['APPCAST_FTP_HOST'],
+                              os.environ.get('APPCAST_FTP_PORT', ''))
+    ftp.connect(host, port)
     try:
         ftp.login(os.environ['APPCAST_FTP_USERNAME'], os.environ['APPCAST_FTP_PASSWORD'])
         login_directory = ftp.pwd()
         ftp.prot_p()
+        check_not_older(manifest, read_existing_feed(ftp, login_directory))
         filename = manifest['installer']
         upload_atomic(ftp, args.directory / filename, 'helium-neo', filename, login_directory)
         verify_public(manifest['backup_download'], manifest['sha256'])
