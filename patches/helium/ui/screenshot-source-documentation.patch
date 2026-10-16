@@ -1,9 +1,75 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -14064,6 +14064,111 @@
+@@ -14064,6 +14064,177 @@
  
        <!-- Desktop Screenshots feature within the share hub; desktop-only. -->
        <if expr="not is_android">
++        <message name="IDS_NEO_CAPTURE_REVIEW_NOTICE" desc="Review notice for screenshot source suggestions.">
++          Review the suggested source details before saving.
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_ALT" desc="IPTC accessibility alt text preview label.">
++          Alt Text (Accessibility)
++        </message>
++        <message name="IDS_NEO_CAPTURE_POST_TEXT" desc="Label for manually entered post text preserved in screenshot metadata.">
++          Post text (optional)
++        </message>
++        <message name="IDS_NEO_CAPTURE_ALT_TEXT" desc="Label for optional accessibility text describing the screenshot.">
++          Alt text (optional)
++        </message>
++        <message name="IDS_NEO_CAPTURE_SOURCE_SECTION" desc="Heading for screenshot source fields.">
++          Source details
++        </message>
++        <message name="IDS_NEO_CAPTURE_DESCRIPTION_SECTION" desc="Expandable screenshot description section.">
++          Image description and notes
++        </message>
++        <message name="IDS_NEO_CAPTURE_EXPORT_SECTION" desc="Expandable screenshot export settings section.">
++          Export options
++        </message>
++        <message name="IDS_NEO_CAPTURE_CAPTURE_SECTION" desc="Expandable observed screenshot capture facts section.">
++          Capture details
++        </message>
++        <message name="IDS_NEO_CAPTURE_METADATA_TITLE" desc="Heading for metadata that will be embedded in the screenshot.">
++          IPTC / XMP preview
++        </message>
++        <message name="IDS_NEO_CAPTURE_METADATA_HELP" desc="Explanation for live screenshot metadata preview.">
++          Read-only preview of the values embedded in your saved image.
++        </message>
++        <message name="IDS_NEO_CAPTURE_SHOW_TAGS" desc="Checkbox to show technical XMP property names.">
++          Show XMP field names
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_TITLE" desc="IPTC title and headline preview label.">
++          Title / Headline
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_SOURCE" desc="IPTC source preview label.">
++          Source
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_CREDIT" desc="IPTC copyright notice preview label.">
++          Copyright Notice
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_DESCRIPTION" desc="IPTC description preview label.">
++          Description / Caption
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_CAPTURE" desc="Screenshot capture timestamp preview label, distinct from post publication time.">
++          Capture date
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_PAGE" desc="XMP observed page source URL label.">
++          Captured page URL
++        </message>
++        <message name="IDS_NEO_CAPTURE_META_TOOL" desc="XMP creator software preview label.">
++          Creator tool
++        </message>
++        <message name="IDS_NEO_CAPTURE_RECORD_SECTION" desc="Expandable custom embedded screenshot JSON source record.">
++          Helium source record
++        </message>
++        <message name="IDS_NEO_CAPTURE_RECORD_HELP" desc="Explanation of custom source metadata distinct from IPTC properties.">
++          Post links, publication dates, text, notes, field origins and capture limitations are also preserved in this embedded JSON record.
++        </message>
++        <message name="IDS_NEO_CAPTURE_NOT_SUPPLIED" desc="Placeholder for an empty optional screenshot metadata value.">
++          Not supplied
++        </message>
++        <message name="IDS_NEO_CAPTURE_COPY_HELP" desc="Explains the difference between saving and copying a screenshot.">
++          Save preserves source metadata. Copy image copies pixels only.
++        </message>
 +        <message name="IDS_NEO_CAPTURE_SELECTION_HINT" desc="Instructions displayed over the screenshot region selector.">
 +          Drag to select · Enter for visible page · Esc to cancel
 +        </message>
@@ -11,7 +77,7 @@
 +          Capture screenshot with source…
 +        </message>
 +        <message name="IDS_NEO_CAPTURE_TITLE" desc="Screenshot documentation dialog title.">
-+          Document screenshot
++          Save screenshot
 +        </message>
 +        <message name="IDS_NEO_CAPTURE_HELP" desc="Explanation of screenshot export.">
 +          Source details are embedded as IPTC/XMP metadata. Check any suggested permalink before saving. Your export choices are remembered.
@@ -38,7 +104,7 @@
 +          Publication date / time (optional)
 +        </message>
 +        <message name="IDS_NEO_CAPTURE_NOTES" desc="Label for capture notes entered by the user.">
-+          Notes / post text (optional)
++          Notes (optional)
 +        </message>
 +        <message name="IDS_NEO_CAPTURE_FORMAT" desc="Screenshot image format selector label.">
 +          Image format
@@ -3370,7 +3436,7 @@
 +}
 --- a/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
-@@ -3,242 +3,531 @@
+@@ -3,242 +3,742 @@
  // found in the LICENSE file.
  
  #include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h"
@@ -3429,6 +3495,7 @@
 -#include "ui/resources/grit/ui_resources.h"
 -#include "ui/views/border.h"
 -#include "ui/views/controls/button/label_button.h"
++#include "ui/color/color_id.h"
 +#include "ui/gfx/image/image_skia.h"
 +#include "ui/views/accessibility/view_accessibility.h"
 +#include "ui/views/controls/button/checkbox.h"
@@ -3444,6 +3511,7 @@
 -#include "ui/views/metadata/view_factory.h"
 -#include "ui/views/view.h"
 -
++#include "ui/views/style/typography.h"
 +#include "url/origin.h"
 +
 +namespace sharing_hub {
@@ -3461,22 +3529,27 @@
 +  return value;
 +}
 +
-+views::Label* AddLabel(views::View* parent, const std::u16string& text) {
++views::Label* AddLabel(views::View* parent,
++                       const std::u16string& text,
++                       int width = 400) {
 +  auto* label = parent->AddChildView(std::make_unique<views::Label>(text));
 +  label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
 +  label->SetMultiLine(true);
-+  label->SetMaximumWidth(440);
++  label->SetMaximumWidth(width);
 +  return label;
 +}
 +
-+views::Textfield* AddField(views::View* parent, int label_id, bool multiline) {
++views::Textfield* AddField(views::View* parent,
++                           int label_id,
++                           bool multiline,
++                           int width) {
 +  const auto label = l10n_util::GetStringUTF16(label_id);
-+  AddLabel(parent, label);
++  AddLabel(parent, label, width);
 +  auto field = multiline ? std::unique_ptr<views::Textfield>(
 +                               std::make_unique<views::Textarea>())
 +                         : std::make_unique<views::Textfield>();
 +  field->GetViewAccessibility().SetName(label);
-+  field->SetPreferredSize(gfx::Size(440, multiline ? 54 : 30));
++  field->SetPreferredSize(gfx::Size(width, multiline ? 76 : 32));
 +  return parent->AddChildView(std::move(field));
 +}
  
@@ -3495,12 +3568,15 @@
 -      web_contents_(web_contents->GetWeakPtr()),
 -      profile_(profile) {
 +      capture_(capture),
++      color_info_(image_editor::AnalyzeScreenshotColor(
++          capture.high_precision_available ? capture.high_precision_bitmap
++                                           : *capture.image.ToSkBitmap())),
 +      web_contents_(web_contents->GetWeakPtr()) {
    SetButtons(static_cast<int>(ui::mojom::DialogButton::kNone));
 -  SetTitle(IDS_BROWSER_SHARING_SCREENSHOT_POST_CAPTURE_TITLE);
 +  SetTitle(IDS_NEO_CAPTURE_TITLE);
 +  set_close_on_deactivate(false);
-+  set_fixed_width(480);
++  set_fixed_width(std::clamp(capture_.screen_bounds.width() - 32, 320, 940));
  }
  
  ScreenshotCapturedBubble::~ScreenshotCapturedBubble() = default;
@@ -3617,34 +3693,40 @@
 -      image_view_->GetImage().GetRepresentation(1.0f).GetBitmap();
 -  const GURL data_url = GURL(webui::GetBitmapDataUrl(bitmap));
 -
-+  set_margins(gfx::Insets(16));
++  set_margins(gfx::Insets(20));
 +  SetLayoutManager(std::make_unique<views::BoxLayout>(
-+      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 10));
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 12));
++  const int available_width =
++      std::clamp(capture_.screen_bounds.width() - 32, 320, 940) - 40;
++  const bool two_columns = available_width >= 720;
++  column_width_ = two_columns ? (available_width - 24) / 2 : available_width;
 +  auto* scroll = AddChildView(std::make_unique<views::ScrollView>());
-+  scroll->ClipHeightTo(0, 460);
++  scroll->ClipHeightTo(
++      0, std::clamp(capture_.screen_bounds.height() - 160, 240, 660));
 +  auto contents = std::make_unique<views::View>();
-+  contents->SetLayoutManager(std::make_unique<views::BoxLayout>(
-+      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 6));
-+  auto* body = scroll->SetContents(std::move(contents));
++  auto* columns = contents->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      two_columns ? views::BoxLayout::Orientation::kHorizontal
++                  : views::BoxLayout::Orientation::kVertical,
++      gfx::Insets(), 24));
++  columns->set_cross_axis_alignment(
++      views::BoxLayout::CrossAxisAlignment::kStart);
++  auto* container = scroll->SetContents(std::move(contents));
++  auto* body = container->AddChildView(std::make_unique<views::View>());
++  body->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 8));
 +  auto* preview = body->AddChildView(std::make_unique<views::ImageView>());
 +  const double scale =
-+      std::min(440.0 / capture_.image.Width(), 130.0 / capture_.image.Height());
++      std::min({1.0, double(column_width_) / capture_.image.Width(),
++                96.0 / capture_.image.Height()});
 +  preview->SetImage(ui::ImageModel::FromImage(capture_.image));
 +  preview->SetImageSize(gfx::Size(capture_.image.Width() * scale,
 +                                  capture_.image.Height() * scale));
 +  preview->GetViewAccessibility().SetName(
 +      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_TITLE));
-+  auto* page = AddLabel(body, l10n_util::GetStringFUTF16(
-+                                  IDS_NEO_CAPTURE_PAGE,
-+                                  base::UTF8ToUTF16(capture_.page_url.spec())));
-+  page->SetMaxLines(2);
-+  page->SetTooltipText(base::UTF8ToUTF16(capture_.page_url.spec()));
-+  AddLabel(body, l10n_util::GetStringFUTF16(
-+                     IDS_NEO_CAPTURE_TIME,
-+                     base::UTF8ToUTF16(base::TimeFormatAsIso8601(
-+                         capture_.capture_started_at))));
-+  AddLabel(body, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_HELP));
-+  permalink_ = AddField(body, IDS_NEO_CAPTURE_SOURCE_URL, false);
++  AddLabel(body, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_SOURCE_SECTION),
++           column_width_)
++      ->SetTextStyle(views::style::STYLE_EMPHASIZED);
++  permalink_ = AddField(body, IDS_NEO_CAPTURE_SOURCE_URL, false, column_width_);
 +  auto sources = base::JSONReader::ReadDict(capture_.source_suggestions_json,
 +                                            base::JSON_PARSE_RFC);
 +  if (sources) {
@@ -3652,13 +3734,12 @@
 +    if (capture_.suggested_permalink.is_valid()) {
 +      selected_suggestion_ = capture_.suggested_permalink.spec();
 +      permalink_->SetText(base::UTF8ToUTF16(selected_suggestion_));
-+      AddLabel(body, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_LINK_SUGGESTED));
 +    }
 +    if (status && (*status == "ambiguous" || *status == "incomplete" ||
 +                   *status == "preferred")) {
 +      if (!capture_.suggested_permalink.is_valid())
-+        AddLabel(body,
-+                 l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_LINK_MULTIPLE));
++        AddLabel(body, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_LINK_MULTIPLE),
++                 column_width_);
 +      std::vector<ui::SimpleComboboxModel::Item> items;
 +      items.emplace_back(
 +          l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_LINK_CHOOSE));
@@ -3674,7 +3755,7 @@
 +      if (!suggested_permalinks_.empty()) {
 +        candidates_ = body->AddChildView(std::make_unique<views::Combobox>(
 +            std::make_unique<ui::SimpleComboboxModel>(std::move(items))));
-+        candidates_->SetPreferredSize(gfx::Size(440, 32));
++        candidates_->SetPreferredSize(gfx::Size(column_width_, 32));
 +        candidates_->GetViewAccessibility().SetName(
 +            l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_LINK_CHOOSE));
 +        if (*status == "preferred") {
@@ -3689,17 +3770,24 @@
 +      }
 +    }
 +  }
-+  account_ = AddField(body, IDS_NEO_CAPTURE_ACCOUNT, false);
-+  published_ = AddField(body, IDS_NEO_CAPTURE_PUBLISHED, false);
++  account_ = AddField(body, IDS_NEO_CAPTURE_ACCOUNT, false, column_width_);
++  published_ = AddField(body, IDS_NEO_CAPTURE_PUBLISHED, false, column_width_);
 +  account_->set_controller(this);
 +  permalink_->set_controller(this);
 +  published_->set_controller(this);
-+  details_status_ = AddLabel(body, u"");
++  details_status_ = AddLabel(body, u"", column_width_);
 +  details_status_->SetVisible(false);
-+  AutofillPostDetails(selected_suggestion_);
-+  notes_ = AddField(body, IDS_NEO_CAPTURE_NOTES, true);
-+  AddLabel(body, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_FORMAT));
-+  format_ = body->AddChildView(std::make_unique<views::Combobox>(
++  post_text_ = AddField(body, IDS_NEO_CAPTURE_POST_TEXT, true, column_width_);
++  auto* descriptions = AddSection(body, IDS_NEO_CAPTURE_DESCRIPTION_SECTION);
++  alt_text_ =
++      AddField(descriptions, IDS_NEO_CAPTURE_ALT_TEXT, true, column_width_);
++  notes_ = AddField(descriptions, IDS_NEO_CAPTURE_NOTES, true, column_width_);
++  for (auto* field : {post_text_.get(), alt_text_.get(), notes_.get()})
++    field->set_controller(this);
++  auto* options = AddSection(body, IDS_NEO_CAPTURE_EXPORT_SECTION);
++  AddLabel(options, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_FORMAT),
++           column_width_);
++  format_ = options->AddChildView(std::make_unique<views::Combobox>(
 +      std::make_unique<ui::SimpleComboboxModel>(
 +          std::vector<ui::SimpleComboboxModel::Item>{
 +              ui::SimpleComboboxModel::Item(
@@ -3714,22 +3802,23 @@
 +                    ->GetPrefs();
 +  format_->SetSelectedIndex(
 +      std::clamp(prefs->GetInteger(kScreenshotFormatPref), 0, 2));
-+  preserve_hdr_ = body->AddChildView(std::make_unique<views::Checkbox>(
++  preserve_hdr_ = options->AddChildView(std::make_unique<views::Checkbox>(
 +      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_PRESERVE_HDR),
 +      base::BindRepeating(&ScreenshotCapturedBubble::PreserveHDRChanged,
 +                          weak_factory_.GetWeakPtr())));
 +  preserve_hdr_->SetChecked(prefs->GetBoolean(kScreenshotPreserveHDRPref));
-+  hdr_detected_ =
-+      image_editor::AnalyzeScreenshotColor(capture_.high_precision_bitmap).hdr;
++  hdr_detected_ = color_info_.hdr;
 +  if (hdr_detected_ && preserve_hdr_->GetChecked())
 +    format_->SetSelectedIndex(static_cast<size_t>(ScreenshotFormat::kJpegXL));
-+  color_status_ = AddLabel(body, u"");
++  color_status_ = AddLabel(this, u"", available_width);
 +  format_->SetCallback(
 +      base::BindRepeating(&ScreenshotCapturedBubble::UpdateColorStatus,
 +                          weak_factory_.GetWeakPtr()));
 +  UpdateColorStatus();
-+  AddLabel(body, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_COPYRIGHT_LANGUAGE));
-+  copyright_language_ = body->AddChildView(std::make_unique<views::Combobox>(
++  AddLabel(options,
++           l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_COPYRIGHT_LANGUAGE),
++           column_width_);
++  copyright_language_ = options->AddChildView(std::make_unique<views::Combobox>(
 +      std::make_unique<ui::SimpleComboboxModel>(
 +          std::vector<ui::SimpleComboboxModel::Item>{
 +              ui::SimpleComboboxModel::Item(
@@ -3740,20 +3829,110 @@
 +      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_COPYRIGHT_LANGUAGE));
 +  copyright_language_->SetSelectedIndex(
 +      std::clamp(prefs->GetInteger(kScreenshotCopyrightLanguagePref), 0, 1));
-+  copyright_preview_ = AddLabel(body, u"");
 +  copyright_language_->SetCallback(
 +      base::BindRepeating(&ScreenshotCapturedBubble::CopyrightLanguageChanged,
 +                          weak_factory_.GetWeakPtr()));
-+  UpdateCopyrightPreview();
-+  bundle_ = body->AddChildView(std::make_unique<views::Checkbox>(
++  bundle_ = options->AddChildView(std::make_unique<views::Checkbox>(
 +      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_BUNDLE)));
 +  bundle_->SetChecked(prefs->GetBoolean(kScreenshotBundlePref));
-+  status_ = AddLabel(this, u"");
++  auto* captured = AddSection(body, IDS_NEO_CAPTURE_CAPTURE_SECTION);
++  AddLabel(captured, base::UTF8ToUTF16(capture_.page_url.spec()), column_width_)
++      ->SetSelectable(true);
++  AddLabel(
++      captured,
++      base::UTF8ToUTF16(base::TimeFormatAsIso8601(capture_.capture_started_at)),
++      column_width_);
++  auto* metadata = container->AddChildView(std::make_unique<views::View>());
++  metadata->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 8));
++  AddLabel(metadata, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_METADATA_TITLE),
++           column_width_)
++      ->SetTextStyle(views::style::STYLE_EMPHASIZED);
++  AddLabel(metadata, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_METADATA_HELP),
++           column_width_)
++      ->SetTextStyle(views::style::STYLE_SECONDARY);
++  auto* tags = metadata->AddChildView(std::make_unique<views::Checkbox>(
++      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_SHOW_TAGS)));
++  tags->SetChecked(true);
++  tags->SetCallback(base::BindRepeating(
++      [](ScreenshotCapturedBubble* bubble, views::Checkbox* checkbox) {
++        for (const auto& tag : bubble->metadata_tags_)
++          tag->SetVisible(checkbox->GetChecked());
++        bubble->SizeToContents();
++      },
++      base::Unretained(this), base::Unretained(tags)));
++  const auto heading = [&](int title, const char* properties, bool tracked) {
++    auto* label =
++        AddLabel(metadata, l10n_util::GetStringUTF16(title), column_width_);
++    label->SetTextStyle(views::style::STYLE_EMPHASIZED);
++    if (tracked)
++      metadata_headings_.push_back(label);
++    auto* tag =
++        AddLabel(metadata, base::ASCIIToUTF16(properties), column_width_);
++    tag->SetTextStyle(views::style::STYLE_SECONDARY_MONOSPACED);
++    tag->SetSelectable(true);
++    metadata_tags_.push_back(tag);
++  };
++  const auto value = [&](const std::u16string& text) {
++    auto* label = AddLabel(metadata, text, column_width_);
++    label->SetSelectable(true);
++    return label;
++  };
++  heading(IDS_NEO_CAPTURE_META_TITLE, "dc:title / photoshop:Headline", false);
++  value(capture_.page_title)->SetMaxLines(3);
++  heading(IDS_NEO_CAPTURE_META_SOURCE, "photoshop:Source", true);
++  source_preview_ = value(u"");
++  heading(IDS_NEO_CAPTURE_META_CREDIT, "dc:rights", true);
++  credit_preview_ = value(u"");
++  heading(IDS_NEO_CAPTURE_META_DESCRIPTION, "dc:description", true);
++  auto description = std::make_unique<views::Textarea>();
++  description->SetReadOnly(true);
++  description->SetTextColorId(ui::kColorLabelForeground);
++  description->SetBackgroundColor(ui::kColorSysBaseContainer);
++  description->SetPreferredSize(gfx::Size(column_width_, 140));
++  description->GetViewAccessibility().SetName(
++      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_META_DESCRIPTION));
++  description_preview_ = metadata->AddChildView(std::move(description));
++  heading(IDS_NEO_CAPTURE_META_ALT, "Iptc4xmpCore:AltTextAccessibility", true);
++  alt_preview_ = value(u"");
++  heading(IDS_NEO_CAPTURE_META_CAPTURE,
++          "photoshop:DateCreated / xmp:CreateDate", false);
++  value(base::UTF8ToUTF16(
++      base::TimeFormatAsIso8601(capture_.capture_started_at)));
++  heading(IDS_NEO_CAPTURE_META_PAGE, "dc:source", false);
++  value(base::UTF8ToUTF16(capture_.page_url.spec()))->SetMaxLines(2);
++  heading(IDS_NEO_CAPTURE_META_TOOL, "xmp:CreatorTool", false);
++  value(base::UTF8ToUTF16("Helium Neo / Chromium " +
++                          std::string(version_info::GetVersionNumber())));
++  auto* record = AddSection(metadata, IDS_NEO_CAPTURE_RECORD_SECTION);
++  AddLabel(record, u"helium:SourceRecord", column_width_)
++      ->SetTextStyle(views::style::STYLE_SECONDARY_MONOSPACED);
++  AddLabel(record, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_RECORD_HELP),
++           column_width_);
++  auto json = std::make_unique<views::Textarea>();
++  json->SetReadOnly(true);
++  json->SetTextColorId(ui::kColorLabelForeground);
++  json->SetBackgroundColor(ui::kColorSysBaseContainer);
++  json->SetPreferredSize(gfx::Size(column_width_, 220));
++  json->GetViewAccessibility().SetName(
++      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_RECORD_SECTION));
++  record_preview_ = record->AddChildView(std::move(json));
++  for (auto* field : {permalink_.get(), account_.get(), published_.get(),
++                      post_text_.get(), alt_text_.get(), notes_.get()})
++    focus_observations_.AddObservation(field);
++  AutofillPostDetails(selected_suggestion_);
++  UpdateMetadataPreview();
++  AddLabel(this, l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_COPY_HELP),
++           available_width)
++      ->SetTextStyle(views::style::STYLE_SECONDARY);
++  status_ = AddLabel(this, u"", available_width);
++  status_->SetVisible(false);
 +  status_->GetViewAccessibility().SetRole(ax::mojom::Role::kStatus);
 +
 +  auto* row = AddChildView(std::make_unique<views::View>());
-+  row->SetLayoutManager(std::make_unique<views::BoxLayout>(
++  auto* actions = row->SetLayoutManager(std::make_unique<views::BoxLayout>(
 +      views::BoxLayout::Orientation::kHorizontal, gfx::Insets(), 12));
++  actions->set_main_axis_alignment(views::BoxLayout::MainAxisAlignment::kEnd);
 +  row->AddChildView(std::make_unique<views::MdTextButton>(
 +      base::BindRepeating(&ScreenshotCapturedBubble::CopyImage,
 +                          weak_factory_.GetWeakPtr()),
@@ -3782,7 +3961,17 @@
 +    account_edited_ = true;
 +  if (sender == published_)
 +    publication_date_edited_ = true;
-+  UpdateCopyrightPreview();
++  UpdateMetadataPreview();
++  const auto label = sender == permalink_ ? u"Post permalink (reviewed)"
++                     : sender == account_ ? u"Posting account (reviewed)"
++                     : sender == published_
++                         ? u"Publication date / time as entered"
++                     : sender == post_text_ ? u"Post text (user-provided)"
++                     : sender == alt_text_  ? u"Alt text (user-provided)"
++                                            : u"Notes (user-provided)";
++  const auto position = description_preview_->GetText().find(label);
++  if (position != std::u16string_view::npos)
++    description_preview_->Scroll({position});
 +}
 +
 +void ScreenshotCapturedBubble::AutofillPostDetails(
@@ -3818,18 +4007,20 @@
 +    published_->SetText(base::UTF8ToUTF16(suggested_publication_date_));
 +  }
 +  const bool suggested =
++      !selected_suggestion_.empty() ||
 +      (!account_edited_ && !suggested_account_.empty()) ||
 +      (!publication_date_edited_ && !suggested_publication_date_.empty());
 +  details_status_->SetText(
-+      suggested ? l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_DETAILS_SUGGESTED)
++      suggested ? l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_REVIEW_NOTICE)
 +                : u"");
 +  details_status_->SetVisible(suggested);
-+  UpdateCopyrightPreview();
++  UpdateMetadataPreview();
 +}
 +
 +void ScreenshotCapturedBubble::CopyImage() {
 +  ui::ScopedClipboardWriter(ui::ClipboardBuffer::kCopyPaste)
 +      .WriteImage(*capture_.image.ToSkBitmap());
++  status_->SetVisible(true);
 +  status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_COPIED));
 +  SizeToContents();
 +}
@@ -3854,6 +4045,8 @@
 +      : !hdr_detected_                   ? IDS_NEO_CAPTURE_HDR_SDR
 +      : hdr_export                       ? IDS_NEO_CAPTURE_HDR_PRESERVED
 +                                         : IDS_NEO_CAPTURE_HDR_CONVERTED));
++  color_status_->SetVisible(hdr_detected_);
++  UpdateMetadataPreview();
 +}
 +
 +void ScreenshotCapturedBubble::CopyrightLanguageChanged() {
@@ -3862,52 +4055,90 @@
 +        ->GetPrefs()
 +        ->SetInteger(kScreenshotCopyrightLanguagePref,
 +                     copyright_language_->GetSelectedIndex().value_or(0));
-+  UpdateCopyrightPreview();
++  UpdateMetadataPreview();
 +  SizeToContents();
 +}
 +
-+void ScreenshotCapturedBubble::UpdateCopyrightPreview() {
-+  if (!copyright_language_ || !copyright_preview_)
-+    return;
-+  base::DictValue automatic, user;
-+  automatic.Set("page_url", capture_.page_url.spec());
-+  auto sources = base::JSONReader::ReadDict(capture_.source_suggestions_json,
-+                                            base::JSON_PARSE_RFC);
-+  if (sources)
-+    automatic.Set("permalink_suggestions", std::move(*sources));
-+  user.Set("posting_account", base::UTF16ToUTF8(account_->GetText()));
-+  user.Set("post_permalink", base::UTF16ToUTF8(permalink_->GetText()));
-+  const auto notice = ScreenshotCopyrightNotice(
-+      automatic, user,
-+      static_cast<ScreenshotTextLanguage>(
-+          copyright_language_->GetSelectedIndex().value_or(0)));
-+  copyright_preview_->SetText(base::UTF8ToUTF16(notice));
-+  copyright_preview_->SetVisible(!notice.empty());
++views::View* ScreenshotCapturedBubble::AddSection(views::View* parent,
++                                                  int title_id) {
++  auto* button = parent->AddChildView(std::make_unique<views::MdTextButton>(
++      views::Button::PressedCallback(),
++      u"▸ " + l10n_util::GetStringUTF16(title_id)));
++  button->SetStyle(ui::ButtonStyle::kText);
++  button->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++  auto* section = parent->AddChildView(std::make_unique<views::View>());
++  section->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 8));
++  section->SetVisible(false);
++  button->GetViewAccessibility().SetIsCollapsed();
++  button->SetCallback(base::BindRepeating(
++      [](ScreenshotCapturedBubble* bubble, views::View* section,
++         views::MdTextButton* button, int title_id) {
++        section->SetVisible(!section->GetVisible());
++        button->SetText((section->GetVisible() ? u"▾ " : u"▸ ") +
++                        l10n_util::GetStringUTF16(title_id));
++        if (section->GetVisible())
++          button->GetViewAccessibility().SetIsExpanded();
++        else
++          button->GetViewAccessibility().SetIsCollapsed();
++        bubble->SizeToContents();
++      },
++      base::Unretained(this), base::Unretained(section),
++      base::Unretained(button), title_id));
++  return section;
 +}
 +
-+void ScreenshotCapturedBubble::SaveCapture() {
-+  const std::string permalink = base::UTF16ToUTF8(permalink_->GetText());
-+  if (!permalink.empty() &&
-+      (!GURL(permalink).is_valid() || !GURL(permalink).SchemeIsHTTPOrHTTPS())) {
-+    status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_URL_ERROR));
-+    permalink_->RequestFocus();
-+    SizeToContents();
-+    return;
++void ScreenshotCapturedBubble::OnViewFocused(views::View* view) {
++  for (size_t i = 0; i < metadata_headings_.size(); ++i) {
++    if (!metadata_headings_[i])
++      continue;
++    const bool relevant = i == 0   ? view == account_
++                          : i == 1 ? view == account_ || view == permalink_
++                          : i == 2 ? true
++                          : i == 3 ? view == alt_text_
++                                   : true;
++    metadata_headings_[i]->SetEnabledColor(
++        relevant ? ui::kColorSysPrimary : ui::kColorLabelForeground);
 +  }
-   if (!web_contents_) {
-+    status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_SOURCE_GONE));
-+    SizeToContents();
-     return;
-   }
--
--  BrowserWindowInterface* browser =
--      GlobalBrowserCollection::GetInstance()->FindBrowserWithTab(
--          web_contents_.get());
--  content::DownloadManager* download_manager =
--      browser->GetProfile()->GetDownloadManager();
--  // TODO(crbug.com/40753957): Update the annotation's |setting| and
--  // |chrome_policy| fields once the Sharing Hub is landed.
--  net::NetworkTrafficAnnotationTag traffic_annotation =
++}
++
++void ScreenshotCapturedBubble::OnViewBlurred(views::View* view) {
++  for (const auto& heading : metadata_headings_) {
++    if (heading)
++      heading->SetEnabledColor(ui::kColorLabelForeground);
++  }
++}
++
++void ScreenshotCapturedBubble::UpdateMetadataPreview() {
++  if (!record_preview_)
++    return;
++  const auto metadata = BuildScreenshotMetadata(
++      AutomaticFields(), UserFields(), color_info_,
++      capture_.high_precision_available
++          ? gfx::Size(capture_.high_precision_bitmap.width(),
++                      capture_.high_precision_bitmap.height())
++          : gfx::Size(capture_.image.ToSkBitmap()->width(),
++                      capture_.image.ToSkBitmap()->height()),
++      static_cast<ScreenshotFormat>(format_->GetSelectedIndex().value_or(0)),
++      preserve_hdr_->GetChecked(),
++      static_cast<ScreenshotTextLanguage>(
++          copyright_language_->GetSelectedIndex().value_or(0)));
++  const auto display = [](const std::string& value) {
++    return value.empty()
++               ? l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_NOT_SUPPLIED)
++               : base::UTF8ToUTF16(value);
++  };
++  source_preview_->SetText(display(metadata.source));
++  credit_preview_->SetText(display(metadata.copyright_notice));
++  alt_preview_->SetText(display(metadata.alt_text));
++  description_preview_->SetText(base::UTF8ToUTF16(metadata.description));
++  description_preview_->Scroll({0});
++  record_preview_->SetText(base::UTF8ToUTF16(metadata.source_record_json));
++  record_preview_->Scroll({0});
++  InvalidateLayout();
++}
++
++base::DictValue ScreenshotCapturedBubble::AutomaticFields() const {
 +  base::DictValue automatic;
 +  automatic.Set("page_url", capture_.page_url.spec());
 +  automatic.Set("page_title", base::UTF16ToUTF8(capture_.page_title));
@@ -3924,6 +4155,11 @@
 +                                            base::JSON_PARSE_RFC);
 +  if (sources)
 +    automatic.Set("permalink_suggestions", std::move(*sources));
++  return automatic;
++}
++
++base::DictValue ScreenshotCapturedBubble::UserFields() const {
++  const std::string permalink = base::UTF16ToUTF8(permalink_->GetText());
 +  base::DictValue user;
 +  user.Set("post_permalink", permalink);
 +  user.Set("post_permalink_origin",
@@ -3947,6 +4183,43 @@
 +           origin(base::UTF16ToUTF8(published_->GetText()),
 +                  suggested_publication_date_, publication_date_edited_));
 +  user.Set("notes", base::UTF16ToUTF8(notes_->GetText()));
++  user.Set("post_text", base::UTF16ToUTF8(post_text_->GetText()));
++  user.Set("alt_text", base::UTF16ToUTF8(alt_text_->GetText()));
++  for (const char* field : {"post_text", "alt_text", "notes"}) {
++    const auto* value = user.FindString(field);
++    user.Set(std::string(field) + "_origin",
++             value && !value->empty() ? "user_entered" : "not_supplied");
++  }
++  return user;
++}
++
++void ScreenshotCapturedBubble::SaveCapture() {
++  const std::string permalink = base::UTF16ToUTF8(permalink_->GetText());
++  if (!permalink.empty() &&
++      (!GURL(permalink).is_valid() || !GURL(permalink).SchemeIsHTTPOrHTTPS())) {
++    status_->SetVisible(true);
++    status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_URL_ERROR));
++    permalink_->RequestFocus();
++    SizeToContents();
++    return;
++  }
+   if (!web_contents_) {
++    status_->SetVisible(true);
++    status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_SOURCE_GONE));
++    SizeToContents();
+     return;
+   }
+-
+-  BrowserWindowInterface* browser =
+-      GlobalBrowserCollection::GetInstance()->FindBrowserWithTab(
+-          web_contents_.get());
+-  content::DownloadManager* download_manager =
+-      browser->GetProfile()->GetDownloadManager();
+-  // TODO(crbug.com/40753957): Update the annotation's |setting| and
+-  // |chrome_policy| fields once the Sharing Hub is landed.
+-  net::NetworkTrafficAnnotationTag traffic_annotation =
++  auto automatic = AutomaticFields();
++  auto user = UserFields();
 +  auto format =
 +      static_cast<ScreenshotFormat>(format_->GetSelectedIndex().value_or(0));
 +  const bool bundle = bundle_->GetChecked();
@@ -3961,6 +4234,7 @@
 +  prefs->SetInteger(kScreenshotCopyrightLanguagePref,
 +                    static_cast<int>(language));
 +  save_->SetEnabled(false);
++  status_->SetVisible(true);
 +  status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_WORKING));
 +  SizeToContents();
 +  base::ThreadPool::PostTaskAndReplyWithResult(
@@ -3978,6 +4252,7 @@
 +void ScreenshotCapturedBubble::ExportReady(ScreenshotExport result) {
 +  if (result.bytes.empty() || !web_contents_) {
 +    save_->SetEnabled(true);
++    status_->SetVisible(true);
 +    status_->SetText(l10n_util::GetStringUTF16(
 +        result.bytes.empty() ? IDS_NEO_CAPTURE_FAILED
 +                             : IDS_NEO_CAPTURE_SOURCE_GONE));
@@ -4003,6 +4278,7 @@
 +    std::unique_ptr<content::BlobHandle> blob) {
 +  save_->SetEnabled(true);
 +  if (!blob || !web_contents_) {
++    status_->SetVisible(true);
 +    status_->SetText(l10n_util::GetStringUTF16(
 +        blob ? IDS_NEO_CAPTURE_SOURCE_GONE : IDS_NEO_CAPTURE_FAILED));
 +    SizeToContents();
@@ -4084,6 +4360,7 @@
 +  Profile::FromBrowserContext(web_contents_->GetBrowserContext())
 +      ->GetDownloadManager()
 +      ->DownloadUrl(std::move(params), std::move(factory));
++  status_->SetVisible(true);
 +  status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_READY));
 +  SizeToContents();
  }
@@ -4091,7 +4368,7 @@
  BEGIN_METADATA(ScreenshotCapturedBubble)
 --- a/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h
-@@ -5,75 +5,90 @@
+@@ -5,75 +5,113 @@
  #ifndef CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_CAPTURED_BUBBLE_H_
  #define CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_CAPTURED_BUBBLE_H_
  
@@ -4101,12 +4378,16 @@
 -#include "base/files/file_path.h"
  #include "base/memory/raw_ptr.h"
  #include "base/memory/weak_ptr.h"
++#include "base/scoped_multi_source_observation.h"
++#include "base/values.h"
++#include "chrome/browser/image_editor/screenshot_color.h"
 +#include "chrome/browser/image_editor/screenshot_flow.h"
  #include "chrome/browser/ui/views/location_bar/location_bar_bubble_delegate_view.h"
  #include "ui/base/metadata/metadata_header_macros.h"
 -#include "ui/views/controls/label.h"
 +#include "ui/views/controls/textfield/textfield_controller.h"
  #include "ui/views/metadata/view_factory.h"
++#include "ui/views/view_observer.h"
  
  namespace content {
  class WebContents;
@@ -4133,7 +4414,8 @@
 +struct ScreenshotExport;
 +
 +class ScreenshotCapturedBubble : public LocationBarBubbleDelegateView,
-+                                 public views::TextfieldController {
++                                 public views::TextfieldController,
++                                 public views::ViewObserver {
    METADATA_HEADER(ScreenshotCapturedBubble, LocationBarBubbleDelegateView)
  
   public:
@@ -4158,7 +4440,12 @@
 +                       const std::u16string& new_contents) override;
 +  void SaveCapture();
 +  void UpdateColorStatus();
-+  void UpdateCopyrightPreview();
++  void UpdateMetadataPreview();
++  base::DictValue AutomaticFields() const;
++  base::DictValue UserFields() const;
++  views::View* AddSection(views::View* parent, int title_id);
++  void OnViewFocused(views::View* view) override;
++  void OnViewBlurred(views::View* view) override;
 +  void CopyrightLanguageChanged();
 +  void PreserveHDRChanged();
 +  void ExportReady(ScreenshotExport result);
@@ -4189,6 +4476,8 @@
 -
 +  // Source details are frozen with the snapshot, never read from a later page.
 +  const image_editor::ScreenshotCaptureResult capture_;
++  const image_editor::ScreenshotColorInfo color_info_;
++  int column_width_ = 400;
    base::WeakPtr<content::WebContents> web_contents_;
 -
 -  raw_ptr<Profile> profile_;
@@ -4207,7 +4496,14 @@
 +  raw_ptr<views::Combobox> candidates_ = nullptr;
 +  raw_ptr<views::Combobox> format_ = nullptr;
 +  raw_ptr<views::Combobox> copyright_language_ = nullptr;
-+  raw_ptr<views::Label> copyright_preview_ = nullptr;
++  raw_ptr<views::Label> source_preview_ = nullptr;
++  raw_ptr<views::Label> credit_preview_ = nullptr;
++  raw_ptr<views::Label> alt_preview_ = nullptr;
++  raw_ptr<views::Textfield> description_preview_ = nullptr;
++  raw_ptr<views::Textfield> record_preview_ = nullptr;
++  std::vector<raw_ptr<views::Label>> metadata_tags_;
++  // Source, credit, description, alt text, and source record headings.
++  std::vector<raw_ptr<views::Label>> metadata_headings_;
 +  raw_ptr<views::Checkbox> bundle_ = nullptr;
 +  raw_ptr<views::Checkbox> preserve_hdr_ = nullptr;
 +  raw_ptr<views::Label> color_status_ = nullptr;
@@ -4215,15 +4511,19 @@
 +  raw_ptr<views::Textfield> permalink_ = nullptr;
 +  raw_ptr<views::Textfield> account_ = nullptr;
 +  raw_ptr<views::Textfield> published_ = nullptr;
++  raw_ptr<views::Textfield> post_text_ = nullptr;
++  raw_ptr<views::Textfield> alt_text_ = nullptr;
 +  raw_ptr<views::Textfield> notes_ = nullptr;
 +  raw_ptr<views::Label> status_ = nullptr;
 +  raw_ptr<views::MdTextButton> save_ = nullptr;
++  base::ScopedMultiSourceObservation<views::View, views::ViewObserver>
++      focus_observations_{this};
    base::WeakPtrFactory<ScreenshotCapturedBubble> weak_factory_{this};
  };
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,484 @@
+@@ -0,0 +1,516 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4266,7 +4566,9 @@
 +    "the webpage or entered by the user; each field's origin is recorded. "
 +    "Site-reported text, timestamps and account links are unverified claims. "
 +    "Relative dates and missing timezones are not converted to exact times. "
-+    "Notes are user-provided. Suggestions are heuristic and unverified. "
++    "Post text, alt text and notes are user-provided. Suggestions are "
++    "heuristic "
++    "and unverified. "
 +    "Missing "
 +    "fields mean not supplied. The posting account is "
 +    "not necessarily the creator. A manifest SHA-256 detects image changes "
@@ -4320,33 +4622,29 @@
 +  return out;
 +}
 +
-+std::string Field(const base::DictValue& fields, const char* key) {
-+  const auto* value = fields.FindString(key);
-+  return value ? Xml(*value) : "";
-+}
-+
-+std::string Xmp(const base::DictValue& automatic,
-+                const base::DictValue& user,
-+                const std::string& report,
-+                const std::string& json,
-+                const std::string& copyright_notice,
++std::string Xmp(const ScreenshotMetadata& metadata,
 +                ScreenshotTextLanguage language) {
 +  // JSON escapes preserve XML-forbidden Unicode values verbatim in the record.
-+  std::string xml_json(json);
++  std::string xml_json(metadata.source_record_json);
 +  base::ReplaceSubstringsAfterOffset(&xml_json, 0, "\xef\xbf\xbe", "\\ufffe");
 +  base::ReplaceSubstringsAfterOffset(&xml_json, 0, "\xef\xbf\xbf", "\\uffff");
-+  // Copyright Notice is IPTC Core's dc:rights language alternative. This is
-+  // the user's requested formatted credit; do not set Creator, rights-holder
-+  // or xmpRights:Marked from a posting account.
-+  const std::string rights =
-+      copyright_notice.empty()
-+          ? ""
-+          : "<dc:rights><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
-+                Xml(copyright_notice) + "</rdf:li><rdf:li xml:lang=\"" +
-+                (language == ScreenshotTextLanguage::kNorwegian ? "nb" : "en") +
-+                "\">" + Xml(copyright_notice) +
-+                "</rdf:li></rdf:Alt></dc:rights>";
-+  // Capture and publication dates remain distinct.
++  const auto alternative = [](std::string_view property,
++                              const std::string& value) {
++    if (value.empty())
++      return std::string();
++    return "<" + std::string(property) +
++           "><rdf:Alt><rdf:li xml:lang=\"x-default\">" + Xml(value) +
++           "</rdf:li></rdf:Alt></" + std::string(property) + ">";
++  };
++  // The source credit does not imply creator or rights-holder attribution.
++  std::string rights;
++  if (!metadata.copyright_notice.empty()) {
++    rights = "<dc:rights><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
++             Xml(metadata.copyright_notice) + "</rdf:li><rdf:li xml:lang=\"" +
++             (language == ScreenshotTextLanguage::kNorwegian ? "nb" : "en") +
++             "\">" + Xml(metadata.copyright_notice) +
++             "</rdf:li></rdf:Alt></dc:rights>";
++  }
 +  return "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF "
 +         "xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">"
 +         "<rdf:Description rdf:about=\"\" "
@@ -4354,26 +4652,17 @@
 +         "xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\" "
 +         "xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\" "
 +         "xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\" "
-+         "xmlns:helium=\"https://github.com/aagedal/helium/ns/capture/1.0/\">"
-+         "<dc:title><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
-+         Field(automatic, "page_title") +
-+         "</rdf:li></rdf:Alt></dc:title>"
-+         "<photoshop:Headline>" + Field(automatic, "page_title") +
-+         "</photoshop:Headline>"
-+         "<dc:description><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
-+         Xml(report) + "</rdf:li></rdf:Alt></dc:description>" + rights +
-+         "<Iptc4xmpCore:ExtDescrAccessibility><rdf:Alt>"
-+         "<rdf:li xml:lang=\"x-default\">" + Xml(kLimitations) +
-+         "</rdf:li></rdf:Alt></Iptc4xmpCore:ExtDescrAccessibility>"
-+         "<dc:source>" + Field(automatic, "page_url") +
-+         "</dc:source>"
-+         "<photoshop:Source>" +
-+         Field(user, "posting_account") +
-+         "</photoshop:Source><photoshop:DateCreated>" +
-+         Field(automatic, "capture_started_at_utc") +
++         "xmlns:helium=\"https://github.com/aagedal/helium/ns/capture/1.0/\">" +
++         alternative("dc:title", metadata.title) + "<photoshop:Headline>" +
++         Xml(metadata.title) + "</photoshop:Headline>" +
++         alternative("dc:description", metadata.description) + rights +
++         alternative("Iptc4xmpCore:AltTextAccessibility", metadata.alt_text) +
++         "<dc:source>" + Xml(metadata.page_url) + "</dc:source>" +
++         "<photoshop:Source>" + Xml(metadata.source) + "</photoshop:Source>" +
++         "<photoshop:DateCreated>" + Xml(metadata.capture_time) +
 +         "</photoshop:DateCreated><xmp:CreateDate>" +
-+         Field(automatic, "capture_started_at_utc") +
-+         "</xmp:CreateDate><xmp:CreatorTool>" + Field(automatic, "browser") +
++         Xml(metadata.capture_time) + "</xmp:CreateDate><xmp:CreatorTool>" +
++         Xml(metadata.creator_tool) +
 +         "</xmp:CreatorTool><helium:SourceRecord>" + Xml(xml_json) +
 +         "</helium:SourceRecord></rdf:Description></rdf:RDF></x:xmpmeta>";
 +}
@@ -4543,7 +4832,8 @@
 +  if (source.empty()) {
 +    const auto* reviewed = user_provided.FindString("post_permalink");
 +    const auto* suggestions = automatic.FindDict("permalink_suggestions");
-+    const auto* candidates = suggestions ? suggestions->FindList("candidates") : nullptr;
++    const auto* candidates =
++        suggestions ? suggestions->FindList("candidates") : nullptr;
 +    if (reviewed && candidates) {
 +      for (const auto& value : *candidates) {
 +        if (!value.is_dict())
@@ -4573,6 +4863,103 @@
 +                         ? "Skjermbilde"
 +                         : "Screenshot") +
 +         " / " + account + " / " + source;
++}
++
++ScreenshotMetadata BuildScreenshotMetadata(
++    base::DictValue automatic,
++    base::DictValue user_provided,
++    const image_editor::ScreenshotColorInfo& color,
++    const gfx::Size& pixel_size,
++    ScreenshotFormat format,
++    bool preserve_hdr,
++    ScreenshotTextLanguage language) {
++  const bool hdr =
++      preserve_hdr && color.hdr && format == ScreenshotFormat::kJpegXL;
++  const char* extension = format == ScreenshotFormat::kPng    ? "png"
++                          : format == ScreenshotFormat::kJpeg ? "jpg"
++                                                              : "jxl";
++  const char* mime = format == ScreenshotFormat::kPng    ? "image/png"
++                     : format == ScreenshotFormat::kJpeg ? "image/jpeg"
++                                                         : "image/jxl";
++  automatic.Set("automatically_preserve_hdr", preserve_hdr);
++  automatic.Set("high_precision_readback", color.high_precision);
++  automatic.Set("hdr_detected_in_selection", color.hdr);
++  automatic.Set("selected_peak_linear_rec2020", color.peak_linear);
++  const std::string copyright_notice =
++      ScreenshotCopyrightNotice(automatic, user_provided, language);
++  const std::string filename = std::string("screenshot.") + extension;
++  base::DictValue image;
++  image.Set("filename", filename);
++  image.Set("mime_type", mime);
++  image.Set("pixel_width", pixel_size.width());
++  image.Set("pixel_height", pixel_size.height());
++  image.Set("bits_per_channel", hdr ? 16 : 8);
++  image.Set("hdr_preserved", hdr);
++  image.Set("color_encoding", hdr ? "Rec.2100 PQ / Rec.2020 / D65" : "sRGB");
++  image.Set("sdr_reference_white_nits", 203);
++  image.Set("range_conversion", hdr         ? "linear Rec.2020 to 16-bit PQ"
++                                : color.hdr ? "HDR clipped to SDR"
++                                            : "SDR");
++  image.Set("encoding", format == ScreenshotFormat::kJpeg
++                            ? "JPEG quality 95, 4:4:4 (lossy)"
++                            : "lossless");
++
++  std::string report = "HELIUM NEO — SCREENSHOT SOURCE RECORD\n\n";
++  AppendField(report, "Page URL (observed)", automatic, "page_url");
++  AppendField(report, "Page title (observed)", automatic, "page_title");
++  AppendField(report, "Capture started (UTC, computer clock)", automatic,
++              "capture_started_at_utc");
++  AppendField(report, "Capture completed (UTC, computer clock)", automatic,
++              "capture_completed_at_utc");
++  AppendField(report, "Post permalink (reviewed)", user_provided,
++              "post_permalink");
++  AppendField(report, "Permalink origin", user_provided,
++              "post_permalink_origin");
++  AppendField(report, "Posting account (reviewed)", user_provided,
++              "posting_account");
++  AppendField(report, "Publication date / time as entered (reviewed)",
++              user_provided, "publication_date_text");
++  AppendField(report, "Posting account origin", user_provided,
++              "posting_account_origin");
++  AppendField(report, "Publication date origin", user_provided,
++              "publication_date_text_origin");
++  AppendField(report, "Post text (user-provided)", user_provided, "post_text");
++  AppendField(report, "Alt text (user-provided)", user_provided, "alt_text");
++  AppendField(report, "Notes (user-provided)", user_provided, "notes");
++  report += "Screenshot: " + filename +
++            "\nDimensions: " + base::NumberToString(pixel_size.width()) +
++            " × " + base::NumberToString(pixel_size.height()) + " pixels\n\n" +
++            "Color: " + (hdr ? "16-bit Rec.2100 PQ HDR" : "8-bit sRGB SDR") +
++            "\nHDR detected in selection: " + (color.hdr ? "Yes" : "No") +
++            "\nHDR preserved: " + (hdr ? "Yes" : "No") + "\n";
++
++  base::DictValue metadata;
++  metadata.Set("schema_version", 2);
++  metadata.Set("capture_method", "renderer_surface_region");
++  metadata.Set("automatic", automatic.Clone());
++  metadata.Set("user_provided", user_provided.Clone());
++  metadata.Set("screenshot", std::move(image));
++  metadata.Set("copyright_notice", copyright_notice);
++  metadata.Set("copyright_notice_method", "formatted_source_credit");
++  metadata.Set("limitations", kLimitations);
++  const auto value = [](const base::DictValue& fields, const char* key) {
++    const auto* text = fields.FindString(key);
++    return text ? *text : std::string();
++  };
++  ScreenshotMetadata result;
++  result.title = value(automatic, "page_title");
++  result.description = std::move(report);
++  result.source = value(user_provided, "posting_account");
++  result.page_url = value(automatic, "page_url");
++  result.capture_time = value(automatic, "capture_started_at_utc");
++  result.creator_tool = value(automatic, "browser");
++  result.copyright_notice = copyright_notice;
++  result.alt_text = value(user_provided, "alt_text");
++  result.source_record = std::move(metadata);
++  base::JSONWriter::WriteWithOptions(result.source_record,
++                                     base::JSONWriter::OPTIONS_PRETTY_PRINT,
++                                     &result.source_record_json);
++  return result;
 +}
 +
 +ScreenshotExport CreateScreenshotExport(const SkBitmap& bitmap,
@@ -4607,74 +4994,14 @@
 +  SkBitmap export_bitmap = hdr ? bitmap : image_editor::ScreenshotToSDR(bitmap);
 +  if (export_bitmap.drawsNothing())
 +    return {};
-+  automatic.Set("automatically_preserve_hdr", preserve_hdr);
-+  automatic.Set("high_precision_readback", color.high_precision);
-+  automatic.Set("hdr_detected_in_selection", color.hdr);
-+  automatic.Set("selected_peak_linear_rec2020", color.peak_linear);
-+  const std::string copyright_notice =
-+      ScreenshotCopyrightNotice(automatic, user_provided, language);
-+  const std::string filename = "screenshot." + extension;
-+  base::DictValue image;
-+  image.Set("filename", filename);
-+  image.Set("mime_type", mime);
-+  image.Set("pixel_width", bitmap.width());
-+  image.Set("pixel_height", bitmap.height());
-+  image.Set("bits_per_channel", hdr ? 16 : 8);
-+  image.Set("hdr_preserved", hdr);
-+  image.Set("color_encoding", hdr ? "Rec.2100 PQ / Rec.2020 / D65" : "sRGB");
-+  image.Set("sdr_reference_white_nits", 203);
-+  image.Set("range_conversion", hdr         ? "linear Rec.2020 to 16-bit PQ"
-+                                : color.hdr ? "HDR clipped to SDR"
-+                                            : "SDR");
-+  image.Set("encoding", format == ScreenshotFormat::kJpeg
-+                            ? "JPEG quality 95, 4:4:4 (lossy)"
-+                            : "lossless");
-+
-+  std::string report = "HELIUM NEO — SCREENSHOT SOURCE RECORD\n\n";
-+  AppendField(report, "Page URL (observed)", automatic, "page_url");
-+  AppendField(report, "Page title (observed)", automatic, "page_title");
-+  AppendField(report, "Capture started (UTC, computer clock)", automatic,
-+              "capture_started_at_utc");
-+  AppendField(report, "Capture completed (UTC, computer clock)", automatic,
-+              "capture_completed_at_utc");
-+  AppendField(report, "Post permalink (reviewed)", user_provided,
-+              "post_permalink");
-+  AppendField(report, "Permalink origin", user_provided,
-+              "post_permalink_origin");
-+  AppendField(report, "Posting account (reviewed)", user_provided,
-+              "posting_account");
-+  AppendField(report, "Publication date / time as entered (reviewed)",
-+              user_provided, "publication_date_text");
-+  AppendField(report, "Posting account origin", user_provided,
-+              "posting_account_origin");
-+  AppendField(report, "Publication date origin", user_provided,
-+              "publication_date_text_origin");
-+  AppendField(report, "Notes / post text (user-provided)", user_provided,
-+              "notes");
-+  report += "Screenshot: " + filename +
-+            "\nDimensions: " + base::NumberToString(bitmap.width()) + " × " +
-+            base::NumberToString(bitmap.height()) + " pixels\n\n" +
-+            "Color: " + (hdr ? "16-bit Rec.2100 PQ HDR" : "8-bit sRGB SDR") +
-+            "\nHDR detected in selection: " + (color.hdr ? "Yes" : "No") +
-+            "\nHDR preserved: " + (hdr ? "Yes" : "No") + "\n";
-+
-+  base::DictValue metadata;
-+  metadata.Set("schema_version", 2);
-+  metadata.Set("capture_method", "renderer_surface_region");
-+  metadata.Set("automatic", automatic.Clone());
-+  metadata.Set("user_provided", user_provided.Clone());
-+  metadata.Set("screenshot", std::move(image));
-+  metadata.Set("copyright_notice", copyright_notice);
-+  metadata.Set("copyright_notice_method", "formatted_source_credit");
-+  metadata.Set("limitations", kLimitations);
-+  std::string json;
-+  if (!base::JSONWriter::WriteWithOptions(
-+          metadata, base::JSONWriter::OPTIONS_PRETTY_PRINT, &json))
++  auto metadata =
++      BuildScreenshotMetadata(std::move(automatic), std::move(user_provided),
++                              color, gfx::Size(bitmap.width(), bitmap.height()),
++                              format, preserve_hdr, language);
++  if (metadata.source_record_json.empty())
 +    return {};
-+  std::string bytes = Encode(
-+      export_bitmap, format,
-+      Xmp(automatic, user_provided, report, json, copyright_notice, language),
-+      hdr);
++  std::string bytes =
++      Encode(export_bitmap, format, Xmp(metadata, language), hdr);
 +  if (bytes.empty())
 +    return {};
 +  if (!bundle)
@@ -4683,17 +5010,22 @@
 +  // A file cannot contain its own final hash. Hash the completed image with
 +  // embedded metadata, then store that hash in the external ZIP manifest.
 +  const std::string hash = base::HexEncodeLower(crypto::hash::Sha256(bytes));
-+  metadata.FindDict("screenshot")->Set("sha256", hash);
++  metadata.source_record.FindDict("screenshot")->Set("sha256", hash);
++  std::string report = metadata.description;
++  std::string json;
 +  report += "\n";
 +  report += kLimitations;
-+  report += "\n\nSHA-256 (complete image including embedded metadata): " + hash +
-+            "\n";
++  report +=
++      "\n\nSHA-256 (complete image including embedded metadata): " + hash +
++      "\n";
 +  if (!base::JSONWriter::WriteWithOptions(
-+          metadata, base::JSONWriter::OPTIONS_PRETTY_PRINT, &json))
++          metadata.source_record, base::JSONWriter::OPTIONS_PRETTY_PRINT,
++          &json))
 +    return {};
 +  base::ScopedTempDir temporary;
 +  if (!temporary.CreateUniqueTempDir())
 +    return {};
++  const std::string filename = "screenshot." + extension;
 +  const base::FilePath directory = temporary.GetPath().AppendASCII("capture");
 +  const base::FilePath archive = temporary.GetPath().AppendASCII("capture.zip");
 +  if (!base::CreateDirectory(directory) ||
@@ -4710,7 +5042,7 @@
 +}  // namespace sharing_hub
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.h
-@@ -0,0 +1,45 @@
+@@ -0,0 +1,70 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4720,6 +5052,8 @@
 +
 +#include <string>
 +#include "base/values.h"
++#include "chrome/browser/image_editor/screenshot_color.h"
++#include "ui/gfx/geometry/size.h"
 +
 +class SkBitmap;
 +
@@ -4734,6 +5068,29 @@
 +std::string ScreenshotCopyrightNotice(const base::DictValue& automatic,
 +                                      const base::DictValue& user_provided,
 +                                      ScreenshotTextLanguage language);
++
++// One canonical representation for the review preview and encoded XMP.
++// Building it does not encode pixels, analyze the bitmap, or perform I/O.
++struct ScreenshotMetadata {
++  std::string title;
++  std::string description;
++  std::string source;
++  std::string page_url;
++  std::string capture_time;
++  std::string creator_tool;
++  std::string copyright_notice;
++  std::string alt_text;
++  std::string source_record_json;
++  base::DictValue source_record;
++};
++ScreenshotMetadata BuildScreenshotMetadata(
++    base::DictValue automatic,
++    base::DictValue user_provided,
++    const image_editor::ScreenshotColorInfo& color,
++    const gfx::Size& pixel_size,
++    ScreenshotFormat format,
++    bool preserve_hdr,
++    ScreenshotTextLanguage language);
 +
 +struct ScreenshotExport {
 +  std::string bytes;
@@ -4758,7 +5115,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,553 @@
+@@ -0,0 +1,653 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -5103,7 +5460,8 @@
 +           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"},
 +           {"https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube"},
 +           {"https://t.me/source_channel/123", "Telegram"},
-+           {"https://www.linkedin.com/feed/update/urn:li:activity:123/", "LinkedIn"}}) {
++           {"https://www.linkedin.com/feed/update/urn:li:activity:123/",
++            "LinkedIn"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");
@@ -5145,16 +5503,18 @@
 +                                      ScreenshotTextLanguage::kEnglish),
 +            "Screenshot / @source_channel / Telegram");
 +  for (const char* url : {"https://www.t.me/source_channel/123",
-+                           "https://sub.t.me/source_channel/123",
-+                           "https://t.me.attacker.example/source_channel/123"}) {
++                          "https://sub.t.me/source_channel/123",
++                          "https://t.me.attacker.example/source_channel/123"}) {
 +    user.Set("post_permalink", url);
 +    EXPECT_EQ(ScreenshotCopyrightNotice(automatic, user,
 +                                        ScreenshotTextLanguage::kEnglish),
-+              "Screenshot / @source_channel / example.com") << url;
++              "Screenshot / @source_channel / example.com")
++        << url;
 +  }
 +}
 +
-+TEST(ScreenshotDocumentationTest, MastodonCreditRequiresSelectedOwnedCandidate) {
++TEST(ScreenshotDocumentationTest,
++     MastodonCreditRequiresSelectedOwnedCandidate) {
 +  const std::string url = "https://community.example/@alice/123";
 +  base::DictValue automatic, user;
 +  automatic.Set("page_url", "https://view.example/timelines/public");
@@ -5166,15 +5526,16 @@
 +  };
 +  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
 +  base::ListValue candidates;
-+  candidates.Append(base::DictValue()
-+                        .Set("url", url)
-+                        .Set("platform", "mastodon")
-+                        .Set("mastodon_ownership",
-+                             base::DictValue()
-+                                 .Set("layout", "mastodon_status_header_v1")
-+                                 .Set("timestamp_url", url)
-+                                 .Set("profile_url", "https://community.example/@alice")
-+                                 .Set("account", "@alice@identity.example")));
++  candidates.Append(
++      base::DictValue()
++          .Set("url", url)
++          .Set("platform", "mastodon")
++          .Set("mastodon_ownership",
++               base::DictValue()
++                   .Set("layout", "mastodon_status_header_v1")
++                   .Set("timestamp_url", url)
++                   .Set("profile_url", "https://community.example/@alice")
++                   .Set("account", "@alice@identity.example")));
 +  automatic.Set("permalink_suggestions",
 +                base::DictValue().Set("candidates", std::move(candidates)));
 +  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / Mastodon");
@@ -5187,7 +5548,9 @@
 +  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
 +  user.Set("post_permalink", url);
 +  auto& candidate = automatic.FindDict("permalink_suggestions")
-+                        ->FindList("candidates")->front().GetDict();
++                        ->FindList("candidates")
++                        ->front()
++                        .GetDict();
 +  candidate.Set("platform", "other");
 +  EXPECT_EQ(credit(), "Screenshot / @alice@identity.example / view.example");
 +  candidate.Set("platform", "mastodon");
@@ -5232,13 +5595,15 @@
 +          std::string::npos);
 +      EXPECT_NE(standalone.bytes.find("@brukernavnæøå &amp; &lt;test&gt;"),
 +                std::string::npos);
-+      const size_t description_start = standalone.bytes.find("<dc:description>");
++      const size_t description_start =
++          standalone.bytes.find("<dc:description>");
 +      const size_t description_end = standalone.bytes.find("</dc:description>");
 +      ASSERT_NE(description_start, std::string::npos);
 +      ASSERT_NE(description_end, std::string::npos);
 +      const std::string description = standalone.bytes.substr(
 +          description_start, description_end - description_start);
-+      EXPECT_NE(description.find("Posting account (reviewed)"), std::string::npos);
++      EXPECT_NE(description.find("Posting account (reviewed)"),
++                std::string::npos);
 +      EXPECT_NE(description.find("https://example.com/post/123"),
 +                std::string::npos);
 +      EXPECT_NE(standalone.bytes.find(
@@ -5261,15 +5626,12 @@
 +                    "<xmp:CreatorTool>Helium Neo / Chromium 155.0.8059.79"
 +                    "</xmp:CreatorTool>"),
 +                std::string::npos);
-+      EXPECT_NE(standalone.bytes.find(
-+                    "<Iptc4xmpCore:ExtDescrAccessibility><rdf:Alt>"
-+                    "<rdf:li xml:lang=\"x-default\">"
-+                    "This records a selected region"),
++      EXPECT_EQ(standalone.bytes.find("<Iptc4xmpCore:ExtDescrAccessibility>"),
 +                std::string::npos);
-+      EXPECT_NE(standalone.bytes.find(
-+                    "converted export pixels.</rdf:li></rdf:Alt>"
-+                    "</Iptc4xmpCore:ExtDescrAccessibility>"),
++      EXPECT_EQ(standalone.bytes.find("<Iptc4xmpCore:AltTextAccessibility>"),
 +                std::string::npos);
++      EXPECT_NE(standalone.bytes.find("This records a selected region"),
++                std::string::npos);  // Limitations remain in SourceRecord.
 +      EXPECT_EQ(standalone.bytes.find("<dc:creator>"), std::string::npos);
 +      EXPECT_EQ(standalone.bytes.find("xmpRights:Marked"), std::string::npos);
 +      if (!fixtures.empty()) {
@@ -5309,6 +5671,101 @@
 +  auto blank =
 +      CreateScreenshotExport(bitmap, {}, {}, ScreenshotFormat::kJpegXL, false);
 +  EXPECT_EQ(blank.bytes.find("<dc:rights>"), std::string::npos);
++}
++
++TEST(ScreenshotDocumentationTest, PreviewMatchesEmbeddedValuesInEveryFormat) {
++  SkBitmap bitmap;
++  bitmap.allocN32Pixels(32, 24);
++  bitmap.eraseColor(SK_ColorBLUE);
++  base::DictValue automatic, user;
++  automatic.Set("page_url", "https://example.com/feed");
++  automatic.Set("page_title", "Example post");
++  automatic.Set("capture_started_at_utc", "2026-10-16T18:30:00Z");
++  automatic.Set("browser", "Helium Neo / Chromium test");
++  user.Set("post_permalink", "https://example.com/posts/123");
++  user.Set("posting_account", "@example");
++  user.Set("publication_date_text", "Yesterday");
++  user.Set("post_text", "First line\nSecond line æøå");
++  user.Set("alt_text", "A post announcing the library opening.");
++  user.Set("notes", "My own annotations");
++  const auto color = image_editor::AnalyzeScreenshotColor(bitmap);
++  for (auto format : {ScreenshotFormat::kPng, ScreenshotFormat::kJpeg,
++                      ScreenshotFormat::kJpegXL}) {
++    for (auto language : {ScreenshotTextLanguage::kEnglish,
++                          ScreenshotTextLanguage::kNorwegian}) {
++      const auto preview =
++          BuildScreenshotMetadata(automatic.Clone(), user.Clone(), color,
++                                  gfx::Size(32, 24), format, true, language);
++      const auto output =
++          CreateScreenshotExport(bitmap, automatic.Clone(), user.Clone(),
++                                 format, false, true, language);
++      ASSERT_FALSE(output.bytes.empty());
++      for (const auto& item :
++           {std::pair("dc:title", preview.title),
++            std::pair("dc:description", preview.description),
++            std::pair("dc:rights", preview.copyright_notice),
++            std::pair("Iptc4xmpCore:AltTextAccessibility", preview.alt_text)}) {
++        EXPECT_NE(
++            output.bytes.find(std::string("<") + item.first +
++                              "><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
++                              item.second + "</rdf:li>"),
++            std::string::npos)
++            << item.first;
++      }
++      EXPECT_NE(output.bytes.find("<photoshop:Source>" + preview.source +
++                                  "</photoshop:Source>"),
++                std::string::npos);
++      EXPECT_NE(
++          output.bytes.find("<photoshop:DateCreated>" + preview.capture_time +
++                            "</photoshop:DateCreated>"),
++          std::string::npos);
++      EXPECT_EQ(preview.capture_time, "2026-10-16T18:30:00Z");
++      const auto* fields = preview.source_record.FindDict("user_provided");
++      ASSERT_TRUE(fields);
++      EXPECT_EQ(*fields->FindString("publication_date_text"), "Yesterday");
++      EXPECT_EQ(*fields->FindString("post_text"),
++                "First line\nSecond line æøå");
++      EXPECT_EQ(*fields->FindString("notes"), "My own annotations");
++      EXPECT_NE(preview.description.find("Post text (user-provided)"),
++                std::string::npos);
++      EXPECT_NE(preview.description.find("Notes (user-provided)"),
++                std::string::npos);
++      EXPECT_EQ(preview.description.find("This records a selected region"),
++                std::string::npos);
++      auto json = base::JSONReader::ReadDict(preview.source_record_json,
++                                             base::JSON_PARSE_RFC);
++      ASSERT_TRUE(json);
++      EXPECT_EQ(*json, preview.source_record);
++    }
++  }
++}
++
++TEST(ScreenshotDocumentationTest, AltTextEscapesXmlAndNeverBorrowsNotes) {
++  SkBitmap bitmap;
++  bitmap.allocN32Pixels(8, 8);
++  bitmap.eraseColor(SK_ColorBLUE);
++  base::DictValue user;
++  user.Set("post_text", "The post body");
++  user.Set("notes", "Personal annotation");
++  for (auto format : {ScreenshotFormat::kPng, ScreenshotFormat::kJpeg,
++                      ScreenshotFormat::kJpegXL}) {
++    auto output =
++        CreateScreenshotExport(bitmap, {}, user.Clone(), format, false);
++    EXPECT_EQ(output.bytes.find("<Iptc4xmpCore:AltTextAccessibility>"),
++              std::string::npos);
++    auto with_alt = user.Clone();
++    with_alt.Set("alt_text", "Post: æøå & <opening>\nSecond line");
++    output =
++        CreateScreenshotExport(bitmap, {}, std::move(with_alt), format, false);
++    EXPECT_NE(output.bytes.find(
++                  "<Iptc4xmpCore:AltTextAccessibility><rdf:Alt>"
++                  "<rdf:li xml:lang=\"x-default\">Post: æøå &amp; "
++                  "&lt;opening&gt;\nSecond line"
++                  "</rdf:li></rdf:Alt></Iptc4xmpCore:AltTextAccessibility>"),
++              std::string::npos);
++    EXPECT_EQ(output.bytes.find("<Iptc4xmpCore:ExtDescrAccessibility>"),
++              std::string::npos);
++  }
 +}
 +
 +}  // namespace sharing_hub
