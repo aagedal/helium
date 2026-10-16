@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Publish verified release bytes over explicit FTPS, then prune old installers.
 
-The FTP account root must be the public /apps directory, matching the existing
+The FTP login directory must be the public /apps directory, matching the existing
 Aagedal Apps deployment. Credentials come only from APPCAST_FTP_* environment
 variables; they are never printed or stored in release artifacts.
 """
@@ -89,15 +89,15 @@ def check_not_older(manifest):
         raise ValueError('Refusing to overwrite a newer mirror release')
 
 
-def upload_atomic(ftp, source, directory, filename):
+def upload_atomic(ftp, source, directory, filename, login_directory):
     """Upload to a unique temporary name and rename only after transfer succeeds."""
-    ftp.cwd('/')
+    ftp.cwd(login_directory)
     try:
         ftp.mkd(directory)
     except ftplib.error_perm as error:
         if not str(error).startswith('550'):
             raise
-    ftp.cwd('/' + directory)
+    ftp.cwd(directory)
     temporary = filename + '.' + uuid.uuid4().hex + '.tmp'
     with source.open('rb') as stream:
         ftp.storbinary('STOR ' + temporary, stream)
@@ -122,17 +122,19 @@ def main():
     ftp.connect(os.environ['APPCAST_FTP_HOST'], int(os.environ.get('APPCAST_FTP_PORT') or '21'))
     try:
         ftp.login(os.environ['APPCAST_FTP_USERNAME'], os.environ['APPCAST_FTP_PASSWORD'])
+        login_directory = ftp.pwd()
         ftp.prot_p()
         filename = manifest['installer']
-        upload_atomic(ftp, args.directory / filename, 'helium-neo', filename)
+        upload_atomic(ftp, args.directory / filename, 'helium-neo', filename, login_directory)
         verify_public(manifest['backup_download'], manifest['sha256'])
         feed = args.directory / 'helium-neo-backup.xml'
-        upload_atomic(ftp, feed, 'appcast', 'helium-neo.xml')
+        upload_atomic(ftp, feed, 'appcast', 'helium-neo.xml', login_directory)
         verify_public(manifest['backup_feed'] + '?revision=' + uuid.uuid4().hex,
                       hashlib.sha256(feed.read_bytes()).hexdigest())
         # Each feed contains only the current release. Never remove that release;
         # retain at least seven days of older downloads for in-flight clients.
-        ftp.cwd('/helium-neo')
+        ftp.cwd(login_directory)
+        ftp.cwd('helium-neo')
         entries = []
         cutoff = datetime.now(timezone.utc) - timedelta(days=7)
         for listed in ftp.nlst():

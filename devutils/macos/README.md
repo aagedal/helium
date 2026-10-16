@@ -102,7 +102,9 @@ and can be rerun manually with a tag. Its `Aagedal Apps` environment needs:
 - `APPCAST_FTP_USERNAME`
 - `APPCAST_FTP_PASSWORD`
 
-The FTP root is the public `/apps` directory, matching the other Aagedal apps.
+The FTP login directory is the public `/apps` directory, matching the relative
+paths in the other Aagedal apps' curl deployment. Uploads and cleanup stay relative
+to that directory, even when the server's filesystem root is different.
 Deployment uses explicit FTPS with certificate verification and protected data
 connections. It validates the assets, uploads under a temporary name, renames,
 downloads the public installer to verify SHA-256, then publishes/verifies the

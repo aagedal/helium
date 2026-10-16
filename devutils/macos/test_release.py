@@ -9,9 +9,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
-from deploy_mirror import check_not_older, validate_bundle
+from deploy_mirror import check_not_older, upload_atomic, validate_bundle
 from make_appcast import make_feed
 
 
@@ -85,6 +85,11 @@ class ReleaseTests(unittest.TestCase):
         feed = (self.root / 'helium-neo-backup.xml').read_bytes()
         with patch('deploy_mirror.urlopen', return_value=io.BytesIO(feed)):
             check_not_older(self.manifest)
+
+    def test_upload_uses_login_directory_instead_of_server_root(self):
+        ftp = Mock()
+        upload_atomic(ftp, self.archive, 'helium-neo', self.archive.name, '/hosting/www/apps')
+        self.assertEqual(ftp.cwd.call_args_list, [call('/hosting/www/apps'), call('helium-neo')])
 
 
 if __name__ == '__main__':
