@@ -207,7 +207,6 @@ def extract_helper():
     return ''.join(line.value for hunk in header for line in hunk if not line.is_removed)
 
 
-
 def main():
     """Compile and run the multi-pane geometry checks."""
     parser = argparse.ArgumentParser(description=__doc__)

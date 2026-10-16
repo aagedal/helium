@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "A Helium felszabadítja az inaktív lapok által használt memóriát. Így az aktív lapok és más alkalmazások több számítógépes erőforrást kapnak, és a Helium gyors marad. Az inaktív lapok automatikusan újra aktívvá válnak, amikor visszatér hozzájuk."
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "A Helium Neo felszabadítja az inaktív lapok által használt memóriát. Így az aktív lapok és más alkalmazások több számítógépes erőforrást kapnak, és a Helium Neo gyors marad. Az inaktív lapok automatikusan újra aktívvá válnak, amikor visszatér hozzájuk."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "A Helium kíméli az akkumulátort a háttértevékenység és a vizuális effektusok, például a sima görgetés és a videók képkockasebességének korlátozásával."
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "A Helium Neo kíméli az akkumulátort a háttértevékenység és a vizuális effektusok, például a sima görgetés és a videók képkockasebességének korlátozásával."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "A Helium előre betölti az oldalakat, ami gyorsabbá teszi a böngészést és a keresést."
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "A Helium Neo előre betölti az oldalakat, ami gyorsabbá teszi a böngészést és a keresést."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "Importálva innen: <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>"
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "Importálva innen: <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>"
   },
   {
     "name": "IDS_EXTENSIONS_IMPORTER_LOCK_TITLE",
@@ -46,18 +46,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "Helium szolgáltatások"
+    "source": "Helium Neo services",
+    "message": "Helium Neo szolgáltatások"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "A böngészőjében engedélyezett Helium szolgáltatások kezelése"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "A böngészőjében engedélyezett Helium Neo szolgáltatások kezelése"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "A Helium szolgáltatások frissítései:"
+    "source": "Updates to Helium Neo services:",
+    "message": "A Helium Neo szolgáltatások frissítései:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -71,23 +71,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Csatlakozás engedélyezése a Helium szolgáltatásokhoz"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Csatlakozás engedélyezése a Helium Neo szolgáltatásokhoz"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "Ha engedélyezve van, a Helium anonim webszolgáltatásokhoz csatlakozhat, hogy kiegészítő funkciókat biztosítson. Ha le van tiltva, ezek a funkciók nem működnek."
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "Ha engedélyezve van, a Helium Neo anonim webszolgáltatásokhoz csatlakozhat, hogy kiegészítő funkciókat biztosítson. Ha le van tiltva, ezek a funkciók nem működnek."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "Saját Helium szolgáltatáspéldány használata"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Saját Helium Neo szolgáltatáspéldány használata"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "Használhatja saját Helium szolgáltatási példányát is, amelyet Ön maga üzemeltet, és ezt a böngészőjében az alapértelmezett helyett használhatja. Kizárólag HTTPS kapcsolaton keresztül működik."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "Használhatja saját Helium Neo szolgáltatási példányát is, amelyet Ön maga üzemeltet, és ezt a böngészőjében az alapértelmezett helyett használhatja. Kizárólag HTTPS kapcsolaton keresztül működik."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -96,18 +96,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "Egyéni origin URL a Helium szolgáltatásokhoz"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "Egyéni origin URL a Helium Neo szolgáltatásokhoz"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "A Helium szolgáltatások frissültek. Kérjük, tekintse át a módosításokat."
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "A Helium Neo szolgáltatások frissültek. Kérjük, tekintse át a módosításokat."
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "A Helium szolgáltatások frissítéseinek áttekintése"
+    "source": "Review Helium Neo services updates",
+    "message": "A Helium Neo szolgáltatások frissítéseinek áttekintése"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -116,8 +116,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "A Helium szolgáltatások nem érhetők el, amíg a beállítás be nem fejeződik, az adatvédelem és a hozzájárulás biztosítása érdekében."
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "A Helium Neo szolgáltatások nem érhetők el, amíg a beállítás be nem fejeződik, az adatvédelem és a hozzájárulás biztosítása érdekében."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -156,8 +156,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Ha engedélyezve van, a Helium proxykapcsolaton keresztül tölti le és frissíti a bővítményeket az adatvédelem érdekében. Ha le van tiltva, a bővítmények letöltése és frissítése nem fog működni."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Ha engedélyezve van, a Helium Neo proxykapcsolaton keresztül tölti le és frissíti a bővítményeket az adatvédelem érdekében. Ha le van tiltva, a bővítmények letöltése és frissítése nem fog működni."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -166,13 +166,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "A Helium letölti a bangek listáját, amelyek segítenek gyorsabban böngészni az interneten, például !w vagy !gh. Ha le van tiltva, a bangek nem fognak működni."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "A Helium Neo letölti a bangek listáját, amelyek segítenek gyorsabban böngészni az interneten, például !w vagy !gh. Ha le van tiltva, a bangek nem fognak működni."
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "Kérjük, ellenőrizze, hogy a Helium szolgáltatások engedélyezve vannak-e (beleértve a helyesírás-ellenőrző szótárak letöltését), és győződjön meg róla, hogy a tűzfal nem blokkolja a Helium szerverekről történő letöltéseket."
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "Kérjük, ellenőrizze, hogy a Helium Neo szolgáltatások engedélyezve vannak-e (beleértve a helyesírás-ellenőrző szótárak letöltését), és győződjön meg róla, hogy a tűzfal nem blokkolja a Helium Neo szerverekről történő letöltéseket."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -181,8 +181,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "A Helium kérésre letölti a helyesírás-ellenőrzéshez használt szótárfájlokat. Ha le van tiltva, a helyesírás-ellenőrzés nem fog működni."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "A Helium Neo kérésre letölti a helyesírás-ellenőrzéshez használt szótárfájlokat. Ha le van tiltva, a helyesírás-ellenőrzés nem fog működni."
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -196,8 +196,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "A Helium friss szűrőlistákat tölt be a uBlock Originba. A listákra irányuló összes kérés proxykapcsolaton keresztül történik az adatvédelem érdekében. Ha le van tiltva, az alapértelmezett szűrőlisták a helyi tárhelyről töltődnek be, amelyek csak a Helium frissítéseivel együtt frissülnek. Az opcionális szűrőlisták proxy nélkül kerülnek lekérésre."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "A Helium Neo friss szűrőlistákat tölt be a uBlock Originba. A listákra irányuló összes kérés proxykapcsolaton keresztül történik az adatvédelem érdekében. Ha le van tiltva, az alapértelmezett szűrőlisták a helyi tárhelyről töltődnek be, amelyek csak a Helium Neo frissítéseivel együtt frissülnek. Az opcionális szűrőlisták proxy nélkül kerülnek lekérésre."
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -211,8 +211,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "A komponensek frissítése le van tiltva. Lásd a Helium szolgáltatások menüpontot a beállításokban."
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "A komponensek frissítése le van tiltva. Lásd a Helium Neo szolgáltatások menüpontot a beállításokban."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -231,8 +231,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "Amikor a címsorba gépel, a Helium elküldi a beírt szöveget az alapértelmezett keresőmotornak, hogy javaslatokat kapjon. Inkognitó módban ez ki van kapcsolva."
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "Amikor a címsorba gépel, a Helium Neo elküldi a beírt szöveget az alapértelmezett keresőmotornak, hogy javaslatokat kapjon. Inkognitó módban ez ki van kapcsolva."
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -261,8 +261,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "A bővítmények letöltése le van tiltva. Engedélyezze ezt a funkciót a Helium szolgáltatások beállításaiban, és próbálja újra."
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "A bővítmények letöltése le van tiltva. Engedélyezze ezt a funkciót a Helium Neo szolgáltatások beállításaiban, és próbálja újra."
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -276,13 +276,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "A Helium inkognitó módban nem ment el semmit a böngészéséről, de a letöltések és könyvjelzők megmaradnak. A böngészés nem hagy nyomot ezen az eszközön, és más felhasználók nem fogják látni a tevékenységét."
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "A Helium Neo inkognitó módban nem ment el semmit a böngészéséről, de a letöltések és könyvjelzők megmaradnak. A böngészés nem hagy nyomot ezen az eszközön, és más felhasználók nem fogják látni a tevékenységét."
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "Helium komponens"
+    "source": "Helium Neo component",
+    "message": "Helium Neo komponens"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -366,8 +366,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "A Helium nem állítható be alapértelmezettként, mert nem található <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> fájl a következő helyeken: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "A Helium Neo nem állítható be alapértelmezettként, mert nem található <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> fájl a következő helyeken: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -426,7 +426,7 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
     "message": "A Heliumnek teljes lemezhozzáférésre van szüksége a könyvjelzőid Safariból való importálásához."
   },
   {
@@ -681,8 +681,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "A Helium automatikusan ellenőrzi és telepíteni fogja a frissítéseket. Ez a böngésző- és komponensfrissítéseket is magába foglalja. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást, hogy mindig megkapd a legújabb funkciókat és biztonsági frissítéseket."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "A Helium Neo automatikusan ellenőrzi és telepíteni fogja a frissítéseket. Ez a böngésző- és komponensfrissítéseket is magába foglalja. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást, hogy mindig megkapd a legújabb funkciókat és biztonsági frissítéseket."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -691,8 +691,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "A Helium automatikusan ellenőrzi és telepíteni fogja a komponensfrissítéseket. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást. Linuxon a böngésző frissítését a disztribúciód csomagkezelője végzi. Legalább hetente ellenőrizd, hogy elérhető-e frissítés a Helium csomagjához."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "A Helium Neo automatikusan ellenőrzi és telepíteni fogja a komponensfrissítéseket. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást. Linuxon a böngésző frissítését a disztribúciód csomagkezelője végzi. Legalább hetente ellenőrizd, hogy elérhető-e frissítés a Helium Neo csomagjához."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -821,8 +821,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "Válaszd ki, hogy a Helium kérdezzen-e az összeomlási jelentések elküldése előtt, vagy automatikusan küldje őket. A jelentések letiltása törli az összes függőben lévő jelentést."
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "Válaszd ki, hogy a Helium Neo kérdezzen-e az összeomlási jelentések elküldése előtt, vagy automatikusan küldje őket. A jelentések letiltása törli az összes függőben lévő jelentést."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -846,13 +846,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "A Helium váratlanul bezárult. Egy összeomlási jelentés segíthet nekünk kijavítani a felmerült hibát, és megelőzni annak újbóli előfordulását."
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "A Helium Neo váratlanul bezárult. Egy összeomlási jelentés segíthet nekünk kijavítani a felmerült hibát, és megelőzni annak újbóli előfordulását."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "Egy összeomlási jelentés véletlenül tartalmazhat érzékeny adatokat, amelyek az összeomlás pillanatában a Helium memóriájában voltak."
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "Egy összeomlási jelentés véletlenül tartalmazhat érzékeny adatokat, amelyek az összeomlás pillanatában a Helium Neo memóriájában voltak."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -871,8 +871,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "Az összeomlások jelentése le van tiltva a Helium beállításaiban vagy házirend által."
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "Az összeomlások jelentése le van tiltva a Helium Neo beállításaiban vagy házirend által."
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -901,8 +901,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "Helium beállítása"
+    "source": "Helium Neo Setup",
+    "message": "Helium Neo beállítása"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -916,17 +916,17 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "Helium partner"
+    "source": "Helium Neo Partner",
+    "message": "Helium Neo partner"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "A szolgáltatásért fizetve támogatod a Helium fejlesztését."
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "A szolgáltatásért fizetve támogatod a Helium Neo fejlesztését."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
+    "source": "Meet Helium Neo",
     "message": "Ismerd meg a Heliumot"
   },
   {
@@ -936,8 +936,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "Helium szolgáltatások"
+    "source": "Helium Neo services",
+    "message": "Helium Neo szolgáltatások"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -946,13 +946,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Csatlakozás engedélyezése a Helium szolgáltatásokhoz"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Csatlakozás engedélyezése a Helium Neo szolgáltatásokhoz"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "A Helium szolgáltatások további funkciókat biztosítanak, mint például: bővítmények letöltése, natív !bang parancsok, a szűrőlisták és a böngésző frissítése. Letiltás esetén ezek egyike sem fog működni, de a Helium semmilyen webes kérést nem indít."
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "A Helium Neo szolgáltatások további funkciókat biztosítanak, mint például: bővítmények letöltése, natív !bang parancsok, a szűrőlisták és a böngésző frissítése. Letiltás esetén ezek egyike sem fog működni, de a Helium Neo semmilyen webes kérést nem indít."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -961,8 +961,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "A Helium letölt egy bang-parancsok listáját, amelyek segítenek gyorsabban böngészni az interneten, például !w vagy !gh. Letiltás esetén a bang-parancsok nem működnek."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "A Helium Neo letölt egy bang-parancsok listáját, amelyek segítenek gyorsabban böngészni az interneten, például !w vagy !gh. Letiltás esetén a bang-parancsok nem működnek."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -971,8 +971,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Bekapcsolva a Helium proxyn keresztül tölti le és frissíti a bővítményeket az adataid védelme érdekében. Kikapcsolva a bővítmények letöltése és frissítése nem működik."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Bekapcsolva a Helium Neo proxyn keresztül tölti le és frissíti a bővítményeket az adataid védelme érdekében. Kikapcsolva a bővítmények letöltése és frissítése nem működik."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -981,8 +981,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "A Helium friss szűrőlistákat tölt le a uBlock Originhoz. A listákhoz intézett összes kérés proxyn keresztül halad az adataid védelme érdekében. Letiltás esetén az alapértelmezett szűrőlisták a helyi tárolóból töltődnek be, amelyek csak a Heliummal együtt frissülnek. Az opcionális szűrőlisták proxy nélkül lesznek lekérve."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "A Helium Neo friss szűrőlistákat tölt le a uBlock Originhoz. A listákhoz intézett összes kérés proxyn keresztül halad az adataid védelme érdekében. Letiltás esetén az alapértelmezett szűrőlisták a helyi tárolóból töltődnek be, amelyek csak a Heliummal együtt frissülnek. Az opcionális szűrőlisták proxy nélkül lesznek lekérve."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -991,8 +991,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "A Helium automatikusan keresi és telepíti a frissítéseket. Ez magában foglalja a böngésző- és komponensfrissítéseket is. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást, hogy mindig megkapd a legújabb funkciókat és biztonsági frissítéseket."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "A Helium Neo automatikusan keresi és telepíti a frissítéseket. Ez magában foglalja a böngésző- és komponensfrissítéseket is. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást, hogy mindig megkapd a legújabb funkciókat és biztonsági frissítéseket."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1001,8 +1001,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "A Helium automatikusan keresi és telepíti a komponensfrissítéseket. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást. Linuxon a böngészőfrissítéseket a disztribúciód csomagkezelője kezeli. Kérjük, legalább hetente ellenőrizd a Helium csomagfrissítéseit."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "A Helium Neo automatikusan keresi és telepíti a komponensfrissítéseket. Javasoljuk, hogy hagyd bekapcsolva ezt a beállítást. Linuxon a böngészőfrissítéseket a disztribúciód csomagkezelője kezeli. Kérjük, legalább hetente ellenőrizd a Helium Neo csomagfrissítéseit."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1011,18 +1011,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "A Helium szükség esetén letölti a helyesírás-ellenőrzéshez használt szótárfájlokat. Letiltás esetén a helyesírás-ellenőrzés nem működik."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "A Helium Neo szükség esetén letölti a helyesírás-ellenőrzéshez használt szótárfájlokat. Letiltás esetén a helyesírás-ellenőrzés nem működik."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "Saját Helium szolgáltatás-példány használata"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Saját Helium Neo szolgáltatás-példány használata"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "Üzemeltetheted a Helium szolgáltatások saját példányát, és a böngésződben az előre üzemeltetett kiszolgáló helyett ezt használhatod. Ha van ilyened, beállíthatod a Helium beállításaiban."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "Üzemeltetheted a Helium Neo szolgáltatások saját példányát, és a böngésződben az előre üzemeltetett kiszolgáló helyett ezt használhatod. Ha van ilyened, beállíthatod a Helium Neo beállításaiban."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1041,8 +1041,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "Egyéni keresőmotor. Az adatvédelmét nem ellenőrizte a Helium."
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "Egyéni keresőmotor. Az adatvédelmét nem ellenőrizte a Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1056,17 +1056,17 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
+    "source": "Ready to switch to Helium Neo?",
     "message": "Készen állsz a Heliumra váltásra?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "A Helium legyen az alapértelmezett böngészőm."
+    "source": "Make Helium Neo my default browser.",
+    "message": "A Helium Neo legyen az alapértelmezett böngészőm."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
+    "source": "Just trying Helium Neo for now.",
     "message": "Egyelőre csak kipróbálom a Heliumot."
   },
   {
@@ -1106,8 +1106,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "Annak kezelése, hogy a Helium hogyan védjen az ujjlenyomatvétel ellen"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "Annak kezelése, hogy a Helium Neo hogyan védjen az ujjlenyomatvétel ellen"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1116,13 +1116,13 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "Ha az ujjlenyomat-védelem be van kapcsolva, a Helium zajt ad bizonyos böngészőfunkciókhoz, hogy megnehezítse a webhelyek számára a követésedet és a profilozásodat. Minden webhely következetes, véletlenszerűsített információkat lát a böngészési munkamenet során, így kisebb az esélye annak, hogy ez kiderüljön."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "Ha az ujjlenyomat-védelem be van kapcsolva, a Helium Neo zajt ad bizonyos böngészőfunkciókhoz, hogy megnehezítse a webhelyek számára a követésedet és a profilozásodat. Minden webhely következetes, véletlenszerűsített információkat lát a böngészési munkamenet során, így kisebb az esélye annak, hogy ez kiderüljön."
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
-    "message": "Az ujjlenyomatvétel nem akadályozható meg teljesen, de a Helium védelmi megoldásai megnehezítik az eredeti ujjlenyomat visszanyerését."
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
+    "message": "Az ujjlenyomatvétel nem akadályozható meg teljesen, de a Helium Neo védelmi megoldásai megnehezítik az eredeti ujjlenyomat visszanyerését."
   },
   {
     "name": "IDS_SETTINGS_NOISE_CUSTOM_DESCRIPTION",
@@ -1151,8 +1151,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "Ha az ujjlenyomat-védelem be van kapcsolva, a Helium zajt ad bizonyos böngészőfunkciókhoz, hogy megnehezítse a webhelyek számára a követésedet és a profilozásodat."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "Ha az ujjlenyomat-védelem be van kapcsolva, a Helium Neo zajt ad bizonyos böngészőfunkciókhoz, hogy megnehezítse a webhelyek számára a követésedet és a profilozásodat."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1161,8 +1161,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "Az ujjlenyomat-védelem ki van kapcsolva a Helium beállításaiban."
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "Az ujjlenyomat-védelem ki van kapcsolva a Helium Neo beállításaiban."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1276,8 +1276,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "A Helium webhelyekhez való kapcsolódásának, az engedélyezett adatvédelmi jelzéseknek és további beállításoknak a kezelése"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "A Helium Neo webhelyekhez való kapcsolódásának, az engedélyezett adatvédelmi jelzéseknek és további beállításoknak a kezelése"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1341,22 +1341,22 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "A Helium nem tudott hozzáférni a macOS Kulcskarikához. Az Ön adatainak védelme érdekében a böngésző bezárul. Ha a macOS kéri, engedélyezze a hozzáférést a Helium titkosítási kulcsához. Lépjen ki a Helium minden más futó példányából, majd nyissa meg újra."
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "A Helium Neo nem tudott hozzáférni a macOS Kulcskarikához. Az Ön adatainak védelme érdekében a böngésző bezárul. Ha a macOS kéri, engedélyezze a hozzáférést a Helium Neo titkosítási kulcsához. Lépjen ki a Helium Neo minden más futó példányából, majd nyissa meg újra."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
     "message": "Szabja ízlésére a Heliumot, és importálja adatait más böngészőkből. Tegye otthonossá, vagy kezdjen rögtön böngészni."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "Az alapértelmezett beállítások használatával a Helium szolgáltatások automatikusan engedélyezve lesznek."
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "Az alapértelmezett beállítások használatával a Helium Neo szolgáltatások automatikusan engedélyezve lesznek."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
     "message": "A beállítás befejeződött. Köszönjük, hogy a Heliumot választotta. Ideje újra élvezni az internetet."
   },
   {
@@ -1371,13 +1371,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
     "message": "Jobb adatvédelem, gyorsaság és kényelem. Mindez egy kattintással. Szeretné, hogy a linkek alapértelmezés szerint a Heliumban nyíljanak meg?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "A Helium nem rendelkezik beépített jelszókezelővel. Szeretne telepíteni egyet a Webáruházból?"
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "A Helium Neo nem rendelkezik beépített jelszókezelővel. Szeretne telepíteni egyet a Webáruházból?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_PROTON_PASS",
@@ -1391,7 +1391,7 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
     "message": "Népszerű, fizetős és zárt forráskódú jelszókezelő. Európai vagy amerikai adattárolást kínál. További beállítások nélkül előfordulhat, hogy nem működik megfelelően a Heliummal."
   },
   {

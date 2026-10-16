@@ -1,18 +1,18 @@
 [
   {
     "name": "IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium fast. Your inactive tabs automatically become active again when you go back to them.",
-    "message": "Helium oslobađa memoriju iz neaktivnih kartica. Ovo daje aktivnim karticama i drugim aplikacijama više računarskih resursa i održava Helium brzim. Vaše neaktivne kartice automatski ponovo postaju aktivne kada se vratite na njih."
+    "source": "Helium Neo frees up memory from inactive tabs. This gives active tabs and other apps more computer resources and keeps Helium Neo fast. Your inactive tabs automatically become active again when you go back to them.",
+    "message": "Helium Neo oslobađa memoriju iz neaktivnih kartica. Ovo daje aktivnim karticama i drugim aplikacijama više računarskih resursa i održava Helium Neo brzim. Vaše neaktivne kartice automatski ponovo postaju aktivne kada se vratite na njih."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_BATTERY_SAVER_MODE_SETTING_DESCRIPTION",
-    "source": "Helium conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
-    "message": "Helium štedi bateriju ograničavanjem pozadinske aktivnosti i vizuelnih efekata, kao što su glatko skrolovanje i broj frejmova videa."
+    "source": "Helium Neo conserves battery power by limiting background activity and visual effects, such as smooth scrolling and video frame rates.",
+    "message": "Helium Neo štedi bateriju ograničavanjem pozadinske aktivnosti i vizuelnih efekata, kao što su glatko skrolovanje i broj frejmova videa."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_PRELOAD_TOGGLE_SUMMARY",
-    "source": "Helium preloads pages which makes browsing and searching faster.",
-    "message": "Helium unapred učitava stranice što čini pregledanje i pretragu bržim."
+    "source": "Helium Neo preloads pages which makes browsing and searching faster.",
+    "message": "Helium Neo unapred učitava stranice što čini pregledanje i pretragu bržim."
   },
   {
     "name": "IDS_SETTINGS_PERFORMANCE_TAB_DISCARDING_EXCEPTIONS_ADD_DIALOG_HELP",
@@ -31,8 +31,8 @@
   },
   {
     "name": "IDS_IMPORTED_FROM_BOOKMARK_FOLDER",
-    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
-    "message": "Uvezeno iz <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>",
+    "source": "Imported from <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
+    "message": "Uvezeno iz <ph name=\"BROWSER_NAME\">$1<ex>Helium Neo</ex></ph>",
     "feminine": "Uvezeno iz <ph name=\"BROWSER_NAME\">$1<ex>Helium</ex></ph>"
   },
   {
@@ -47,18 +47,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES",
-    "source": "Helium services",
-    "message": "Helium usluge"
+    "source": "Helium Neo services",
+    "message": "Helium Neo usluge"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_DESCRIPTION",
-    "source": "Manage what Helium services are allowed in your browser",
-    "message": "Upravljajte time koje Helium usluge su dozvoljene u vašem pregledaču"
+    "source": "Manage what Helium Neo services are allowed in your browser",
+    "message": "Upravljajte time koje Helium Neo usluge su dozvoljene u vašem pregledaču"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_TITLE",
-    "source": "Updates to Helium services:",
-    "message": "Ažuriranja Helium usluga:"
+    "source": "Updates to Helium Neo services:",
+    "message": "Ažuriranja Helium Neo usluga:"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SCHEMA_NOTICE_DESCRIPTION",
@@ -72,23 +72,23 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Dozvoli povezivanje sa Helium uslugama"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Dozvoli povezivanje sa Helium Neo uslugama"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
-    "message": "Kada je omogućeno, Helium će moći da se poveže sa anonimnim veb uslugama kako bi pružio dodatnu funkcionalnost. Kada je onemogućeno, dodatne funkcije neće raditi."
+    "source": "When enabled, Helium Neo will be able to connect to anonymous web services to provide additional functionality. When disabled, additional features will not work.",
+    "message": "Kada je omogućeno, Helium Neo će moći da se poveže sa anonimnim veb uslugama kako bi pružio dodatnu funkcionalnost. Kada je onemogućeno, dodatne funkcije neće raditi."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE",
-    "source": "Use your own instance of Helium services",
-    "message": "Koristite sopstvenu instancu Helium usluga"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Koristite sopstvenu instancu Helium Neo usluga"
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the default one. HTTPS only.",
-    "message": "Možete hostovati sopstvenu instancu Helium usluga i koristiti je u svom pregledaču umesto podrazumevane. Samo HTTPS."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the default one. HTTPS only.",
+    "message": "Možete hostovati sopstvenu instancu Helium Neo usluga i koristiti je u svom pregledaču umesto podrazumevane. Samo HTTPS."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_DESCRIPTION_WARNING",
@@ -97,18 +97,18 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_OVERRIDE_ARIA_LABEL",
-    "source": "Custom origin URL for Helium services",
-    "message": "Prilagođeni URL izvora za Helium usluge"
+    "source": "Custom origin URL for Helium Neo services",
+    "message": "Prilagođeni URL izvora za Helium Neo usluge"
   },
   {
     "name": "IDS_APPMENU_TOOLTIP_HELIUM_SERVICES_UPDATE",
-    "source": "Helium services have been updated. Please review the changes.",
-    "message": "Helium usluge su ažurirane. Pregledajte promene."
+    "source": "Helium Neo services have been updated. Please review the changes.",
+    "message": "Helium Neo usluge su ažurirane. Pregledajte promene."
   },
   {
     "name": "IDS_HELIUM_SERVICES_SCHEMA_MENU_ITEM",
-    "source": "Review Helium services updates",
-    "message": "Pregledajte ažuriranja Helium usluga"
+    "source": "Review Helium Neo services updates",
+    "message": "Pregledajte ažuriranja Helium Neo usluga"
   },
   {
     "name": "IDS_APP_MENU_BUTTON_HELIUM_SERVICES_UPDATE",
@@ -117,8 +117,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_TEXT",
-    "source": "Helium services are not available until setup is complete to ensure your privacy and consent.",
-    "message": "Helium usluge nisu dostupne dok se podešavanje ne završi kako bi se obezbedila vaša privatnost i saglasnost."
+    "source": "Helium Neo services are not available until setup is complete to ensure your privacy and consent.",
+    "message": "Helium Neo usluge nisu dostupne dok se podešavanje ne završi kako bi se obezbedila vaša privatnost i saglasnost."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SETUP_PENDING_BUTTON",
@@ -157,8 +157,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_EXT_PROXY_TOGGLE_DESCRIPTION",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Kada je omogućeno, Helium će proksirati preuzimanja i ažuriranja ekstenzija kako bi zaštitio vašu privatnost. Kada je onemogućeno, preuzimanje i ažuriranje ekstenzija neće raditi."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Kada je omogućeno, Helium Neo će proksirati preuzimanja i ažuriranja ekstenzija kako bi zaštitio vašu privatnost. Kada je onemogućeno, preuzimanje i ažuriranje ekstenzija neće raditi."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE",
@@ -167,13 +167,13 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_BANGS_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium će preuzeti listu bangs komandi koje vam pomažu da brže pretražujete internet, kao što su !w ili !gh. Kada je onemogućeno, bangs komande neće raditi."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo će preuzeti listu bangs komandi koje vam pomažu da brže pretražujete internet, kao što su !w ili !gh. Kada je onemogućeno, bangs komande neće raditi."
   },
   {
     "name": "IDS_SETTINGS_LANGUAGES_DICTIONARY_DOWNLOAD_FAILED_HELP_HELIUM",
-    "source": "Please check that Helium services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium servers.",
-    "message": "Proverite da li su Helium usluge omogućene (uključujući preuzimanje rečnika za proveru pravopisa) i uverite se da zaštitni zid ne blokira preuzimanja sa Helium servera."
+    "source": "Please check that Helium Neo services are enabled (including spell check downloads) and make sure that the firewall is not blocking downloads from Helium Neo servers.",
+    "message": "Proverite da li su Helium Neo usluge omogućene (uključujući preuzimanje rečnika za proveru pravopisa) i uverite se da zaštitni zid ne blokira preuzimanja sa Helium Neo servera."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE",
@@ -182,8 +182,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_SPELLCHECK_TOGGLE_DESCRIPTION",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium će preuzimati datoteke rečnika koje se koriste za proveru pravopisa kada je to potrebno. Kada je onemogućeno, provera pravopisa neće raditi."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo će preuzimati datoteke rečnika koje se koriste za proveru pravopisa kada je to potrebno. Kada je onemogućeno, provera pravopisa neće raditi."
   },
   {
     "name": "IDS_SETTINGS_ABOUT_PAGE_BROWSER_VERSION",
@@ -197,8 +197,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UBO_DESCRIPTION",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium će preuzimati sveže liste filtera za uBlock Origin. Svi zahtevi za liste se proksiraju radi zaštite vaše privatnosti. Kada je onemogućeno, podrazumevane liste filtera će se učitavati iz lokalnog skladišta, a ažuriraju se samo zajedno sa Helium-om. Opcione liste filtera će se zahtevati bez proksiranja."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo će preuzimati sveže liste filtera za uBlock Origin. Svi zahtevi za liste se proksiraju radi zaštite vaše privatnosti. Kada je onemogućeno, podrazumevane liste filtera će se učitavati iz lokalnog skladišta, a ažuriraju se samo zajedno sa Helium Neo-om. Opcione liste filtera će se zahtevati bez proksiranja."
   },
   {
     "name": "IDS_SETTINGS_NEW_TAB_NEXT_TO_ACTIVE_BUTTON",
@@ -212,8 +212,8 @@
   },
   {
     "name": "IDS_COMPONENTS_SVC_STATUS_ERROR_HELIUM_SERVICES",
-    "source": "Component updates are disabled. See Helium services in settings.",
-    "message": "Ažuriranja komponenti su onemogućena. Pogledajte Helium usluge u podešavanjima."
+    "source": "Component updates are disabled. See Helium Neo services in settings.",
+    "message": "Ažuriranja komponenti su onemogućena. Pogledajte Helium Neo usluge u podešavanjima."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE",
@@ -232,8 +232,8 @@
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_DESC_HELIUM",
-    "source": "When you type in the address bar, Helium sends what you type to your default search engine to get suggestions. This is off in Incognito.",
-    "message": "Kada kucate u traci za adresu, Helium šalje ono što kucate vašem podrazumevanom pretraživaču da bi dobio predloge. Ovo je isključeno u režimu bez arhiviranja."
+    "source": "When you type in the address bar, Helium Neo sends what you type to your default search engine to get suggestions. This is off in Incognito.",
+    "message": "Kada kucate u traci za adresu, Helium Neo šalje ono što kucate vašem podrazumevanom pretraživaču da bi dobio predloge. Ovo je isključeno u režimu bez arhiviranja."
   },
   {
     "name": "IDS_SETTINGS_SUGGEST_PREF_HELIUM",
@@ -262,8 +262,8 @@
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_SUBPAGE_SUMMARY_HELIUM_SERVICES_DISABLED",
-    "source": "Extension downloads are disabled. Enable this feature in Helium services settings and try again.",
-    "message": "Preuzimanja ekstenzija su onemogućena. Omogućite ovu funkciju u podešavanjima Helium usluga i pokušajte ponovo."
+    "source": "Extension downloads are disabled. Enable this feature in Helium Neo services settings and try again.",
+    "message": "Preuzimanja ekstenzija su onemogućena. Omogućite ovu funkciju u podešavanjima Helium Neo usluga i pokušajte ponovo."
   },
   {
     "name": "IDS_DOWNLOAD_BUBBLE_INTERRUPTED_EXTENSION_DL_DISABLED",
@@ -277,13 +277,13 @@
   },
   {
     "name": "IDS_NEW_TAB_OTR_SUBTITLE_HELIUM",
-    "source": "Helium will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
-    "message": "Helium neće sačuvati ništa o vašem pregledanju u režimu bez arhiviranja, ali preuzimanja i obeleživači će ostati. Vaše pregledanje neće ostaviti tragove na ovom uređaju i drugi korisnici neće moći da vide vašu aktivnost."
+    "source": "Helium Neo will not save anything about your browsing in Incognito, but downloads and bookmarks will stick around. Your browsing won't leave any traces on this device, and other users won't be able to see your activity.",
+    "message": "Helium Neo neće sačuvati ništa o vašem pregledanju u režimu bez arhiviranja, ali preuzimanja i obeleživači će ostati. Vaše pregledanje neće ostaviti tragove na ovom uređaju i drugi korisnici neće moći da vide vašu aktivnost."
   },
   {
     "name": "IDS_EXTENSIONS_INSTALL_LOCATION_HELIUM",
-    "source": "Helium component",
-    "message": "Helium komponenta"
+    "source": "Helium Neo component",
+    "message": "Helium Neo komponenta"
   },
   {
     "name": "IDS_SETTINGS_BROWSER_LAYOUT",
@@ -367,8 +367,8 @@
   },
   {
     "name": "IDS_SETTINGS_DEFAULT_BROWSER_SECONDARY",
-    "source": "Helium cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
-    "message": "Helium ne može biti postavljen kao podrazumevani pregledač jer datoteka <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> nije pronađena ni u jednom od sledećih direktorijuma: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
+    "source": "Helium Neo cannot be set as default, because no <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> file was found in any of: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications.",
+    "message": "Helium Neo ne može biti postavljen kao podrazumevani pregledač jer datoteka <ph name=\"DESKTOP_FILENAME\">$1<ex>helium.desktop</ex></ph> nije pronađena ni u jednom od sledećih direktorijuma: ~/.local/share/applications, /usr/share/applications, /usr/local/share/applications."
   },
   {
     "name": "IDS_SETTINGS_CHOOSE_CUSTOM_AVATAR_FILE",
@@ -417,8 +417,8 @@
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_MESSAGE",
-    "source": "Helium needs Full Disk Access to import your Bookmarks from Safari.",
-    "message": "Helium-u je potreban pun pristup disku za uvoz obeleživača iz Safari-ja."
+    "source": "Helium Neo needs Full Disk Access to import your Bookmarks from Safari.",
+    "message": "Helium Neo-u je potreban pun pristup disku za uvoz obeleživača iz Safari-ja."
   },
   {
     "name": "IDS_IMPORT_FULL_DISK_ACCESS_DIALOG_LINK",
@@ -682,8 +682,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium će automatski proveravati da li postoje ažuriranja i instalirati ih. To obuhvata ažuriranja pregledača i komponenti. Preporučujemo da ovo podešavanje ostane omogućeno kako biste dobijali najnovije funkcije i bezbednosna ažuriranja."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo će automatski proveravati da li postoje ažuriranja i instalirati ih. To obuhvata ažuriranja pregledača i komponenti. Preporučujemo da ovo podešavanje ostane omogućeno kako biste dobijali najnovije funkcije i bezbednosna ažuriranja."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE",
@@ -692,8 +692,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_SERVICES_UPDATE_DESCRIPTION",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium će automatski proveravati da li postoje ažuriranja komponenti i instalirati ih. Preporučujemo da ovo podešavanje ostane omogućeno. Na Linux-u, ažuriranjima pregledača upravlja menadžer paketa vaše distribucije. Proveravajte ažuriranja Helium paketa bar jednom nedeljno."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo će automatski proveravati da li postoje ažuriranja komponenti i instalirati ih. Preporučujemo da ovo podešavanje ostane omogućeno. Na Linux-u, ažuriranjima pregledača upravlja menadžer paketa vaše distribucije. Proveravajte ažuriranja Helium Neo paketa bar jednom nedeljno."
   },
   {
     "name": "IDS_TAB_CXMENU_HIBERNATE_OTHER_TABS",
@@ -822,8 +822,8 @@
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DESCRIPTION",
-    "source": "Choose whether Helium can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
-    "message": "Izaberite da li Helium može da traži slanje izveštaja o otkazivanju ili da ih šalje automatski. Onemogućavanje izveštaja će izbrisati sve izveštaje na čekanju."
+    "source": "Choose whether Helium Neo can ask to send crash reports or send them automatically. Disabling reports will delete all pending reports.",
+    "message": "Izaberite da li Helium Neo može da traži slanje izveštaja o otkazivanju ili da ih šalje automatski. Onemogućavanje izveštaja će izbrisati sve izveštaje na čekanju."
   },
   {
     "name": "IDS_SETTINGS_HELIUM_CRASH_REPORTING_DISABLED",
@@ -847,13 +847,13 @@
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_DESCRIPTION",
-    "source": "Helium closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
-    "message": "Helium se neočekivano zatvorio. Izveštaj o otkazivanju bi mogao da nam pomogne da rešimo problem na koji ste naišli i sprečimo da se ponovo dogodi."
+    "source": "Helium Neo closed unexpectedly. A crash report could help us fix the issue you ran into and prevent it from happening again.",
+    "message": "Helium Neo se neočekivano zatvorio. Izveštaj o otkazivanju bi mogao da nam pomogne da rešimo problem na koji ste naišli i sprečimo da se ponovo dogodi."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_PRIVACY",
-    "source": "A crash report may incidentally include some sensitive data present in Helium's memory at the time of crash.",
-    "message": "Izveštaj o otkazivanju može slučajno uključiti neke osetljive podatke koji su bili u memoriji programa Helium u trenutku otkazivanja."
+    "source": "A crash report may incidentally include some sensitive data present in Helium Neo's memory at the time of crash.",
+    "message": "Izveštaj o otkazivanju može slučajno uključiti neke osetljive podatke koji su bili u memoriji programa Helium Neo u trenutku otkazivanja."
   },
   {
     "name": "IDS_HELIUM_CRASH_REPORTING_DIALOG_OPTIONAL",
@@ -872,8 +872,8 @@
   },
   {
     "name": "IDS_CRASH_DISABLED_MESSAGE",
-    "source": "Crash reporting is disabled in Helium settings or by policy.",
-    "message": "Prijavljivanje otkazivanja je onemogućeno u Helium podešavanjima ili smernicom."
+    "source": "Crash reporting is disabled in Helium Neo settings or by policy.",
+    "message": "Prijavljivanje otkazivanja je onemogućeno u Helium Neo podešavanjima ili smernicom."
   },
   {
     "name": "IDS_CRASH_BUG_LINK_LABEL",
@@ -902,8 +902,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PAGE_TITLE",
-    "source": "Helium Setup",
-    "message": "Helium podešavanje"
+    "source": "Helium Neo Setup",
+    "message": "Helium Neo podešavanje"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_BUTTON_USE_DEFAULTS",
@@ -917,18 +917,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TITLE",
-    "source": "Helium Partner",
-    "message": "Helium partner"
+    "source": "Helium Neo Partner",
+    "message": "Helium Neo partner"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PARTNER_TOOLTIP",
-    "source": "Paying for this service will support the development of Helium.",
-    "message": "Plaćanje ove usluge će podržati razvoj programa Helium."
+    "source": "Paying for this service will support the development of Helium Neo.",
+    "message": "Plaćanje ove usluge će podržati razvoj programa Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_GREETING",
-    "source": "Meet Helium",
-    "message": "Upoznajte Helium"
+    "source": "Meet Helium Neo",
+    "message": "Upoznajte Helium Neo"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_TITLE",
@@ -938,8 +938,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_TITLE",
-    "source": "Helium services",
-    "message": "Helium usluge"
+    "source": "Helium Neo services",
+    "message": "Helium Neo usluge"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SUBTITLE",
@@ -948,13 +948,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_TITLE",
-    "source": "Allow connecting to Helium services",
-    "message": "Dozvoli povezivanje sa Helium uslugama"
+    "source": "Allow connecting to Helium Neo services",
+    "message": "Dozvoli povezivanje sa Helium Neo uslugama"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_CONNECTION_DESC",
-    "source": "Helium services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium will not make any web requests.",
-    "message": "Helium usluge pružaju dodatne funkcije, kao što su: preuzimanje dodataka, izvorni !bang-ovi, ažuriranja lista filtera i ažuriranja pregledača. Kada su onemogućene, nijedna od ovih funkcija neće raditi, ali Helium neće slati nijedan veb zahtev."
+    "source": "Helium Neo services provide additional functionality, such as: extension downloads, native !bangs, filter list updates, and browser updates. When disabled, none of these features will work, but Helium Neo will not make any web requests.",
+    "message": "Helium Neo usluge pružaju dodatne funkcije, kao što su: preuzimanje dodataka, izvorni !bang-ovi, ažuriranja lista filtera i ažuriranja pregledača. Kada su onemogućene, nijedna od ovih funkcija neće raditi, ali Helium Neo neće slati nijedan veb zahtev."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_TITLE",
@@ -963,8 +963,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_BANGS_DESC",
-    "source": "Helium will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
-    "message": "Helium će preuzeti listu bang-ova koji vam pomažu da brže pregledate internet, kao što su !w ili !gh. Kada je onemogućeno, bang-ovi neće raditi."
+    "source": "Helium Neo will fetch a list of bangs that help you browse the Internet faster, such as !w or !gh. When disabled, bangs will not work.",
+    "message": "Helium Neo će preuzeti listu bang-ova koji vam pomažu da brže pregledate internet, kao što su !w ili !gh. Kada je onemogućeno, bang-ovi neće raditi."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_TITLE",
@@ -973,8 +973,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_EXTENSIONS_DESC",
-    "source": "When enabled, Helium will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
-    "message": "Kada je omogućeno, Helium će preusmeravati preuzimanja i ažuriranja dodataka preko proksija radi zaštite vaše privatnosti. Kada je onemogućeno, preuzimanje i ažuriranje dodataka neće raditi."
+    "source": "When enabled, Helium Neo will proxy extension downloads and updates to protect your privacy. When disabled, downloading and updating extensions will not work.",
+    "message": "Kada je omogućeno, Helium Neo će preusmeravati preuzimanja i ažuriranja dodataka preko proksija radi zaštite vaše privatnosti. Kada je onemogućeno, preuzimanje i ažuriranje dodataka neće raditi."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_TITLE",
@@ -983,8 +983,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_UBLOCK_DESC",
-    "source": "Helium will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium. Optional filter lists will be requested without proxying.",
-    "message": "Helium će preuzeti sveže liste filtera za uBlock Origin. Svi zahtevi za listama se preusmeravaju preko proksija radi zaštite vaše privatnosti. Kada je onemogućeno, podrazumevane liste filtera će se učitavati iz lokalnog skladišta i ažuriraju se samo zajedno sa programom Helium. Opcione liste filtera će se zahtevati bez proksija."
+    "source": "Helium Neo will fetch fresh filter lists for uBlock Origin. All requests to lists are proxied to protect your privacy. When disabled, default filter lists will be loaded from local storage, which are only updated along with Helium Neo. Optional filter lists will be requested without proxying.",
+    "message": "Helium Neo će preuzeti sveže liste filtera za uBlock Origin. Svi zahtevi za listama se preusmeravaju preko proksija radi zaštite vaše privatnosti. Kada je onemogućeno, podrazumevane liste filtera će se učitavati iz lokalnog skladišta i ažuriraju se samo zajedno sa programom Helium Neo. Opcione liste filtera će se zahtevati bez proksija."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE",
@@ -993,8 +993,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC",
-    "source": "Helium will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
-    "message": "Helium će automatski proveravati ima li ažuriranja i instalirati ih. To uključuje ažuriranja pregledača i komponenti. Preporučujemo da ovo podešavanje ostane omogućeno kako biste dobili najnovije funkcije i bezbednosna ažuriranja."
+    "source": "Helium Neo will automatically check for updates and install them. This includes browser and component updates. We recommend keeping this setting enabled to ensure you get the latest features and security updates.",
+    "message": "Helium Neo će automatski proveravati ima li ažuriranja i instalirati ih. To uključuje ažuriranja pregledača i komponenti. Preporučujemo da ovo podešavanje ostane omogućeno kako biste dobili najnovije funkcije i bezbednosna ažuriranja."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_TITLE_LINUX",
@@ -1003,8 +1003,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_AUTOUPDATES_DESC_LINUX",
-    "source": "Helium will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium package updates at least every week.",
-    "message": "Helium će automatski proveravati ima li ažuriranja komponenti i instalirati ih. Preporučujemo da ovo podešavanje ostane omogućeno. Na Linuksu, ažuriranjima pregledača upravlja menadžer paketa vaše distribucije. Proveravajte ima li ažuriranja Helium paketa barem jednom nedeljno."
+    "source": "Helium Neo will automatically check for component updates and install them. We recommend keeping this setting enabled. On Linux, browser updates are handled by your distro's package manager. Please check for Helium Neo package updates at least every week.",
+    "message": "Helium Neo će automatski proveravati ima li ažuriranja komponenti i instalirati ih. Preporučujemo da ovo podešavanje ostane omogućeno. Na Linuksu, ažuriranjima pregledača upravlja menadžer paketa vaše distribucije. Proveravajte ima li ažuriranja Helium Neo paketa barem jednom nedeljno."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_TITLE",
@@ -1013,18 +1013,18 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_SPELLCHECK_DESC",
-    "source": "Helium will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
-    "message": "Helium će preuzimati datoteke rečnika koje se koriste za proveru pravopisa kada su potrebne. Kada je onemogućeno, provera pravopisa neće raditi."
+    "source": "Helium Neo will fetch dictionary files used for spell checking when requested. When disabled, spell checking will not work.",
+    "message": "Helium Neo će preuzimati datoteke rečnika koje se koriste za proveru pravopisa kada su potrebne. Kada je onemogućeno, provera pravopisa neće raditi."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_TITLE",
-    "source": "Use your own instance of Helium services",
-    "message": "Koristi sopstvenu instancu Helium usluga"
+    "source": "Use your own instance of Helium Neo services",
+    "message": "Koristi sopstvenu instancu Helium Neo usluga"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SERVICES_INSTANCE_DESC",
-    "source": "You can host your own instance of Helium services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium settings.",
-    "message": "Možete hostovati sopstvenu instancu Helium usluga i koristiti je u svom pregledaču umesto unapred hostovanog servera. Ako je imate, možete je podesiti u Helium podešavanjima."
+    "source": "You can host your own instance of Helium Neo services and use it in your browser instead of the pre-hosted server. If you have one, you can set it in Helium Neo settings.",
+    "message": "Možete hostovati sopstvenu instancu Helium Neo usluga i koristiti je u svom pregledaču umesto unapred hostovanog servera. Ako je imate, možete je podesiti u Helium Neo podešavanjima."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_PRIVATE",
@@ -1043,8 +1043,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_CATEGORIES_CUSTOM",
-    "source": "A custom search engine. Its privacy wasn't verified by Helium.",
-    "message": "Prilagođeni pretraživač. Njegovu privatnost Helium nije proverio."
+    "source": "A custom search engine. Its privacy wasn't verified by Helium Neo.",
+    "message": "Prilagođeni pretraživač. Njegovu privatnost Helium Neo nije proverio."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_ENGINES_BING",
@@ -1058,19 +1058,19 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_TITLE",
-    "source": "Ready to switch to Helium?",
-    "message": "Spremni da pređete na Helium?",
+    "source": "Ready to switch to Helium Neo?",
+    "message": "Spremni da pređete na Helium Neo?",
     "feminine": "Spremne da pređete na Helium?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_YES_DESC",
-    "source": "Make Helium my default browser.",
-    "message": "Postavi Helium kao moj podrazumevani pregledač."
+    "source": "Make Helium Neo my default browser.",
+    "message": "Postavi Helium Neo kao moj podrazumevani pregledač."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_NO_DESC",
-    "source": "Just trying Helium for now.",
-    "message": "Za sada samo isprobavam Helium."
+    "source": "Just trying Helium Neo for now.",
+    "message": "Za sada samo isprobavam Helium Neo."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DATA_IMPORT_TITLE",
@@ -1109,8 +1109,8 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_LINK_DESCRIPTION",
-    "source": "Manage how Helium protects you against fingerprinting",
-    "message": "Upravljajte time kako vas Helium štiti od digitalnog otiska"
+    "source": "Manage how Helium Neo protects you against fingerprinting",
+    "message": "Upravljajte time kako vas Helium Neo štiti od digitalnog otiska"
   },
   {
     "name": "IDS_SETTINGS_NOISE_TOGGLE_DESCRIPTION",
@@ -1119,12 +1119,12 @@
   },
   {
     "name": "IDS_SETTINGS_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
-    "message": "Kada je zaštita od digitalnog otiska uključena, Helium dodaje šum određenim funkcijama pregledača kako bi sajtovima otežao praćenje i profilisanje. Svaki sajt vidi dosledno nasumične informacije tokom vaše sesije pregledanja, čime se smanjuje mogućnost otkrivanja."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you. Each site sees consistent randomized information during your browsing session to reduce the chances of detection.",
+    "message": "Kada je zaštita od digitalnog otiska uključena, Helium Neo dodaje šum određenim funkcijama pregledača kako bi sajtovima otežao praćenje i profilisanje. Svaki sajt vidi dosledno nasumične informacije tokom vaše sesije pregledanja, čime se smanjuje mogućnost otkrivanja."
   },
   {
     "name": "IDS_SETTINGS_NOISE_DISCLAIMER",
-    "source": "Fingerprinting cannot be fully prevented, but Helium's analysis defenses make it harder to recover the original fingerprint.",
+    "source": "Fingerprinting cannot be fully prevented, but Helium Neo's analysis defenses make it harder to recover the original fingerprint.",
     "message": "Digitalni otisak se ne može u potpunosti sprečiti, ali Heliumove odbrane od analize otežavaju rekonstrukciju izvornog otiska."
   },
   {
@@ -1154,8 +1154,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_DESCRIPTION",
-    "source": "When fingerprinting protection is enabled, Helium adds noise to certain browser features to make it harder for sites to track and profile you.",
-    "message": "Kada je zaštita od digitalnog otiska uključena, Helium dodaje šum određenim funkcijama pregledača kako bi sajtovima otežao praćenje i profilisanje."
+    "source": "When fingerprinting protection is enabled, Helium Neo adds noise to certain browser features to make it harder for sites to track and profile you.",
+    "message": "Kada je zaštita od digitalnog otiska uključena, Helium Neo dodaje šum određenim funkcijama pregledača kako bi sajtovima otežao praćenje i profilisanje."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_BREAKAGE",
@@ -1164,8 +1164,8 @@
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_GLOBALLY_DISABLED",
-    "source": "Fingerprinting protection is turned off in Helium settings.",
-    "message": "Zaštita od digitalnog otiska je isključena u Helium podešavanjima."
+    "source": "Fingerprinting protection is turned off in Helium Neo settings.",
+    "message": "Zaštita od digitalnog otiska je isključena u Helium Neo podešavanjima."
   },
   {
     "name": "IDS_PAGE_INFO_HELIUM_NOISE_SETTINGS_BUTTON",
@@ -1279,8 +1279,8 @@
   },
   {
     "name": "IDS_SETTINGS_NETWORK_AND_SECURITY_DESCRIPTION",
-    "source": "Manage how Helium connects to sites, what privacy signals are allowed, and more",
-    "message": "Upravljajte načinom na koji se Helium povezuje sa sajtovima, dozvoljenim signalima privatnosti i drugim opcijama"
+    "source": "Manage how Helium Neo connects to sites, what privacy signals are allowed, and more",
+    "message": "Upravljajte načinom na koji se Helium Neo povezuje sa sajtovima, dozvoljenim signalima privatnosti i drugim opcijama"
   },
   {
     "name": "IDS_SETTINGS_PRIVACY_SIGNALS_SECTION_TITLE",
@@ -1344,23 +1344,23 @@
   },
   {
     "name": "IDS_KEYCHAIN_STARTUP_ERROR",
-    "source": "Helium couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium's encryption key. Quit any other copies of Helium, then reopen it.",
-    "message": "Helium nije mogao da pristupi funkciji macOS Keychain. Pregledač će se zatvoriti radi zaštite vaših podataka. Ako macOS to zatraži, dozvolite pristup ključu za šifrovanje programa Helium. Zatvorite sve druge pokrenute kopije programa Helium, pa ga ponovo otvorite."
+    "source": "Helium Neo couldn't access the macOS Keychain. To protect your data, the browser will close. If prompted by macOS, allow access to Helium Neo's encryption key. Quit any other copies of Helium Neo, then reopen it.",
+    "message": "Helium Neo nije mogao da pristupi funkciji macOS Keychain. Pregledač će se zatvoriti radi zaštite vaših podataka. Ako macOS to zatraži, dozvolite pristup ključu za šifrovanje programa Helium Neo. Zatvorite sve druge pokrenute kopije programa Helium Neo, pa ga ponovo otvorite."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_BODY",
-    "source": "Configure Helium to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
-    "message": "Podesite Helium po svom ukusu i uvezite podatke iz drugih pregledača. Uredite ga tako da se osećate kao kod kuće ili odmah počnite da pregledate veb."
+    "source": "Configure Helium Neo to match your taste and import data from other browsers. Make it feel like home or jump straight to browsing.",
+    "message": "Podesite Helium Neo po svom ukusu i uvezite podatke iz drugih pregledača. Uredite ga tako da se osećate kao kod kuće ili odmah počnite da pregledate veb."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_WELCOME_FOOTER",
-    "source": "If you use defaults, Helium services will be automatically enabled.",
-    "message": "Ako koristite podrazumevana podešavanja, Helium usluge će biti automatski omogućene."
+    "source": "If you use defaults, Helium Neo services will be automatically enabled.",
+    "message": "Ako koristite podrazumevana podešavanja, Helium Neo usluge će biti automatski omogućene."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_FINISH_BODY",
-    "source": "The setup is complete, thank you for choosing Helium. Time to enjoy the internet again.",
-    "message": "Podešavanje je završeno. Hvala vam što ste izabrali Helium. Vreme je da ponovo uživate u internetu."
+    "source": "The setup is complete, thank you for choosing Helium Neo. Time to enjoy the internet again.",
+    "message": "Podešavanje je završeno. Hvala vam što ste izabrali Helium Neo. Vreme je da ponovo uživate u internetu."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_SEARCH_TITLE",
@@ -1374,13 +1374,13 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_DEFAULT_BROWSER_SUBTITLE",
-    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium by default?",
-    "message": "Bolja privatnost, brzina i udobnost. Sve jednim klikom. Želite li da se linkovi podrazumevano otvaraju u pregledaču Helium?"
+    "source": "Better privacy, speed, and comfort. All in one click. Wanna make links open in Helium Neo by default?",
+    "message": "Bolja privatnost, brzina i udobnost. Sve jednim klikom. Želite li da se linkovi podrazumevano otvaraju u pregledaču Helium Neo?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_SUBTITLE",
-    "source": "Helium doesn't have a built-in password manager. Would you like to install one from the Web Store?",
-    "message": "Helium nema ugrađeni menadžer lozinki. Želite li da ga instalirate iz Veb prodavnice?"
+    "source": "Helium Neo doesn't have a built-in password manager. Would you like to install one from the Web Store?",
+    "message": "Helium Neo nema ugrađeni menadžer lozinki. Želite li da ga instalirate iz Veb prodavnice?"
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_PROTON_PASS",
@@ -1394,8 +1394,8 @@
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ONE_PASSWORD",
-    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium without extra configuration.",
-    "message": "Popularan, plaćen menadžer lozinki zatvorenog koda. Nudi čuvanje podataka u Evropi ili SAD. Možda neće ispravno raditi u pregledaču Helium bez dodatnog podešavanja."
+    "source": "Popular, paid, and closed-source password manager. Offers data storage in Europe or US. May not work correctly with Helium Neo without extra configuration.",
+    "message": "Popularan, plaćen menadžer lozinki zatvorenog koda. Nudi čuvanje podataka u Evropi ili SAD. Možda neće ispravno raditi u pregledaču Helium Neo bez dodatnog podešavanja."
   },
   {
     "name": "IDS_HELIUM_ONBOARDING_PASSWORD_MANAGERS_ICLOUD_PASSWORDS",

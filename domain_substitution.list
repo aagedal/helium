@@ -11227,6 +11227,10 @@ third_party/harfbuzz/src/test/api/test-draw.c
 third_party/harfbuzz/src/test/api/test-ot-tag.c
 third_party/harfbuzz/src/test/api/test-subset.c
 third_party/harfbuzz/src/util/gpu/matrix4x4.hh
+third_party/helium_jxl/src/CMakeLists.txt
+third_party/helium_jxl/src/lib/jxl/butteraugli/butteraugli.cc
+third_party/helium_jxl/src/lib/jxl/butteraugli/butteraugli.h
+third_party/helium_jxl/src/tools/ssimulacra.txt
 third_party/highway/src/.bcr/metadata.template.json
 third_party/highway/src/hwy/base.h
 third_party/hunspell/src/hunspell/affentry.cxx
