@@ -65,7 +65,7 @@
      "includes": [7505],
    },
 +  "<(SHARED_INTERMEDIATE_DIR)/components/helium_onboarding/resources.grd": {
-+   "META": {"sizes": {"includes": [48],}},
++   "META": {"sizes": {"includes": [64],}},
 +    "includes": [7510],
 +  },
    # END components/ section.

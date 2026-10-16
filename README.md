@@ -221,7 +221,8 @@ The embedded fields are arranged for photo and newsroom metadata tools:
   when supplied.
 - **Alt Text (Accessibility):** your optional image description. Empty alt text
   is omitted; post text and notes are never used as a substitute.
-- **Source:** the reviewed posting account; the page URL is also preserved
+- **Source:** the reviewed posting account and post permalink, separated by
+  ` / ` when both are supplied; the page URL is also preserved
   separately in XMP Source.
 - **Date Created:** the screenshot capture time, separate from the post's
   publication date. **Creator Tool** identifies the browser and version.
@@ -234,7 +235,10 @@ The IPTC Copyright Notice uses **Screenshot / [account] / [platform]**.
 Choose **Norsk — Skjermbilde** under **Copyright text language** for
 **Skjermbilde / [account] / [platform]**. The choice is remembered, and a live
 preview shows the resulting text. Twitter/X uses the platform name **Twitter**.
-The field stays empty when no posting account is supplied.
+When no posting account is supplied, the notice falls back to
+**Screenshot / [hostname]** or **Skjermbilde / [hostname]** for any website
+(for example, **Screenshot / tv2.no**). The hostname omits `www.`, the page
+path, query and fragment.
 
 **Automatically preserve HDR** is on by default and remembered for your profile.
 When the selected rendered pixels contain HDR brightness, the dialog automatically
@@ -245,8 +249,14 @@ readback availability, detection, output depth and color encoding are recorded.
 The preview and clipboard are SDR. HDR already tone-mapped by the webpage,
 renderer or display pipeline cannot be recovered by screenshot capture.
 
-**Save capture…** opens a save-location prompt. Clear **Include source report and
-checksum (ZIP)** to save the image alone. Leave it checked for a ZIP containing
+**Save capture** saves the image alone by default, with embedded IPTC metadata.
+**Save directly to screenshot folder** is enabled by default: choose a folder
+once, then subsequent captures save there without a location prompt. Use
+**Choose screenshot folder…** to change it, or turn off direct saving to choose
+a destination for each capture. The folder and direct-saving choice are remembered
+for your profile. **Captured by (username)** remembers the person taking the
+screenshot and embeds it as IPTC Creator, separately from the posting account.
+Enable **Include source report and checksum (ZIP)** for a ZIP containing
 `screenshot.png`, `.jpg` or `.jxl`, `metadata.json` and a readable `source.txt`,
 with a SHA-256 hash of the completed image. Format and ZIP choices are remembered
 for your profile. **Copy image** copies pixels without the embedded source record.
