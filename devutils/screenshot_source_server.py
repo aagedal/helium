@@ -51,17 +51,23 @@ def main():
             elif path == '/':
                 data, mime = (ROOT / 'screenshot_source_fixtures.html').read_bytes(), 'text/html'
             elif path == '/telegram-capture':
-                data, mime = (ROOT / 'screenshot_source_telegram_capture.html').read_bytes(), 'text/html'
+                data, mime = (ROOT /
+                              'screenshot_source_telegram_capture.html').read_bytes(), 'text/html'
             elif path == '/mastodon-capture':
-                data, mime = (ROOT / 'screenshot_source_mastodon_capture.html').read_bytes(), 'text/html'
+                data, mime = (ROOT /
+                              'screenshot_source_mastodon_capture.html').read_bytes(), 'text/html'
             elif path == '/linkedin-capture':
-                data, mime = (ROOT / 'screenshot_source_linkedin_capture.html').read_bytes(), 'text/html'
+                data, mime = (ROOT /
+                              'screenshot_source_linkedin_capture.html').read_bytes(), 'text/html'
             elif path == '/youtube-capture':
-                data, mime = (ROOT / 'screenshot_source_youtube_capture.html').read_bytes(), 'text/html'
+                data, mime = (ROOT /
+                              'screenshot_source_youtube_capture.html').read_bytes(), 'text/html'
             elif path == '/reddit-capture':
-                data, mime = (ROOT / 'screenshot_source_reddit_capture.html').read_bytes(), 'text/html'
+                data, mime = (ROOT /
+                              'screenshot_source_reddit_capture.html').read_bytes(), 'text/html'
             elif path == '/tiktok-capture':
-                data, mime = (ROOT / 'screenshot_source_tiktok_capture.html').read_bytes(), 'text/html'
+                data, mime = (ROOT /
+                              'screenshot_source_tiktok_capture.html').read_bytes(), 'text/html'
             else:
                 self.send_error(404)
                 return

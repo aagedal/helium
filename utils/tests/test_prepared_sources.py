@@ -4,8 +4,22 @@
 """Regression coverage for the upstream prepared-source merge and pruning."""
 
 from pathlib import Path
+import shutil
+import tarfile
 
 from .. import _extraction, prune_binaries
+
+
+def test_dependency_archive_creates_nested_output_directory(tmp_path):
+    source = tmp_path / 'input'
+    source.mkdir()
+    (source / 'encoder.cc').write_text('encoder')
+    archive = tmp_path / 'encoder.tar'
+    with tarfile.open(archive, 'w') as stream:
+        stream.add(source, arcname='encoder')
+    destination = tmp_path / 'chromium/third_party/helium_jxl/src'
+    _extraction._extract_tar_with_tar(shutil.which('tar'), archive, destination, Path('encoder'))
+    assert (destination / 'encoder.cc').read_text() == 'encoder'
 
 
 def write(root, name, content='data'):

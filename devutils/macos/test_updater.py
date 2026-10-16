@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import uuid
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
@@ -112,28 +113,30 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
     threading.Thread(target=server.serve_forever, daemon=True).start()
     results = {}
     succeeded = False
+    defaults_domain = 'no.aagedal.helium-neo.update-test.' + uuid.uuid4().hex
     try:
         with tempfile.TemporaryDirectory(prefix='neo-updater-test-') as temporary:
             root = Path(temporary)
             test_app = root / args.app.name
             subprocess.run(['ditto', str(args.app), str(test_app)], check=True)
             needs_update = args.scenario in ('feed-fallback', 'download-fallback', 'bad-signature')
+            info_path = test_app / 'Contents/Info.plist'
+            with info_path.open('rb') as stream:
+                info = plistlib.load(stream)
+            info['SUDefaultsDomain'] = defaults_domain
             if needs_update:
-                info_path = test_app / 'Contents/Info.plist'
-                with info_path.open('rb') as stream:
-                    info = plistlib.load(stream)
                 parts = manifest['build'].split('.')
                 parts[-1] = str(int(parts[-1]) - 1)
                 info['CFBundleVersion'] = '.'.join(parts)
-                with info_path.open('wb') as stream:
-                    plistlib.dump(info, stream)
-                subprocess.run([
-                    'codesign', '--force', '--timestamp', '--sign', args.identity, '--options',
-                    'restrict,kill,library,runtime', '--entitlements',
-                    str(args.source / 'chrome/app/app-entitlements.plist'),
-                    str(test_app)
-                ],
-                               check=True)
+            with info_path.open('wb') as stream:
+                plistlib.dump(info, stream)
+            subprocess.run([
+                'codesign', '--force', '--timestamp', '--sign', args.identity, '--options',
+                'restrict,kill,library,runtime', '--entitlements',
+                str(args.source / 'chrome/app/app-entitlements.plist'),
+                str(test_app)
+            ],
+                           check=True)
             profile = root / 'profile'
             (profile / 'Default').mkdir(parents=True)
             (profile / 'Default/Preferences').write_text(
@@ -261,6 +264,10 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
                 succeeded = True
     finally:
         server.shutdown()
+        subprocess.run(['defaults', 'delete', defaults_domain],
+                       check=False,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL)
         results['passed'] = succeeded
         args.report.write_text(
             json.dumps(results or {
