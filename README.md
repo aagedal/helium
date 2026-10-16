@@ -100,6 +100,22 @@ and Headline; the post permalink remains in Description. The browser and version
 are stored in Creator Tool, and the description omits copyright and language
 settings. The posting account is recorded as a source, not assumed to be the
 image creator or copyright owner.
+
+The embedded fields are arranged for photo and newsroom metadata tools:
+
+- **Title and Headline:** the captured page title.
+- **Description:** the readable source report, including the reviewed post
+  permalink, account, publication date and notes when supplied.
+- **Extended Description:** capture limitations, kept out of Description.
+- **Source:** the reviewed posting account; the page URL is also preserved
+  separately in XMP Source.
+- **Date Created:** the screenshot capture time, separate from the post's
+  publication date. **Creator Tool** identifies the browser and version.
+
+The complete structured source record remains embedded in every format,
+including observed values, reviewed values and how each was obtained. The ZIP's
+`source.txt` retains the capture limitations alongside the readable report.
+
 The IPTC Copyright Notice uses **Screenshot / [account] / [platform]**.
 Choose **Norsk — Skjermbilde** under **Copyright text language** for
 **Skjermbilde / [account] / [platform]**. The choice is remembered, and a live
