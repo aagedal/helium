@@ -3,7 +3,7 @@
 <div align="center">
     <img src="resources/branding/app_icon/raw.png"
         title="Helium Neo" alt="Helium Neo orbital logo" width="120" />
-    <p>A private Helium fork with flexible split workspaces and per-tab previews.</p>
+    <p>A private Helium fork with split workspaces, mobile previews, documented screenshots, and experimental WebKit playback.</p>
 </div>
 
 Helium Neo builds on [Helium](https://helium.computer/) and keeps this fork's
@@ -27,6 +27,8 @@ It retains Helium's privacy-focused foundation and adds the features below.
 - **Pinned splits return across sessions** with their pages, layout, divider
   sizes, and each pane's mobile mode and auto-refresh interval. This works with
   new-tab startup as well as last-session restore.
+- **Zen mode preserves the sidebar state**, including its remembered width
+  and whether it is collapsed. Entering Zen mode does not force it open.
 
 ### Per-tab rendering and refresh
 
@@ -50,6 +52,44 @@ in the user agent and Client Hints. Switching between desktop and mobile reloads
 eligible pages so device detection runs again. The rendering engine remains
 Chromium. Per-tab settings are restored locally and are not synced between devices.
 
+### Experimental WebKit playback on macOS
+
+On macOS 14 or later, enable
+**`helium://flags/#helium-webkit-streaming-tabs`** and restart to host WebKit
+pages inside Helium tabs. HTTPS pages on Netflix, TV 2 Play (`play.tv2.no`),
+HBO Max, Max, and Disney+ use WebKit automatically. Each tab has its own page;
+WebKit tabs in the same Helium profile share a separate persistent WebKit login
+and cookie store. Private and guest profiles remain on Chromium.
+
+With the flag enabled, right-click an ordinary HTTP(S) tab and select
+**Use WebKit renderer (reloads page)** to switch manually. Select it again to
+return the current WebKit URL to Chromium. A manual WebKit tab keeps subsequent
+HTTP(S) address-bar navigation in WebKit; an automatically routed tab returns to
+Chromium for an ordinary URL. Opening an internal or local page returns to
+Chromium. Switching renderers reloads the URL without transferring page state,
+form submissions, cookies, or logins. Renderer choices are not restored across
+sessions.
+
+Helium's address bar and tab title display the WebKit page, and its normal
+Back, Forward, Reload, and bypass-cache reload commands control that page.
+Chromium has no certificate information for WebKit pages, so the location bar
+does not present Chromium security or certificate state for them.
+
+This prototype is disabled by default. Extensions, Chromium history and
+site-data controls, downloads, printing, DevTools, and other browser integrations
+are not fully connected to WebKit. WebKit sessions are not restored; switching
+away suspends media, and returning requires an explicit playback resume.
+Protected playback was confirmed for Netflix and TV 2 Play in the separate
+native-window mode; protected playback in the tab host and on the newly added
+services still needs verification. Split-pane behavior, fullscreen, and
+accessibility also need broader testing.
+
+For separate native streaming windows, enable
+**`helium://flags/#helium-webkit-streaming`** instead. The tab-hosting flag takes
+precedence when both are enabled. See the
+[WebKit experiment notes](experiments/macos-webkit-drm/README.md) for validation
+history and remaining integration work.
+
 ### Startup and identity
 
 - Background session and pinned tabs load when needed, reducing startup work.
@@ -72,11 +112,12 @@ in **Settings → Keyboard shortcuts**, under **Capture screenshot with source**
 
 The review dialog records the page URL, title, capture times in UTC, selection
 bounds and image dimensions. You can optionally enter a post permalink, posting
-account, publication date as displayed, and notes or post text. These entries
-are recorded separately from observed page details. The browser can suggest a
-post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky,
-TikTok, Reddit, YouTube, LinkedIn, Mastodon and Telegram using visible links and the post container overlapping your
-selection. One clear match fills the field;
+account, publication date as displayed, post text, notes, and accessibility alt
+text. Post text is entered manually and kept separate from notes and alt text.
+These entries are recorded separately from observed page details. The browser can
+suggest a post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky,
+TikTok, Reddit, YouTube, LinkedIn, Mastodon and Telegram using visible links and
+the post container overlapping your selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
 heuristics, not verified attribution. Posting account and publication date can
@@ -136,13 +177,39 @@ slugs and numeric activity IDs are not used to guess authors, URLs or dates.
 Authenticated layouts, articles and shortened `lnkd.in` links are not supported
 by this addition. Live capture verification remains limited by sign-in overlays.
 
+Mastodon support targets the standard web app's timeline and detailed status
+layouts across instances. It requires a post's own matching author profile and
+timestamp link. Remote accounts retain their observed handle and instance-local
+permalink; status IDs are never translated into home-instance URLs. Boost actors,
+mentions and edited labels do not replace the original author or publication time.
+Other clients, ActivityPub URI-only layouts and missing ownership evidence require
+manual attribution. These DOM observations remain unverified.
+
+Telegram supports public channel message previews and standalone message widgets
+on `t.me`. The message's own timestamp permalink must match its `data-post`
+identity; account suggestions require its matching channel header link. Video
+durations and edited labels do not supply publication dates. Forwarded messages
+retain the publishing channel and its message time, without claiming original
+authorship. Reply previews and selected references require review. Private channels,
+chat clients, invitation links and channel landing pages without visible messages
+are not supported.
+
+The review dialog places editable **Source details** beside a live, read-only
+**IPTC / XMP preview**, stacking the preview below the form in narrow windows.
+Expand **Image description and notes**, **Export options**, and **Capture
+details** as needed. **Show XMP field names** reveals technical property names;
+focusing a source field highlights its related metadata headings. The preview
+updates as you edit and shows the values that will be embedded in the saved
+image, including the complete structured source record. Save and Copy remain
+visible outside the scrolling review area.
+
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image
 embeds IPTC Core fields in XMP, including a readable source description, capture
 date and posting account, plus the complete source record. Capture limitations
-are stored separately in Extended Description. The page title fills both Title
-and Headline; the post permalink remains in Description. The browser and version
-are stored in Creator Tool, and the description omits copyright and language
+remain in the structured source record and ZIP text report. The page title fills
+both Title and Headline; the post permalink remains in Description. The browser
+and version are stored in Creator Tool, and the description omits copyright and language
 settings. The posting account is recorded as a source, not assumed to be the
 image creator or copyright owner.
 
@@ -150,8 +217,10 @@ The embedded fields are arranged for photo and newsroom metadata tools:
 
 - **Title and Headline:** the captured page title.
 - **Description:** the readable source report, including the reviewed post
-  permalink, account, publication date and notes when supplied.
-- **Extended Description:** capture limitations, kept out of Description.
+  permalink, account, publication date, manually entered post text, and notes
+  when supplied.
+- **Alt Text (Accessibility):** your optional image description. Empty alt text
+  is omitted; post text and notes are never used as a substitute.
 - **Source:** the reviewed posting account; the page URL is also preserved
   separately in XMP Source.
 - **Date Created:** the screenshot capture time, separate from the post's
@@ -191,11 +260,16 @@ build. See [developer notes and validation](devutils/README.md).
 ## Builds and downloads
 
 This repository contains the fork's patches, resources, and build utilities.
-Installable Apple Silicon betas are published on the
-[Helium Neo releases page](https://github.com/aagedal/helium/releases). Download
-the signed DMG and drag **Helium Neo** to Applications. These standalone beta
-packages include their runtime libraries. Automatic updates are disabled;
-install subsequent betas manually.
+The latest release documented here is
+[Helium Neo 0.19.4.1 — Beta 5](https://github.com/aagedal/helium/releases/tag/v0.19.4.1-neo-beta.5),
+based on Chromium **155.0.8059.84**, for Apple Silicon Macs running macOS 13 or
+later. Download the
+[signed and notarized Beta 5 DMG](https://github.com/aagedal/helium/releases/download/v0.19.4.1-neo-beta.5/Helium-Neo-0.19.4.1-beta.5-macOS-arm64-signed.dmg)
+and drag **Helium Neo** to Applications. The release includes `SHA256SUMS` for
+the final installer. Other betas are available on the
+[Helium Neo releases page](https://github.com/aagedal/helium/releases). These
+standalone beta packages include their runtime libraries. Automatic updates are
+disabled; install subsequent betas manually.
 
 The [official Helium downloads](https://helium.computer/) distribute upstream
 Helium and do not include Helium Neo's custom features.
@@ -299,20 +373,3 @@ repositories is licensed under GPL-3.0. See [LICENSE](LICENSE).
 Any content imported from other projects retains its original license (for
 example, any original unmodified code imported from ungoogled-chromium remains
 licensed under their [BSD 3-Clause license](LICENSE.ungoogled_chromium)).
-
-Mastodon support targets the standard web app's timeline and detailed status
-layouts across instances. It requires a post's own matching author profile and
-timestamp link. Remote accounts retain their observed handle and instance-local
-permalink; status IDs are never translated into home-instance URLs. Boost actors,
-mentions and edited labels do not replace the original author or publication time.
-Other clients, ActivityPub URI-only layouts and missing ownership evidence require
-manual attribution. These DOM observations remain unverified.
-
-Telegram supports public channel message previews and standalone message widgets
-on `t.me`. The message's own timestamp permalink must match its `data-post`
-identity; account suggestions require its matching channel header link. Video
-durations and edited labels do not supply publication dates. Forwarded messages
-retain the publishing channel and its message time, without claiming original
-authorship. Reply previews and selected references require review. Private channels,
-chat clients, invitation links and channel landing pages without visible messages
-are not supported.
