@@ -383,3 +383,4 @@ helium/ui/screenshot-source-documentation.patch
 helium/ui/macos-webkit-streaming.patch
 helium/ui/macos-webkit-streaming-tabs.patch
 helium/ui/macos-webkit-manual-renderer.patch
+helium/ui/macos-webkit-browser-navigation.patch
