@@ -8,9 +8,11 @@ All browser profiles and update endpoints are isolated from production.
 import argparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import plistlib
 import socket
+import signal
 import subprocess
 import tempfile
 import threading
@@ -43,6 +45,21 @@ def webdriver(base, method, path, payload=None):
     return result
 
 
+def stop_test_processes(directory):
+    """Stop only processes launched from this test's unique disposable directory."""
+    if directory is None:
+        return
+    processes = subprocess.check_output(['ps', '-axo', 'pid=,command='], text=True)
+    prefixes = (str(directory) + '/', str(directory.resolve()) + '/')
+    for line in processes.splitlines():
+        fields = line.strip().split(None, 1)
+        if len(fields) == 2 and any(prefix in fields[1] for prefix in prefixes):
+            try:
+                os.kill(int(fields[0]), signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+
 def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """Drive a disposable signed app through a real Sparkle update scenario."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -55,7 +72,7 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
     parser.add_argument('--scenario',
                         choices=[
                             'current', 'feed-fallback', 'download-fallback', 'both-down',
-                            'bad-signature', 'disabled'
+                            'bad-signature', 'disabled', 'no-consent'
                         ],
                         required=True)
     args = parser.parse_args()
@@ -113,6 +130,7 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
     threading.Thread(target=server.serve_forever, daemon=True).start()
     results = {}
     succeeded = False
+    root = None
     defaults_domain = 'no.aagedal.helium-neo.update-test.' + uuid.uuid4().hex
     try:
         with tempfile.TemporaryDirectory(prefix='neo-updater-test-') as temporary:
@@ -145,7 +163,7 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
                         'completed_onboarding': True,
                         'services': {
                             'enabled': True,
-                            'user_consented': True,
+                            'user_consented': args.scenario != 'no-consent',
                             'schema_version': 999,
                             'browser_updates': args.scenario != 'disabled',
                             'ext_proxy': False,
@@ -208,7 +226,8 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
                         'download-fallback': 'nearly_updated',
                         'both-down': 'failed',
                         'bad-signature': 'failed',
-                        'disabled': 'disabled'
+                        'disabled': 'disabled',
+                        'no-consent': 'disabled'
                     }[args.scenario]
                     deadline = time.monotonic() + 150
                     while time.monotonic() < deadline:
@@ -227,8 +246,10 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
                             '/primary/helium-neo.xml'), requests
                     else:
                         assert '/backup/helium-neo.xml' not in requests, requests
-                    if args.scenario == 'disabled':
+                    if args.scenario in ('disabled', 'no-consent'):
                         assert not requests, requests
+                    else:
+                        assert '/primary/helium-neo.xml' in requests, requests
                     results = {
                         'scenario': args.scenario,
                         'passed': True,
@@ -264,18 +285,15 @@ def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-stateme
                 succeeded = True
     finally:
         server.shutdown()
+        stop_test_processes(root)
         subprocess.run(['defaults', 'delete', defaults_domain],
                        check=False,
                        stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL)
+        if not results:
+            results = {'scenario': args.scenario, 'requests': requests}
         results['passed'] = succeeded
-        args.report.write_text(
-            json.dumps(results or {
-                'scenario': args.scenario,
-                'passed': False,
-                'requests': requests
-            },
-                       indent=2) + '\n')
+        args.report.write_text(json.dumps(results, indent=2) + '\n')
     print(json.dumps(results, indent=2))
 
 

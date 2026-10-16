@@ -78,7 +78,7 @@ installation on quit from a lower signed build. It requires the packaged release
 built chromedriver, source path and Developer ID identity.
 
 For example, run each of `current`, `feed-fallback`, `download-fallback`,
-`both-down`, `bad-signature`, and `disabled` with:
+`both-down`, `bad-signature`, `disabled`, and `no-consent` with:
 
 ```sh
 python3 devutils/macos/test_updater.py \
