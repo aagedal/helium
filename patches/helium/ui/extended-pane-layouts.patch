@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -282,6 +282,8 @@
+@@ -291,6 +291,8 @@
        <message name="IDS_HELIUM_LAYOUT_LEFT_THREE" desc="Split pane arrangement with 4 pages.">One Left, Three Right</message>
        <message name="IDS_HELIUM_LAYOUT_THREE_LEFT" desc="Split pane arrangement with 4 pages.">Three Left, One Right</message>
        <message name="IDS_HELIUM_LAYOUT_TOP_THREE" desc="Split pane arrangement with 4 pages.">One Above, Three Below</message>

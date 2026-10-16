@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -14064,6 +14064,189 @@
+@@ -14432,6 +14432,189 @@
  
        <!-- Desktop Screenshots feature within the share hub; desktop-only. -->
        <if expr="not is_android">
@@ -187,9 +187,9 @@
 +        <message name="IDS_NEO_CAPTURE_COPYRIGHT_NORWEGIAN" desc="Norwegian screenshot credit format option, showing the Norwegian word for screenshot.">
 +          Norsk — Skjermbilde
 +        </message>
-         <message name="IDS_BROWSER_SHARING_SCREENSHOT_POST_CAPTURE_TITLE" desc="Title for the dialog shown after a screenshot is captured.">
+         <message name="IDS_BROWSER_SHARING_SCREENSHOT_POST_CAPTURE_TITLE"
+             desc="Title for the dialog shown after a screenshot is captured.">
          Screenshot copied to clipboard
-         </message>
 --- a/chrome/browser/image_editor/BUILD.gn
 +++ b/chrome/browser/image_editor/BUILD.gn
 @@ -2,6 +2,7 @@
@@ -3072,7 +3072,7 @@
  #include "components/translate/core/common/translate_util.h"
  #include "components/url_formatter/url_formatter.h"
  #include "components/user_prefs/user_prefs.h"
-@@ -1271,6 +1272,13 @@
+@@ -1269,6 +1270,13 @@
    const bool use_simplified_menu_for_text_selection =
        ShouldUseSimplifiedTextSelection();
  
@@ -3086,7 +3086,7 @@
    bool took_simplified_page_items_path = false;
    if (content_type_->SupportsGroup(ContextMenuContentType::ITEM_GROUP_PAGE)) {
      took_simplified_page_items_path = features::IsMenuSimplificationEnabled() &&
-@@ -1629,6 +1637,10 @@
+@@ -1627,6 +1635,10 @@
  }
  
  void RenderViewContextMenu::RecordUsedItem(int id) {
@@ -3097,7 +3097,7 @@
    // Log general ID.
  
    int enum_id =
-@@ -1744,6 +1756,9 @@
+@@ -1742,6 +1754,9 @@
  }
  
  void RenderViewContextMenu::RecordShownItem(int id, bool is_submenu) {
@@ -3107,7 +3107,7 @@
    // The "RenderViewContextMenu.Shown" histogram is not recorded for submenus.
    if (is_submenu) {
      return;
-@@ -3376,6 +3391,12 @@
+@@ -3374,6 +3389,12 @@
        enterprise_isolated_mode::IsolatedModeReplacesIncognito(GetProfile());
  
    switch (id) {
@@ -3120,7 +3120,7 @@
      case IDC_BACK:
        return embedder_web_contents_->GetController().CanGoBack();
  
-@@ -3973,6 +3994,14 @@
+@@ -3971,6 +3992,14 @@
  
      case IDC_FORWARD:
        chrome::GoForward(embedder_web_contents_);
@@ -6126,7 +6126,7 @@
 +    sk_color_space = dest_color_space.ToSkColorSpace();
    }
  
-   // TODO(https://bugs.ch40m1um.qjz9zk/p/skia/issues/detail?id=14389):
+   // TODO(https://bugs.chromium.org/p/skia/issues/detail?id=14389):
 @@ -867,7 +879,8 @@
  
    SkImageInfo dst_info = SkImageInfo::Make(

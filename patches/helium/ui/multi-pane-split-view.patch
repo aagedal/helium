@@ -324,7 +324,7 @@
      for (bool use_left_tab : {true, false}) {
 --- a/chrome/browser/ui/views/frame/browser_view.cc
 +++ b/chrome/browser/ui/views/frame/browser_view.cc
-@@ -2679,8 +2679,7 @@
+@@ -2659,8 +2659,7 @@
        GetWidget()->GetFocusManager()->ClearFocus();
      }
  
@@ -334,7 +334,7 @@
    }
  
    // Do this before updating InfoBarContainer as the InfoBarContainer may
-@@ -4158,7 +4157,7 @@
+@@ -4138,7 +4137,7 @@
            browser_->GetTabStripModel()->GetActiveTab();
  
        if (active_tab->GetSplit() == change.split_id) {
@@ -343,7 +343,7 @@
        }
        break;
      }
-@@ -5012,6 +5011,9 @@
+@@ -4992,6 +4991,9 @@
  
    std::vector<tabs::TabInterface*> split_tabs = split_data->ListTabs();
  
@@ -353,7 +353,7 @@
    for (size_t i = 0; tabs::TabInterface* tab : split_tabs) {
      multi_contents_view_->SetWebContentsAtIndex(tab->GetContents(), i++);
    }
-@@ -5061,7 +5063,13 @@
+@@ -5041,7 +5043,13 @@
    // However, there are cases where inactive tab can be activated without a
    // focus change e.g. using tab shortcuts and in these cases update focus.
    if (GetWidget()->IsActive() &&
@@ -368,7 +368,7 @@
      multi_contents_view_->GetActiveContentsView()->RequestFocus();
    }
  }
-@@ -5071,8 +5079,10 @@
+@@ -5051,8 +5059,10 @@
    return multi_contents_view_->IsInSplitView() &&
           multi_contents_view_->GetActiveContentsView()->web_contents() ==
               old_contents &&
@@ -381,7 +381,7 @@
  }
  
  void BrowserView::UpdateTabModalDialogHost() {
-@@ -5119,12 +5129,13 @@
+@@ -5099,12 +5109,13 @@
  }
  
  std::vector<ContentsWebView*> BrowserView::GetAllVisibleContentsWebViews() {
@@ -401,7 +401,7 @@
    }
    return contents_views;
  }
-@@ -6144,7 +6155,8 @@
+@@ -6123,7 +6134,8 @@
    if (updated_state) {
      split_tabs::SplitTabData* split_data =
          browser_->GetTabStripModel()->GetSplitData(new_tab->GetSplit().value());

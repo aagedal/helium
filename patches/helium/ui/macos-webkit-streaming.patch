@@ -1,6 +1,6 @@
 --- a/chrome/browser/BUILD.gn
 +++ b/chrome/browser/BUILD.gn
-@@ -1529,6 +1529,8 @@
+@@ -1521,6 +1521,8 @@
        "file_select_helper_mac.mm",
        "fullscreen_mac.mm",
        "global_keyboard_shortcuts_mac.mm",
@@ -9,14 +9,14 @@
        "icon_loader_mac.mm",
        "memory_details_mac.cc",
        "platform_util_mac.mm",
-@@ -1597,6 +1599,7 @@
+@@ -1589,6 +1591,7 @@
        "UserNotifications.framework",
        "UniformTypeIdentifiers.framework",
        "VideoToolbox.framework",
 +      "WebKit.framework",
      ]
+   }
  
-     if (enable_sparkle) {
 --- a/chrome/browser/chrome_content_browser_client.cc
 +++ b/chrome/browser/chrome_content_browser_client.cc
 @@ -839,6 +839,10 @@
