@@ -3370,14 +3370,20 @@
 +         "xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">"
 +         "<rdf:Description rdf:about=\"\" "
 +         "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
++         "xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\" "
 +         "xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\" "
 +         "xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\" "
 +         "xmlns:helium=\"https://github.com/aagedal/helium/ns/capture/1.0/\">"
 +         "<dc:title><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
 +         Field(automatic, "page_title") +
 +         "</rdf:li></rdf:Alt></dc:title>"
++         "<photoshop:Headline>" + Field(automatic, "page_title") +
++         "</photoshop:Headline>"
 +         "<dc:description><rdf:Alt><rdf:li xml:lang=\"x-default\">" +
 +         Xml(report) + "</rdf:li></rdf:Alt></dc:description>" + rights +
++         "<Iptc4xmpCore:ExtDescrAccessibility><rdf:Alt>"
++         "<rdf:li xml:lang=\"x-default\">" + Xml(kLimitations) +
++         "</rdf:li></rdf:Alt></Iptc4xmpCore:ExtDescrAccessibility>"
 +         "<dc:source>" + Field(automatic, "page_url") +
 +         "</dc:source>"
 +         "<photoshop:Source>" +
@@ -3595,8 +3601,6 @@
 +  automatic.Set("selected_peak_linear_rec2020", color.peak_linear);
 +  const std::string copyright_notice =
 +      ScreenshotCopyrightNotice(automatic, user_provided, language);
-+  const char* copyright_language =
-+      language == ScreenshotTextLanguage::kNorwegian ? "nb" : "en";
 +  const std::string filename = "screenshot." + extension;
 +  base::DictValue image;
 +  image.Set("filename", filename);
@@ -3621,7 +3625,6 @@
 +              "capture_started_at_utc");
 +  AppendField(report, "Capture completed (UTC, computer clock)", automatic,
 +              "capture_completed_at_utc");
-+  AppendField(report, "Browser", automatic, "browser");
 +  AppendField(report, "Post permalink (reviewed)", user_provided,
 +              "post_permalink");
 +  AppendField(report, "Permalink origin", user_provided,
@@ -3636,16 +3639,12 @@
 +              "publication_date_text_origin");
 +  AppendField(report, "Notes / post text (user-provided)", user_provided,
 +              "notes");
-+  report += "IPTC Copyright Notice (formatted source credit): " +
-+            (copyright_notice.empty() ? "Not supplied" : copyright_notice) +
-+            "\nCopyright text language: " + copyright_language + "\n\n";
 +  report += "Screenshot: " + filename +
 +            "\nDimensions: " + base::NumberToString(bitmap.width()) + " × " +
 +            base::NumberToString(bitmap.height()) + " pixels\n\n" +
 +            "Color: " + (hdr ? "16-bit Rec.2100 PQ HDR" : "8-bit sRGB SDR") +
 +            "\nHDR detected in selection: " + (color.hdr ? "Yes" : "No") +
-+            "\nHDR preserved: " + (hdr ? "Yes" : "No") + "\n\n" + kLimitations +
-+            "\n";
++            "\nHDR preserved: " + (hdr ? "Yes" : "No") + "\n";
 +
 +  base::DictValue metadata;
 +  metadata.Set("schema_version", 2);
@@ -3654,7 +3653,6 @@
 +  metadata.Set("user_provided", user_provided.Clone());
 +  metadata.Set("screenshot", std::move(image));
 +  metadata.Set("copyright_notice", copyright_notice);
-+  metadata.Set("copyright_text_language", copyright_language);
 +  metadata.Set("copyright_notice_method", "formatted_source_credit");
 +  metadata.Set("limitations", kLimitations);
 +  std::string json;
@@ -3674,8 +3672,10 @@
 +  // embedded metadata, then store that hash in the external ZIP manifest.
 +  const std::string hash = base::HexEncodeLower(crypto::hash::Sha256(bytes));
 +  metadata.FindDict("screenshot")->Set("sha256", hash);
-+  report +=
-+      "\nSHA-256 (complete image including embedded metadata): " + hash + "\n";
++  report += "\n";
++  report += kLimitations;
++  report += "\n\nSHA-256 (complete image including embedded metadata): " + hash +
++            "\n";
 +  if (!base::JSONWriter::WriteWithOptions(
 +          metadata, base::JSONWriter::OPTIONS_PRETTY_PRINT, &json))
 +    return {};
@@ -3746,7 +3746,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,443 @@
+@@ -0,0 +1,486 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4132,6 +4132,9 @@
 +    bool norwegian = language == ScreenshotTextLanguage::kNorwegian;
 +    automatic.Set("page_url", norwegian ? "https://x.com/source/status/123"
 +                                        : "https://www.instagram.com/p/123/");
++    automatic.Set("browser", "Helium Neo / Chromium 155.0.8059.79");
++    automatic.Set("page_title", "A page title æøå & <test>");
++    user.Set("post_permalink", "https://example.com/post/123");
 +    user.Set("posting_account", "@brukernavnæøå & <test>");
 +    const std::string expected =
 +        std::string(norwegian ? "Skjermbilde" : "Screenshot") +
@@ -4149,6 +4152,44 @@
 +                                std::string(norwegian ? "nb" : "en") + "\""),
 +          std::string::npos);
 +      EXPECT_NE(standalone.bytes.find("@brukernavnæøå &amp; &lt;test&gt;"),
++                std::string::npos);
++      const size_t description_start = standalone.bytes.find("<dc:description>");
++      const size_t description_end = standalone.bytes.find("</dc:description>");
++      ASSERT_NE(description_start, std::string::npos);
++      ASSERT_NE(description_end, std::string::npos);
++      const std::string description = standalone.bytes.substr(
++          description_start, description_end - description_start);
++      EXPECT_NE(description.find("Posting account (reviewed)"), std::string::npos);
++      EXPECT_NE(description.find("https://example.com/post/123"),
++                std::string::npos);
++      EXPECT_NE(standalone.bytes.find(
++                    "<dc:title><rdf:Alt><rdf:li xml:lang=\"x-default\">"
++                    "A page title æøå &amp; &lt;test&gt;</rdf:li></rdf:Alt>"
++                    "</dc:title>"),
++                std::string::npos);
++      EXPECT_NE(standalone.bytes.find(
++                    "<photoshop:Headline>A page title æøå &amp; &lt;test&gt;"
++                    "</photoshop:Headline>"),
++                std::string::npos);
++      EXPECT_EQ(description.find("This records a selected region"),
++                std::string::npos);
++      EXPECT_EQ(description.find("Copyright"), std::string::npos);
++      EXPECT_EQ(description.find("Skjermbilde"), std::string::npos);
++      EXPECT_EQ(description.find("Helium Neo / Chromium"), std::string::npos);
++      EXPECT_EQ(standalone.bytes.find("copyright_text_language"),
++                std::string::npos);
++      EXPECT_NE(standalone.bytes.find(
++                    "<xmp:CreatorTool>Helium Neo / Chromium 155.0.8059.79"
++                    "</xmp:CreatorTool>"),
++                std::string::npos);
++      EXPECT_NE(standalone.bytes.find(
++                    "<Iptc4xmpCore:ExtDescrAccessibility><rdf:Alt>"
++                    "<rdf:li xml:lang=\"x-default\">"
++                    "This records a selected region"),
++                std::string::npos);
++      EXPECT_NE(standalone.bytes.find(
++                    "converted export pixels.</rdf:li></rdf:Alt>"
++                    "</Iptc4xmpCore:ExtDescrAccessibility>"),
 +                std::string::npos);
 +      EXPECT_EQ(standalone.bytes.find("<dc:creator>"), std::string::npos);
 +      EXPECT_EQ(standalone.bytes.find("xmpRights:Marked"), std::string::npos);
@@ -4178,10 +4219,12 @@
 +      auto record = base::JSONReader::ReadDict(json, base::JSON_PARSE_RFC);
 +      ASSERT_TRUE(record);
 +      EXPECT_EQ(*record->FindString("copyright_notice"), expected);
-+      EXPECT_EQ(*record->FindString("copyright_text_language"),
-+                norwegian ? "nb" : "en");
++      EXPECT_FALSE(record->contains("copyright_text_language"));
 +      EXPECT_EQ(*record->FindDict("user_provided"), user);
-+      EXPECT_NE(report.find(expected), std::string::npos);
++      EXPECT_EQ(report.find(expected), std::string::npos);
++      EXPECT_EQ(report.find("Copyright text language:"), std::string::npos);
++      EXPECT_NE(report.find(*record->FindString("limitations")),
++                std::string::npos);
 +    }
 +  }
 +  auto blank =
