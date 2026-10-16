@@ -94,8 +94,12 @@ links remain available as secondary sources, including for a photo-only crop.
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image
 embeds IPTC Core fields in XMP, including a readable source description, capture
-date and posting account, plus the complete source record. The posting account
-is recorded as a source, not assumed to be the image creator or copyright owner.
+date and posting account, plus the complete source record. Capture limitations
+are stored separately in Extended Description. The page title fills both Title
+and Headline; the post permalink remains in Description. The browser and version
+are stored in Creator Tool, and the description omits copyright and language
+settings. The posting account is recorded as a source, not assumed to be the
+image creator or copyright owner.
 The IPTC Copyright Notice uses **Screenshot / [account] / [platform]**.
 Choose **Norsk — Skjermbilde** under **Copyright text language** for
 **Skjermbilde / [account] / [platform]**. The choice is remembered, and a live

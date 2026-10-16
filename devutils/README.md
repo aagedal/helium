@@ -148,8 +148,11 @@ XMP carry the same information. Capture precision never implies original-media
 precision or verified source authenticity.
 
 All three image formats embed the same XMP packet: IPTC Core Title
-(`dc:title`), Description (`dc:description`, readable source report), Source
-(`photoshop:Source`, the reviewed posting account), and Date Created
+(`dc:title`) and Headline (`photoshop:Headline`), both using the page title;
+Description (`dc:description`, source report without the capture
+limitations, copyright notice, language setting or browser/version), Extended
+Description (`Iptc4xmpCore:ExtDescrAccessibility`, the complete capture
+limitations), Source (`photoshop:Source`, the reviewed posting account), and Date Created
 (`photoshop:DateCreated`, screenshot capture time). `dc:source` records the page
 URL; XMP CreatorTool/CreateDate record the browser and capture time. A custom
 `helium:SourceRecord` property preserves the complete schema-2 JSON, including
@@ -162,7 +165,8 @@ updates a live preview. The notice uses the reviewed account and recognized
 permalink platform, falling back to the captured page's platform or hostname;
 an empty account leaves the notice absent. Twitter/X is labeled Twitter. XMP
 stores the selected text as both `x-default` and `en`/`nb`; the complete source
-record also identifies the language and formatted-source-credit method.
+record identifies the formatted-source-credit method without recording the
+language preference. The ZIP text report retains the capture limitations.
 No creator or rights-holder flag is set. XML is escaped, and JPEG uses Adobe
 Extended XMP for long records.
 PNG uses the standard XMP iTXt keyword; JPEG XL uses an uncompressed `xml ` box.
