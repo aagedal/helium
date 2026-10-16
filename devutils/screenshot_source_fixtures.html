@@ -168,6 +168,103 @@ window.runScreenshotSourceTests = () => {
     bskyPost.replace('feedItem-by-', 'postThreadItem-by-').replace('3l6oveex3ii2l','3reply'),
     bskyUrl.replace('3l6oveex3ii2l','3reply'), {publication_date_text:bskyDate});
   bskyCanonical.remove();
+  const ytUrl = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
+  const ytOther = 'https://www.youtube.com/watch?v=otherId1234';
+  const ytComment = ytUrl+'&lc=UgABC_123.reply-2';
+  const ytCanonical = document.createElement('link');ytCanonical.rel='canonical';ytCanonical.href=ytUrl;
+  document.head.append(ytCanonical);
+  const ytPost = `<ytd-watch-flexy video-id="jNQXAC9IVRw" style="display:block;position:absolute;left:20px;top:20px;width:600px;height:600px;background:#eee">
+    <div id="movie_player" style="position:absolute;left:0;top:0;width:400px;height:160px;background:#dce7ed">
+      <div id="crop" class="body">Video crop</div></div>
+    <ytd-watch-metadata style="display:block;position:absolute;left:0;top:180px;width:400px;height:150px">
+      <ytd-video-owner-renderer><a href="https://www.youtube.com/@reporter">Reporter</a></ytd-video-owner-renderer>
+      <ytd-watch-info-text><div id="info"><span>1,234 views</span><span> </span><span>Oct 16, 2026</span></div></ytd-watch-info-text>
+      <div id="description">Description</div></ytd-watch-metadata></ytd-watch-flexy>`;
+  detailsCheck('YouTube video crop retains scoped owner and publication label',ytPost,ytUrl,
+    {posting_account:'@reporter',publication_date_text:'Oct 16, 2026',date_evidence:'youtube_watch_info_date'});
+  detailsCheck('YouTube relative publication date remains relative',ytPost.replace('Oct 16, 2026','2 hours ago'),ytUrl,
+    {publication_date_text:'2 hours ago',publication_date_hover_target:undefined});
+  detailsCheck('YouTube missing owner never infers uploader from description mentions',ytPost.replace('<ytd-video-owner-renderer><a href="https://www.youtube.com/@reporter">Reporter</a></ytd-video-owner-renderer>','')
+    .replace('Description','Description <a href="https://www.youtube.com/@reporter">@reporter</a>'),ytUrl,{posting_account:undefined});
+  detailsCheck('YouTube observed channel ID profile keeps its display name, not a fabricated handle',ytPost.replace('/@reporter','/channel/UC1234567890123456789012'),ytUrl,
+    {posting_account:'Reporter',account_profile_url:'https://www.youtube.com/channel/UC1234567890123456789012'});
+  detailsCheck('YouTube conflicting owners leave posting account unset',ytPost.replace('</ytd-video-owner-renderer>','<a href="https://www.youtube.com/@other">Other</a></ytd-video-owner-renderer>'),ytUrl,
+    {posting_account:undefined});
+  detailsCheck('YouTube hidden owner links cannot establish account',ytPost.replace('<ytd-video-owner-renderer>','<ytd-video-owner-renderer hidden>'),ytUrl,{posting_account:undefined});
+  detailsCheck('YouTube missing info date does not use description dates or generic time',ytPost.replace('<span>Oct 16, 2026</span>','').replace('Description','Description <time datetime="2000-01-01T00:00:00Z">Jan 1, 2000</time>'),ytUrl,
+    {publication_date_text:undefined});
+  detailsCheck('YouTube unexpected info-row structure leaves date blank',ytPost.replace('Oct 16, 2026</span>','Oct 16, 2026</span><span>Another label</span>'),ytUrl,{publication_date_text:undefined});
+  check('YouTube stale page canonical cannot bind another video',ytPost.replace('video-id="jNQXAC9IVRw"','video-id="otherId1234"'),'none','');
+  check('YouTube missing video ID cannot use page metadata',ytPost.replace('video-id="jNQXAC9IVRw"',''),'none','');
+  check('YouTube active advertisement requires review',ytPost.replace('id="movie_player"','id="movie_player" class="ad-showing"'),'ambiguous','');
+  const ytAdResult=results[results.length-1];ytAdResult.passed &&= ytAdResult.actual.candidates.every(c=>!c.site_details.posting_account && !c.site_details.publication_date_text);
+  const ytCommentHtml = `<ytd-comment-view-model style="display:block;position:absolute;left:0;top:350px;width:400px;height:160px;background:#faf2d4">
+    <div id="header-author"><a href="https://www.youtube.com/@reader">@reader</a></div>
+    <span id="published-time-text"><a href="${ytComment}&pp=tracking">2 hours ago (edited)</a></span>
+    <div id="comment-body" style="position:absolute;left:15px;top:55px;width:300px;height:70px">Comment text</div></ytd-comment-view-model>`;
+  const ytWithComment = ytPost.replace('</ytd-watch-flexy>',ytCommentHtml+'</ytd-watch-flexy>');
+  detailsCheck('YouTube comment crop uses its own lc ID, author and displayed date',ytWithComment,ytComment,
+    {posting_account:'@reader',publication_date_text:'2 hours ago (edited)',date_evidence:'youtube_comment_timestamp_link'},()=>crop('comment-body'));
+  detailsCheck('YouTube comment by the uploader keeps its own date',ytWithComment.replaceAll('/@reader','/@reporter'),ytComment,
+    {posting_account:'@reporter',publication_date_text:'2 hours ago (edited)'},()=>crop('comment-body'));
+  check('YouTube unlinked comment cannot inherit the video',ytWithComment.replace(`href="${ytComment}&pp=tracking"`,'href="https://example.com/"'),
+    'none','',()=>crop('comment-body'));
+  check('YouTube video and comment together require review',ytWithComment,'ambiguous','',()=>({x:20,y:20,width:400,height:510,view_width:innerWidth,view_height:innerHeight}));
+  const ytReco = `<ytd-compact-video-renderer style="display:block;position:absolute;left:420px;top:0;width:160px;height:150px;background:#faf2d4">
+    <a href="${ytOther}">Recommended video</a><div id="recommendation-body" style="height:100px">Preview</div></ytd-compact-video-renderer>`;
+  const ytWithReco = ytPost.replace('</ytd-watch-flexy>',ytReco+'</ytd-watch-flexy>');
+  check('YouTube unlinked recommendation crop never inherits current uploader',ytWithReco,'none','',()=>crop('recommendation-body'));
+  const recoResult=results[results.length-1];recoResult.passed &&= recoResult.actual.candidates.every(c=>!c.site_details.posting_account);
+  check('YouTube directly selected recommendation requires review',ytWithReco,'ambiguous','',()=>{
+    const r=document.querySelector('ytd-compact-video-renderer').getBoundingClientRect();
+    return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  detailsCheck('YouTube off-crop recommendation does not compete with video',ytWithReco,ytUrl,
+    {posting_account:'@reporter'});
+  const ytReference = ytPost.replace('Video crop',`Video crop <a href="${ytOther}">Reference</a>`);
+  check('YouTube reference captured inside player requires review',ytReference,'ambiguous','');
+  check('YouTube reference on another site is reviewable without author inference',post(ytUrl),'ambiguous','',
+    ()=>{const r=document.querySelector('header a').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,view_width:innerWidth,view_height:innerHeight};});
+  for (const url of ['https://www.youtube.com/playlist?list=PL123','https://www.youtube.com/@reporter',
+      ytUrl+'&v=otherId1234',ytUrl+'&lc=',ytUrl+'&lc=bad%2Fid','https://www.youtube.com/watch?v=short',
+      'https://www.youtube.com.attacker.test/watch?v=jNQXAC9IVRw','https://user@www.youtube.com/watch?v=jNQXAC9IVRw',
+      'https://www.youtube.com:8443/watch?v=jNQXAC9IVRw','https://www.youtube.com/embed/jNQXAC9IVRw',
+      'https://youtu.be/jNQXAC9IVRw/extra']) check('YouTube rejects unsupported link '+url,post(url),'none','');
+  for (const url of ['https://youtu.be/jNQXAC9IVRw?t=20&si=share','https://m.youtube.com/watch?v=jNQXAC9IVRw',
+      'https://www.youtube.com/shorts/jNQXAC9IVRw','https://www.youtube.com/live/jNQXAC9IVRw']) {
+    detailsCheck('YouTube observed URL form normalizes video identity '+url,ytPost,ytUrl,{posting_account:'@reporter'});
+    ytCanonical.href=url;
+    detailsCheck('YouTube canonical URL form normalizes video identity '+url,ytPost,ytUrl,{posting_account:'@reporter'});
+  }
+  ytCanonical.href=ytUrl+'&lc=UgHighlighted';
+  detailsCheck('YouTube highlighted page comment never labels the player',ytPost,ytUrl,{posting_account:'@reporter'});
+  ytCanonical.href=ytUrl;
+  const ytShort = `<ytd-reel-video-renderer style="display:block;position:absolute;left:20px;top:20px;width:400px;height:300px;background:#eee">
+    <div id="shorts-player"><a class="ytp-title-link" href="https://www.youtube.com/shorts/jNQXAC9IVRw" style="display:none">Video title</a></div>
+    <div class="ytReelChannelBarViewModelChannelName"><a href="https://www.youtube.com/@shortcreator/shorts">@shortcreator</a></div>
+    <div id="crop" class="body">Short video</div></ytd-reel-video-renderer>`;
+  detailsCheck('YouTube Short binds observed player permalink and its own channel bar',ytShort,ytUrl,
+    {posting_account:'@shortcreator',publication_date_text:undefined});
+  check('YouTube Short without player identity does not use page metadata',ytShort.replace('class="ytp-title-link"','class="other-link"'),'none','');
+  detailsCheck('YouTube adjacent preloaded Short retains its own observed identity',ytShort.replaceAll('jNQXAC9IVRw','otherId1234'),ytOther,
+    {posting_account:'@shortcreator'});
+  check('YouTube two selected Shorts remain ambiguous',ytShort+ytShort.replaceAll('jNQXAC9IVRw','otherId1234').replace('top:20px','top:340px').replace('id="crop"','id="second"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:620,view_width:innerWidth,view_height:innerHeight}));
+  detailsCheck('YouTube untrusted channel host cannot supply uploader',ytPost.replace('https://www.youtube.com/@reporter','https://www.youtube.com.attacker.test/@reporter'),ytUrl,
+    {posting_account:undefined});
+  detailsCheck('YouTube Unicode handles retain observed identity',ytPost.replace('/@reporter','/@r%C3%A6porter'),ytUrl,{posting_account:'@ræporter'});
+  detailsCheck('YouTube encoded slash cannot be an account handle',ytPost.replace('/@reporter','/@bad%2Fhandle'),ytUrl,{posting_account:undefined});
+  detailsCheck('YouTube hidden date cannot supply publication label',ytPost.replace('<span>Oct 16, 2026</span>','<span hidden>Oct 16, 2026</span>'),ytUrl,{publication_date_text:undefined});
+  const ytOg=document.createElement('meta');ytOg.setAttribute('property','og:url');ytOg.content=ytOther;document.head.append(ytOg);
+  check('YouTube conflicting page video identities never choose one',ytPost,'none','');ytOg.remove();
+  ytCanonical.href=ytUrl+'&t=30&list=PLfixture&si=share';
+  detailsCheck('YouTube playback and playlist context are retained only as provenance',ytPost,ytUrl,{posting_account:'@reporter'});
+  results[results.length-1].passed &&= results[results.length-1].actual.candidates[0].original_url === ytCanonical.href;
+  ytCanonical.href=ytUrl;
+  const ytOverlay=ytPost+'<div style="position:fixed;inset:0;z-index:99;background:white">Login overlay</div>';
+  check('YouTube modal covering video cannot inherit its source',ytOverlay,'none','');
+  check('YouTube known but unlinked selected comment prevents video autofill',ytWithComment.replace(`href="${ytComment}&pp=tracking"`,'href="https://example.com/"'),
+    'ambiguous','',()=>({x:20,y:20,width:400,height:510,view_width:innerWidth,view_height:innerHeight}));
+  ytCanonical.remove();
   const rdUrl = 'https://www.reddit.com/r/news/comments/abc123/';
   const rdComment = rdUrl + 'comment/def456/';
   const rdProfile = 'https://www.reddit.com/user/Reporter/';

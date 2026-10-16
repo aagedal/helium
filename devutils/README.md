@@ -855,3 +855,51 @@ and offered a source chooser. A saved post PNG was inspected with ExifTool and
 its embedded source record verified the reviewed fields, original tracked URL,
 relative date, Reddit credit and separate capture time. This page is controlled
 local test content, not a live Reddit capture.
+
+
+YouTube extraction normalizes explicit watch, Shorts, live and `youtu.be` video
+links to `https://www.youtube.com/watch?v=VIDEO_ID`; an observed comment's full
+`lc` parameter remains distinct, including reply IDs containing dots. Playback
+time, playlists and tracking are omitted from the suggestion and retained in the
+original observed URL. Native validation accepts only the normalized video and
+comment forms. Embed, clip, playlist-only and channel URLs are not video sources.
+
+A watch video needs a matching `ytd-watch-flexy[video-id]` and agreement between
+observed page address/canonical/Open Graph video IDs. The crop must overlap the
+player or watch metadata; comments, sidebar recommendations, chat and unrelated
+panels cannot borrow that source. Shorts use their own scoped
+`#shorts-player a.ytp-title-link` rather than the current page address, so adjacent
+preloads stay independent. Uploader links come only from the video owner or the
+Short's channel bar. Observed handles, including Unicode, remain handles;
+channel-ID/legacy profile links retain their observed display name and profile
+URL without identity resolution. Conflicting owners leave the account blank.
+
+Watch dates come from the observed two-label watch-info row (view count and
+publication label). Expanded descriptions expose a calendar date in that same
+row; collapsed relative labels remain relative. Body text, generic time elements
+and hidden tooltip contents are excluded. Shorts dates remain absent. Current
+watch-page comments use their own `#published-time-text` link and scoped author
+row; nested replies retain their complete `lc` identity. Date text, including an
+edited marker, is preserved without parsing it into a guessed publication time.
+Shorts comment panels and live-chat messages are not attributed by this addition.
+References from any YouTube item are kept only when directly selected and require
+review. Known selected ads suppress uploader/date details; recommendation and
+end-screen tiles, unsupported selected items and multiple sources prevent silent
+autofill. No external API or timestamp hover was added.
+
+Validation: 230 production-script browser fixtures, 12 native source tests and
+nine native export tests passed. Both GN dependency checks, seven patch lint
+checks, patch-file checks, existing devutils tests and the strict no-fuzz
+reverse/apply round trip for all four changed Chromium files passed. The
+persistent macOS development app rebuilt successfully. Live public checks covered
+a watch-player crop, expanded watch date, comment with its own author and `lc`,
+a Short with its own handle, and end-screen recommendations requiring review.
+Authenticated, mobile and additional locale layouts, live broadcasts and actual
+advertisements still need broader live QA; the ad guard was verified in fixtures.
+
+Native QA at `http://127.0.0.1:8235/youtube-capture` verified separate video and
+comment fields, plus a full-page chooser with blank permalink/account/date.
+ExifTool inspection of the saved comment PNG verified its full `lc` URL,
+`@reader`, the unchanged relative edited label, reviewed-field origins, original
+tracking URL, YouTube credit and separate capture timestamp. This is controlled
+local test content, not a live YouTube capture.

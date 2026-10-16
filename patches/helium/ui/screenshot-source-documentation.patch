@@ -1007,12 +1007,14 @@
    gfx::Point drag_end_;
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source.cc
-@@ -0,0 +1,956 @@
+@@ -0,0 +1,1115 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
 +
 +#include "chrome/browser/image_editor/screenshot_source.h"
++
++#include <string_view>
 +
 +#include "base/json/json_writer.h"
 +#include "base/strings/strcat.h"
@@ -1039,6 +1041,17 @@
 +        // Use the observed account path; strip photo/video suffixes and tracking.
 +        path = path.slice(0, path.indexOf('/status/') + 8) + match[1];
 +        platform = 'twitter_x';
++      } else if (host === 'youtube.com' || host === 'youtu.be') {
++        const video = host === 'youtu.be' ? u.pathname.match(/^\/([A-Za-z0-9_-]{11})\/?$/)?.[1] :
++            path === '/watch' && u.searchParams.getAll('v').length === 1 ? u.searchParams.get('v') :
++            path.match(/^\/(?:shorts|live)\/([A-Za-z0-9_-]{11})\/?$/)?.[1];
++        const comments = u.searchParams.getAll('lc');
++        if (!/^[A-Za-z0-9_-]{11}$/.test(video || '') || comments.length > 1 ||
++            (comments.length && !/^[A-Za-z0-9_.-]{1,128}$/.test(comments[0]))) return null;
++        // Retain explicit comment identity. Playback time, playlists and share
++        // tracking remain in original_url, never in the suggested permalink.
++        path = '/watch?v=' + video + (comments.length ? '&lc=' + comments[0] : '');
++        platform = 'youtube';
 +      } else if (['reddit.com','old.reddit.com','new.reddit.com'].includes(host)) {
 +        // The title slug is not identity. Keep comment IDs distinct from posts,
 +        // including legacy /title/comment-id and current /comment/comment-id.
@@ -1102,6 +1115,7 @@
 +        }
 +      } else return null;
 +      const targetHost = platform === 'twitter_x' ? 'x.com' :
++          platform === 'youtube' ? 'www.youtube.com' :
 +          platform === 'reddit' ? 'www.reddit.com' :
 +          platform === 'tiktok' ? 'www.tiktok.com' :
 +          platform === 'bluesky' ? 'bsky.app' :
@@ -1144,8 +1158,12 @@
 +    const hit = document.elementFromPoint(x, y);
 +    return !!hit && (element.contains(hit) || hit.contains(element));
 +  };
++  const youtubeCommentSelector = 'ytd-comment-view-model,ytd-comment-renderer';
++  const youtubeSelector = 'ytd-watch-flexy,ytd-reel-video-renderer,' + youtubeCommentSelector +
++      ',ytd-compact-video-renderer,ytd-video-renderer,ytd-rich-grid-media,yt-lockup-view-model,' +
++      '.ytp-suggestion-set,.ytp-autonav-endscreen-link-container,ytd-live-chat-frame';
 +  const redditSelector = 'shreddit-post,shreddit-comment';
-+  const postSelector = redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
++  const postSelector = youtubeSelector + ',' + redditSelector + ',article,[role="article"],[data-testid="tweet"],[data-testid="quoteTweet"],[role="link"][data-href*="/status/"],[data-pagelet^="FeedUnit_"],[data-pagelet^="TimelineFeedUnit"],[aria-label^="Comment by "],[aria-label^="Kommentar fra "],[data-testid="status"],.detailed-actualStatus,[data-testid^="feedItem-by-"],[data-testid^="postThreadItem-by-"],[data-e2e="comment-level-1"],[data-e2e="comment-level-2"]';
 +  const text = element => (element?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 256);
 +  // Current Meta layouts may omit article semantics. Derive narrow post roots
 +  // from observed timestamp links, without adding attributes to the webpage.
@@ -1181,6 +1199,8 @@
 +    }
 +  }
 +  const postFor = element => {
++    const youtube = element?.closest(youtubeSelector);
++    if (youtube) return youtube;
 +    const reddit = element?.closest(redditSelector);
 +    if (reddit) return reddit;  // Ignore a comment's internal article wrapper.
 +    for (let node = element; node; node = node.parentElement) {
@@ -1219,6 +1239,97 @@
 +  const redditSelectedChild = post => [...post.querySelectorAll(redditSelector)].some(child =>
 +      visible(child) && exposed(child, child.getBoundingClientRect()) &&
 +      area(intersection(child.getBoundingClientRect(), selected)) >= 0.98 * area(selected));
++  const youtubeId = raw => {
++    const parsed = normalize(raw);
++    return parsed?.platform === 'youtube' ? new URL(parsed.url).searchParams.get('v') : null;
++  };
++  const youtubePageSources = [location.href,
++      document.querySelector('link[rel="canonical"]')?.href,
++      document.querySelector('meta[property="og:url"]')?.content].filter(raw => youtubeId(raw));
++  const youtubeMatches = (post, raw) => {
++    const parsed = normalize(raw);
++    if (parsed?.platform !== 'youtube' || !post) return false;
++    const url = new URL(parsed.url), id = url.searchParams.get('v');
++    if (post.matches(youtubeCommentSelector)) {
++      // A comment's own timestamp link establishes identity, not the page's lc
++      // parameter or a body mention. Distinct replies keep their full lc ID.
++      const times = [...post.querySelectorAll('#published-time-text a[href]')]
++          .filter(a => postFor(a) === post && visible(a, false));
++      return url.searchParams.has('lc') && times.length === 1 &&
++          normalize(times[0].href)?.url === parsed.url &&
++          post.closest('ytd-watch-flexy')?.getAttribute('video-id') === id;
++    }
++    if (url.searchParams.has('lc')) return false;
++    if (post.matches('ytd-watch-flexy')) {
++      return post.getAttribute('video-id') === id && youtubePageSources.length > 0 &&
++          youtubePageSources.every(source => youtubeId(source) === id);
++    }
++    if (post.matches('ytd-reel-video-renderer')) {
++      const links = [...post.querySelectorAll('#shorts-player a.ytp-title-link[href]')]
++          .filter(a => postFor(a) === post);
++      return links.length === 1 && youtubeId(links[0].href) === id;
++    }
++    return false;
++  };
++  const youtubeVideoSelected = post => {
++    const roots = post.matches('ytd-watch-flexy')
++        ? [...post.querySelectorAll('#movie_player,ytd-watch-metadata')].filter(e => postFor(e) === post)
++        : [post];
++    return roots.some(root => visible(root) && exposed(root, root.getBoundingClientRect()) &&
++        area(intersection(root.getBoundingClientRect(), selected)) >= 0.25 *
++            Math.min(area(selected), area(intersection(root.getBoundingClientRect(), viewport))));
++  };
++  const youtubeDetails = (post, parsed) => {
++    if (!youtubeMatches(post, parsed.url)) return {};
++    const comment = post.matches(youtubeCommentSelector), shorts = post.matches('ytd-reel-video-renderer');
++    const selector = comment ? '#header-author a[href]' : shorts ?
++        '.ytReelChannelBarViewModelChannelName a[href]' : 'ytd-video-owner-renderer a[href]';
++    const profiles = new Map();
++    for (const link of post.querySelectorAll(selector)) {
++      if (postFor(link) !== post || !visible(link, false)) continue;
++      try {
++        const u = new URL(link.href), host = u.hostname.replace(/^(www|m)\./, '');
++        if (host !== 'youtube.com' || !['http:','https:'].includes(u.protocol) ||
++            u.username || u.password || u.port) continue;
++        const path = u.pathname.replace(/\/$/, '').replace(shorts ? /\/shorts$/ : /$^/, '');
++        const handle = path.match(/^\/@([^/]+)$/), legacy = path.match(/^\/(?:channel|user|c)\/([A-Za-z0-9_-]+)$/);
++        const name = handle ? '@' + decodeURIComponent(handle[1]) : legacy ? text(link) : '';
++        if (!name || /[\s\u0000-\u001f/?#]/.test(handle ? name : '') || name.length > 256) continue;
++        const profile = 'https://www.youtube.com' + path;
++        const display = text(link);
++        if (!profiles.has(profile) || display) profiles.set(profile,
++            {account:name, profile_url:profile, display_name:display});
++      } catch { /* No usable observed channel identity. */ }
++    }
++    const details = {}, accounts = [...profiles.values()];
++    if (accounts.length) details.account_candidates = accounts.slice(0, 8);
++    if (accounts.length === 1) {
++      details.posting_account = accounts[0].account;
++      details.account_profile_url = accounts[0].profile_url;
++      details.account_display_name = accounts[0].display_name;
++      details.account_evidence = comment ? 'youtube_comment_author_link' : 'youtube_video_owner_link';
++    }
++    let date = null;
++    if (comment) {
++      date = [...post.querySelectorAll('#published-time-text a[href]')]
++          .find(a => postFor(a) === post && normalize(a.href)?.url === parsed.url);
++    } else if (!shorts) {
++      // The observed watch info row has two nonempty leaf spans: view count
++      // and publication label. Description text and hidden tooltips are excluded.
++      const rows = [...post.querySelectorAll('ytd-watch-metadata ytd-watch-info-text #info')]
++          .filter(e => postFor(e) === post && visible(e, false));
++      if (rows.length === 1) {
++        const spans = [...rows[0].children].filter(e => e.matches('span') && text(e) && visible(e, false));
++        if (spans.length === 2 && spans.every(e => !e.children.length)) date = spans[1];
++      }
++    }
++    if (date && visible(date, false) && text(date)) {
++      details.publication_date_text = text(date);
++      details.publication_date_displayed = text(date);
++      details.date_evidence = comment ? 'youtube_comment_timestamp_link' : 'youtube_watch_info_date';
++    }
++    return details;
++  };
 +  const fullTimestamp = value => /\d{4}/.test(value) && /\d[:.]\d{2}/.test(value);
 +  const compactTimestamp = value => /^(?:\d+\s*[a-zæøå]{1,3}|yesterday|today|i går|i dag)$/i.test(value);
 +  const selectorFor = element => {
@@ -1233,6 +1344,7 @@
 +
 +  const siteDetails = (post, anchor, parsed) => {
 +    if (!post) return {};
++    if (parsed.platform === 'youtube') return youtubeDetails(post, parsed);
 +    if (parsed.platform === 'reddit' && !redditPostMatches(post, parsed.url)) return {};
 +    if (parsed.platform === 'tiktok' &&
 +        post.matches('article[data-e2e="recommend-list-item-container"]') &&
@@ -1435,9 +1547,19 @@
 +  const postSources = new Map();
 +  const facebookMedia = new Map();
 +  let truncated = false;
-+  const add = (raw, evidence, post = null, anchor = null) => {
++  const add = (raw, evidence, post = null, anchor = null, observedRaw = raw) => {
 +    const parsed = normalize(raw);
 +    if (!parsed) return;
++    parsed.original_url = new URL(observedRaw, document.baseURI).href;
++    if (parsed.platform === 'youtube' || post?.matches(youtubeSelector)) {
++      const own = parsed.platform === 'youtube' && youtubeMatches(post, raw) && youtubeVideoSelected(post);
++      if (!own) {
++        if (evidence !== 'link_in_selection') return;
++        post = null;
++        anchor = null;
++        evidence = 'youtube_reference_link';
++      }
++    }
 +    if (parsed.platform === 'bluesky' && anchor?.closest('[data-testid="postText"],[data-word-wrap]')) {
 +      post = null;
 +      anchor = null;
@@ -1472,8 +1594,9 @@
 +      anchor = null;
 +      evidence = 'referenced_post_link';
 +    }
-+    const details = siteDetails(post, anchor, parsed);
-+    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit'].includes(parsed.platform)) {
++    const details = post?.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
++        post.querySelector('.ad-showing,.ad-interrupting') ? {} : siteDetails(post, anchor, parsed);
++    if (post && ['twitter_x','threads','facebook','bluesky','tiktok','reddit','youtube'].includes(parsed.platform)) {
 +      if (!postSources.has(parsed.url)) postSources.set(parsed.url, new Set());
 +      postSources.get(parsed.url).add(post);
 +      const u = new URL(parsed.url);
@@ -1547,6 +1670,7 @@
 +      const address = normalize(location.href);
 +      const pageSourceAllowed = raw => {
 +        const platform = normalize(raw)?.platform;
++        if (platform === 'youtube') return false;  // Match explicit video/comment ownership below.
 +        if (platform === 'reddit') return false;  // Require the item's own ID/permalink.
 +        if (platform === 'tiktok') return false;  // Matched per item below.
 +        return platform !== 'bluesky' ||
@@ -1590,6 +1714,20 @@
 +  for (const post of overlapping) {
 +    const raw = post.getAttribute('permalink');
 +    if (redditPostMatches(post, raw)) add(raw, 'reddit_item_permalink', post);
++  }
++  for (const post of overlapping) {
++    if (!post.matches('ytd-watch-flexy,ytd-reel-video-renderer') || !youtubeVideoSelected(post)) continue;
++    const sources = post.matches('ytd-watch-flexy') ? youtubePageSources :
++        [...post.querySelectorAll('#shorts-player a.ytp-title-link[href]')].map(a => a.href);
++    for (const raw of sources) {
++      const parsed = normalize(raw);
++      if (!parsed) continue;
++      // A page opened from a highlighted comment still has an independent
++      // video. Drop lc only after matching its explicit video ID to this root.
++      const u = new URL(parsed.url);
++      u.searchParams.delete('lc');
++      if (youtubeMatches(post, u.href)) add(u.href, 'youtube_video_identity', post, null, raw);
++    }
 +  }
 +  const list = [...candidates.values()];
 +  const ownContentSelected = post => {
@@ -1695,8 +1833,14 @@
 +      post.matches('shreddit-post[is-crosspost],shreddit-post[post-type="crosspost"]') &&
 +      !redditSelectedChild(post));
 +  const redditReference = list.some(c => c.evidence === 'reddit_reference_link');
++  const youtubeReview = list.some(c => c.evidence === 'youtube_reference_link') ||
++      (list.some(c => c.platform === 'youtube') && overlapping.some(post =>
++          post.matches(youtubeSelector) && !post.matches('ytd-watch-flexy') && !contexts.includes(post))) ||
++      overlapping.some(post => post.matches('ytd-watch-flexy,ytd-reel-video-renderer') &&
++          [...post.querySelectorAll('.ad-showing,.ad-interrupting')].some(e => visible(e) &&
++              exposed(e, e.getBoundingClientRect())));
 +  const status = truncated ? 'incomplete' : preferred ? 'preferred' :
-+      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || (postCount > 1 && list.length)) ? 'ambiguous' :
++      (list.length > 1 || unlinkedEnclosingPost || unlinkedBlueskyQuote || unlinkedTikTokComment || unattributedTikTokReference || unattributedRedditItem || redditReference || redditCrosspost || youtubeReview || (postCount > 1 && list.length)) ? 'ambiguous' :
 +      list.length === 1 ? 'unique' : 'none';
 +  let selectedDetails = {};
 +  if (!truncated && !list.length && postCount === 1) {
@@ -1785,6 +1929,21 @@
 +  if (!url.is_valid() || !url.SchemeIs("https") || url.has_username() ||
 +      url.has_password() || url.has_port() || raw.size() > 2048)
 +    return false;
++  if (url.host() == "www.youtube.com") {
++    const auto parts = base::SplitStringPiece(
++        url.query(), "&", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
++    const auto identifier = [](std::string_view value) {
++      return !value.empty() && base::ContainsOnlyChars(
++          value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.");
++    };
++    return url.path() == "/watch" && !url.has_ref() &&
++           (parts.size() == 1 || parts.size() == 2) &&
++           parts[0].starts_with("v=") && parts[0].size() == 13 &&
++           base::ContainsOnlyChars(parts[0].substr(2),
++               "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") &&
++           (parts.size() == 1 || (parts[1].starts_with("lc=") &&
++               parts[1].size() <= 131 && identifier(parts[1].substr(3))));
++  }
 +  if (url.host() == "www.reddit.com") {
 +    const auto parts = base::SplitStringPiece(
 +        url.path(), "/", base::KEEP_WHITESPACE, base::SPLIT_WANT_ALL);
@@ -2001,7 +2160,7 @@
 +#endif  // CHROME_BROWSER_IMAGE_EDITOR_SCREENSHOT_SOURCE_H_
 --- /dev/null
 +++ b/chrome/browser/image_editor/screenshot_source_unittest.cc
-@@ -0,0 +1,295 @@
+@@ -0,0 +1,316 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -2034,10 +2193,31 @@
 +                   "https://www.tiktok.com/@reporter/photo/456",
 +                   "https://www.reddit.com/r/news/comments/abc123/",
 +                   "https://www.reddit.com/r/news/comments/abc123/comment/def456/",
-+                   "https://www.reddit.com/comments/abc123/"}) {
++                   "https://www.reddit.com/comments/abc123/",
++                   "https://www.youtube.com/watch?v=jNQXAC9IVRw",
++                   "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=UgABC_123.reply-2"}) {
 +    auto result = ValidateScreenshotSources(Sources(url));
 +    EXPECT_EQ(*result.FindString("status"), "unique");
 +    EXPECT_EQ(*result.FindString("suggested_permalink"), url);
++  }
++}
++
++TEST(ScreenshotSourceTest, RejectsYouTubeNonNormalizedSuggestions) {
++  for (const char* url : {
++           "https://www.youtube.com/@reporter",
++           "https://www.youtube.com/playlist?list=PL123",
++           "https://youtu.be/jNQXAC9IVRw",
++           "https://www.youtube.com/shorts/jNQXAC9IVRw",
++           "https://www.youtube.com/watch?v=short",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&t=30",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=bad%2Fid",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&lc=one&lc=two",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw#comment",
++           "https://www.youtube.com/watch?v=jNQXAC9IVRw&v=otherId1234",
++           "https://www.youtube.com.attacker.test/watch?v=jNQXAC9IVRw"}) {
++    auto result = ValidateScreenshotSources(Sources(url));
++    EXPECT_EQ(*result.FindString("status"), "unavailable") << url;
 +  }
 +}
 +
@@ -3554,7 +3734,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,459 @@
+@@ -0,0 +1,461 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -3853,6 +4033,8 @@
 +      return "Facebook";
 +    if (url.DomainIs("threads.com") || url.DomainIs("threads.net"))
 +      return "Threads";
++    if (url.DomainIs("youtube.com") || url.DomainIs("youtu.be"))
++      return "YouTube";
 +    if (url.DomainIs("reddit.com"))
 +      return "Reddit";
 +    if (url.DomainIs("tiktok.com"))
@@ -4064,7 +4246,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,489 @@
+@@ -0,0 +1,490 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4406,7 +4588,8 @@
 +           {"https://www.threads.net/@source/post/ABC_12", "Threads"},
 +           {"https://bsky.app/profile/source.example/post/3example", "Bluesky"},
 +           {"https://www.tiktok.com/@source/video/123", "TikTok"},
-+           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"}}) {
++           {"https://www.reddit.com/r/news/comments/abc123/", "Reddit"},
++           {"https://www.youtube.com/watch?v=jNQXAC9IVRw", "YouTube"}}) {
 +    base::DictValue automatic, user;
 +    automatic.Set("page_url", entry.first);
 +    user.Set("posting_account", " @brukernavnæøå ");

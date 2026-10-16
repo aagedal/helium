@@ -75,7 +75,7 @@ bounds and image dimensions. You can optionally enter a post permalink, posting
 account, publication date as displayed, and notes or post text. These entries
 are recorded separately from observed page details. The browser can suggest a
 post permalink for Twitter/X, Instagram, Facebook, Threads, Truth Social, Bluesky
-TikTok and Reddit using visible links and the post container overlapping your
+TikTok, Reddit and YouTube using visible links and the post container overlapping your
 selection. One clear match fills the field;
 multiple matches offer a chooser. Check or edit the link before saving. The
 record preserves candidate links and the chosen link's origin. Suggestions are
@@ -116,6 +116,16 @@ must agree with that item's author, and its credit-row timestamp must match its
 reported creation time. Capturing multiple items, crossposts or a reference link requires
 source review. Deleted authors and missing dates stay blank. Shortened share
 links are not resolved; Old Reddit layouts are not yet supported.
+
+YouTube recognizes video, Shorts, live and `youtu.be` links. Watch-page video
+crops require the page URL and the rendered video's ID to agree; Shorts use their
+own player link and channel bar. Comment crops keep their own `lc` permalink,
+author and displayed date. Relative labels and “edited” markers stay as shown;
+Shorts dates remain blank when no scoped date is exposed. Captures including
+multiple sources, reference links, recommendations or known active ads require
+review. Channel names and profile URLs stay as observed, without resolving
+channel IDs into guessed handles. Playlists and playback times remain in the
+original observed URL, separate from the normalized video permalink.
 
 Choose **PNG**, **JPEG** (quality 95), or **JPEG XL** in the review dialog. PNG
 and JPEG XL use lossless compression; JPEG uses lossy compression. Each image
