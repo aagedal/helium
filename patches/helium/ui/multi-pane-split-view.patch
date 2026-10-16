@@ -1,6 +1,6 @@
 --- a/chrome/browser/sessions/session_restore.cc
 +++ b/chrome/browser/sessions/session_restore.cc
-@@ -1075,14 +1075,14 @@
+@@ -1076,14 +1076,14 @@
      }
  
      for (const auto& [split_id, tabs] : tabs_by_split_id) {

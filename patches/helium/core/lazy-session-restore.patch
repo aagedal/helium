@@ -194,7 +194,7 @@
  }
 --- a/chrome/browser/sessions/session_restore.cc
 +++ b/chrome/browser/sessions/session_restore.cc
-@@ -567,8 +567,8 @@ class SessionRestoreImpl : public Browse
+@@ -567,8 +567,8 @@
                    [](RestoredTab& tab) { return tab.contents() == nullptr; });
  
      if (succeeded) {
@@ -205,7 +205,7 @@
        std::stable_sort(restored_tabs.begin(), restored_tabs.end());
        SessionRestoreDelegate::RestoreTabs(restored_tabs, restore_started_);
      }
-@@ -1038,50 +1038,64 @@ class SessionRestoreImpl : public Browse
+@@ -1038,50 +1038,64 @@
      // base::Time) can be mapped onto the TimeTicks timeline WebContents wants.
      const base::Time now = base::Time::Now();
      const base::TimeTicks now_ticks = base::TimeTicks::Now();
@@ -236,8 +236,7 @@
                   last_active_time_ticks, tab.last_active_time,
                   did_show_browser);
 -    }
-+    };
- 
+-
 -    for (const auto& pair : tabs_by_split_id) {
 -      const split_tabs::SplitTabId split_id = pair.first;
 -      const std::vector<tabs::TabInterface*> tab_contents_list = pair.second;
@@ -253,6 +252,15 @@
 -        browser->GetTabStripModel()->RestoreSplit(
 -            split_id, tab_index_list, split_tabs::SplitTabVisualData());
 -      }
+-    }
+-  }
+-
+-  // |tab_index| is ignored for pinned tabs which will always be pushed behind
+-  // the last existing pinned tab. If |is_selected_tab| is true the tab will be
+-  // shown after loading, otherwise it's loaded hidden. |last_active_time| is
+-  // the value to use to set the last time the WebContents was made active.
++    };
++
 +    if (restoring_into_empty_browser &&
 +        !window.tabs[selected_tab_index]->navigations.empty()) {
 +      // An empty tab strip activates and loads its first insertion. Insert the
@@ -287,13 +295,9 @@
 +      std::ranges::sort(tab_indices);
 +      browser->tab_strip_model()->RestoreSplit(
 +          split_id, tab_indices, split_tabs::SplitTabVisualData());
-     }
-   }
- 
--  // |tab_index| is ignored for pinned tabs which will always be pushed behind
--  // the last existing pinned tab. If |is_selected_tab| is true the tab will be
--  // shown after loading, otherwise it's loaded hidden. |last_active_time| is
--  // the value to use to set the last time the WebContents was made active.
++    }
++  }
++
 +  // |tab_index| is constrained to the pinned region for pinned tabs.
 +  // If |is_selected_tab| is true, the tab is shown and loaded; otherwise, it
 +  // remains unloaded until activated.
@@ -302,7 +306,7 @@
    void RestoreTab(const sessions::SessionTab& tab,
                    BrowserWindowInterface* browser,
                    bool is_active_browser,
-@@ -1135,7 +1149,10 @@ class SessionRestoreImpl : public Browse
+@@ -1135,7 +1149,10 @@
          tab.extension_app_id, new_group, is_selected_tab, tab.pinned,
          last_active_time_ticks, last_active_time,
          session_storage_namespace.get(), tab.user_agent_override,

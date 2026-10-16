@@ -1,6 +1,6 @@
 --- a/chrome/browser/sessions/session_restore.cc
 +++ b/chrome/browser/sessions/session_restore.cc
-@@ -101,6 +101,7 @@
+@@ -102,6 +102,7 @@
  #include "components/tab_groups/tab_group_id.h"
  #include "components/tabs/public/tab_collection.h"
  #include "components/tabs/public/tab_group.h"
@@ -8,7 +8,7 @@
  #include "components/tabs/public/tab_interface.h"
  #include "content/public/browser/child_process_security_policy.h"
  #include "content/public/browser/dom_storage_context.h"
-@@ -1189,13 +1190,13 @@
+@@ -1190,13 +1191,13 @@
          continue;
        }
  
