@@ -1,0 +1,338 @@
+--- a/chrome/browser/helium_flag_entries.h
++++ b/chrome/browser/helium_flag_entries.h
+@@ -86,14 +86,14 @@
+      kOsDesktop, FEATURE_VALUE_TYPE(features::kHeliumHidePageActions)},
+     // platform
+     {"helium-webkit-streaming", "WebKit streaming windows (experimental)",
+-     "Opens Netflix and TV 2 Play in a separate native WebKit window on "
++     "Opens Netflix, TV 2 Play, HBO Max and Disney+ in a native WebKit window on "
+      "macOS 14 or later. Uses a separate login per Helium profile and does "
+      "not apply Chromium extensions or content blocking. Disabled in "
+      "private/guest windows. Helium flag.",
+      kOsMac, SINGLE_VALUE_TYPE("helium-webkit-streaming")},
+     {"helium-webkit-streaming-tabs", "WebKit streaming tabs (prototype)",
+-     "Hosts Netflix and TV 2 Play in the Helium tab content area on macOS 14+. "
+-     "WebKit has its own address/navigation toolbar; the Chromium shell shows "
++     "Hosts streaming services in Helium tabs on macOS 14+. Use the tab menu to "
++     "switch other HTTP(S) pages manually. WebKit has its own toolbar; the shell shows "
+      "about:blank. Separate logins; no extensions or session restore. Hidden "
+      "media is paused. Excludes private/guest windows. Overrides streaming "
+      "window mode. Helium flag.",
+--- a/chrome/browser/helium_webkit_streaming_mac.h
++++ b/chrome/browser/helium_webkit_streaming_mac.h
+@@ -27,6 +27,17 @@
+ void PauseWebKitStreamingTab(content::WebContents* contents);
+ 
+ COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++bool IsWebKitStreamingTabsEnabled();
++// Eligibility comes from the owning browser; this component does not own a
++// second copy of Chromium's Profile registry. Switching reloads a GET URL.
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++bool CanToggleWebKitStreamingTab(content::WebContents* contents,
++                                bool profile_allowed);
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++void ToggleWebKitStreamingTab(content::WebContents* contents,
++                             bool profile_allowed);
++
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
+ void MaybeAddWebKitStreamingThrottle(
+     content::NavigationThrottleRegistry& registry, bool profile_allowed);
+ }
+--- a/chrome/browser/helium_webkit_streaming_mac.mm
++++ b/chrome/browser/helium_webkit_streaming_mac.mm
+@@ -35,9 +35,29 @@
+ constexpr char kStreamingTabsSwitch[] = "helium-webkit-streaming-tabs";
+ const void* const kStreamingTabKey = &kStreamingTabKey;
+ 
++bool IsWebKitPageURL(const GURL& url) {
++  return url.is_valid() && url.SchemeIsHTTPOrHTTPS() &&
++         !url.has_username() && !url.has_password();
++}
++
++// DomainIs checks a hostname boundary, including service subdomains but not
++// lookalikes such as hbomax.com.example.org. Only automatic routing needs a list.
++const char* StreamingService(const GURL& url) {
++  if (!IsWebKitPageURL(url) || !url.SchemeIs("https"))
++    return nullptr;
++  if (url.DomainIs("netflix.com"))
++    return "netflix";
++  if (url.DomainIs("play.tv2.no"))
++    return "tv2";
++  if (url.DomainIs("hbomax.com") || url.DomainIs("max.com"))
++    return "hbomax";
++  if (url.DomainIs("disneyplus.com"))
++    return "disneyplus";
++  return nullptr;
++}
++
+ bool IsStreamingURL(const GURL& url) {
+-  return url.SchemeIs("https") && !url.has_username() && !url.has_password() &&
+-         (url.DomainIs("netflix.com") || url.DomainIs("play.tv2.no"));
++  return StreamingService(url) != nullptr;
+ }
+ }  // namespace
+ 
+@@ -96,6 +116,7 @@
+                   windowKey:(NSString*)windowKey;
+ - (void)loadURL:(NSURL*)url;
+ - (NSView*)streamingView;
++- (NSURL*)pageURL;
+ - (void)shutdown;
+ - (void)pauseMedia;
+ @end
+@@ -205,6 +226,9 @@
+   return self;
+ }
+ 
++- (NSURL*)pageURL {
++  return _webView.URL;
++}
+ - (NSView*)streamingView {
+   return _root;
+ }
+@@ -318,6 +342,7 @@
+   ~StreamingTab() override { Deactivate(); }
+ 
+   void Open(const GURL& url) {
++    last_requested_url_ = url;
+     if (!controller_) {
+       auto* profile = web_contents()->GetBrowserContext();
+       std::string digest = base::SHA1HashString(profile->GetPath().value());
+@@ -352,6 +377,31 @@
+     return changed_.Add(std::move(callback));
+   }
+   void Pause() { [controller_ pauseMedia]; }
++  bool ShouldRoute(const GURL& url) const {
++    return !prefer_chromium_ &&
++           (IsStreamingURL(url) || (manual_webkit_ && IsWebKitPageURL(url)));
++  }
++  void Toggle() {
++    weak_factory_.InvalidateWeakPtrs();
++    if (controller_) {
++      NSURL* native_url = [controller_ pageURL];
++      GURL url = native_url ? GURL(base::SysNSStringToUTF8(native_url.absoluteString))
++                            : last_requested_url_;
++      if (!IsWebKitPageURL(url))
++        url = last_requested_url_;
++      // An explicit Chromium choice wins over the automatic service list for
++      // the lifetime of this tab, including subsequent streaming navigations.
++      prefer_chromium_ = true;
++      manual_webkit_ = false;
++      Deactivate();
++      content::NavigationController::LoadURLParams params(url);
++      web_contents()->GetController().LoadURLWithParams(params);
++    } else {
++      manual_webkit_ = true;
++      prefer_chromium_ = false;
++      Open(web_contents()->GetLastCommittedURL());
++    }
++  }
+   void Activate() {
+     if (web_contents() && web_contents()->GetDelegate())
+       web_contents()->GetDelegate()->ActivateContents(web_contents());
+@@ -365,10 +415,15 @@
+       preparing_shell_ = false;
+       return;
+     }
+-    // Typed ordinary URLs return this tab to Chromium. Cross-domain WK links
+-    // (including service authentication) remain in WK's own session.
+-    if (!IsStreamingURL(handle->GetURL()))
++    // Automatic sessions return ordinary omnibox URLs to Chromium. Manual
++    // sessions keep eligible HTTP(S) URLs in WK; POSTs cannot be replayed.
++    // Cross-domain links inside WK keep its service/authentication session.
++    if (handle->IsPost() ||
++        (handle->IsRendererInitiated() && !handle->HasUserGesture()) ||
++        !ShouldRoute(handle->GetURL())) {
++      manual_webkit_ = false;
+       Deactivate();
++    }
+   }
+   void DidFinishNavigation(content::NavigationHandle* handle) override {
+     if (!controller_ || !handle->HasCommitted() ||
+@@ -393,6 +448,9 @@
+   }
+   HeliumStreamingWindow* __strong controller_ = nil;
+   bool preparing_shell_ = false;
++  bool manual_webkit_ = false;
++  bool prefer_chromium_ = false;
++  GURL last_requested_url_;
+   base::RepeatingClosureList changed_;
+   base::WeakPtrFactory<StreamingTab> activation_factory_{this};
+   base::WeakPtrFactory<StreamingTab> weak_factory_{this};
+@@ -422,7 +480,7 @@
+   std::string digest = base::SHA1HashString(profile->GetPath().value());
+   NSUUID* identifier = [[NSUUID alloc]
+       initWithUUIDBytes:reinterpret_cast<const unsigned char*>(digest.data())];
+-  NSString* service = url.DomainIs("netflix.com") ? @"netflix" : @"tv2";
++  NSString* service = base::SysUTF8ToNSString(StreamingService(url));
+   NSString* key =
+       [NSString stringWithFormat:@"%@/%@", identifier.UUIDString, service];
+   if (!g_streaming_windows)
+@@ -442,8 +500,7 @@
+   }
+   [controller showWindow:nil];
+   [controller.window makeKeyAndOrderFront:nil];
+-  VLOG(1) << "WebKit streaming window opened: "
+-          << (url.DomainIs("netflix.com") ? "Netflix" : "TV 2 Play");
++  VLOG(1) << "WebKit streaming window opened: " << StreamingService(url);
+   return true;
+ }
+ 
+@@ -460,15 +517,17 @@
+   ThrottleCheckResult MaybeOpen() {
+     auto* handle = navigation_handle();
+     if (!handle->IsInPrimaryMainFrame() || handle->IsPost() ||
+-        !IsStreamingURL(handle->GetURL()) ||
+         (handle->IsRendererInitiated() && !handle->HasUserGesture())) {
+       return PROCEED;
+     }
+     auto* profile = handle->GetWebContents()->GetBrowserContext();
+     if (profile->IsOffTheRecord())
+       return PROCEED;
+-    const bool in_tab = base::CommandLine::ForCurrentProcess()->HasSwitch(
+-        kStreamingTabsSwitch);
++    const bool in_tab = IsWebKitStreamingTabsEnabled();
++    auto* tab = in_tab ? GetStreamingTab(handle->GetWebContents()) : nullptr;
++    if (!(tab ? tab->ShouldRoute(handle->GetURL())
++              : IsStreamingURL(handle->GetURL())))
++      return PROCEED;
+     return (in_tab ? OpenStreamingTab(handle->GetWebContents(), handle->GetURL())
+                    : OpenStreamingWindow(profile, handle->GetURL())) ? CANCEL_AND_IGNORE
+                                                           : PROCEED;
+@@ -497,6 +556,35 @@
+     tab->Pause();
+ }
+ 
++bool IsWebKitStreamingTabsEnabled() {
++  if (@available(macOS 14.0, *)) {
++    return base::CommandLine::ForCurrentProcess()->HasSwitch(kStreamingTabsSwitch);
++  }
++  return false;
++}
++
++bool CanToggleWebKitStreamingTab(content::WebContents* contents,
++                                bool profile_allowed) {
++  if (!IsWebKitStreamingTabsEnabled() || !profile_allowed || !contents ||
++      contents->GetBrowserContext()->IsOffTheRecord())
++    return false;
++  return GetWebKitStreamingTabView(contents) ||
++         IsWebKitPageURL(contents->GetLastCommittedURL());
++}
++
++void ToggleWebKitStreamingTab(content::WebContents* contents,
++                             bool profile_allowed) {
++  if (!CanToggleWebKitStreamingTab(contents, profile_allowed))
++    return;
++  auto* tab = GetStreamingTab(contents);
++  if (!tab) {
++    auto owned = std::make_unique<StreamingTab>(contents);
++    tab = owned.get();
++    contents->SetUserData(kStreamingTabKey, std::move(owned));
++  }
++  tab->Toggle();
++}
++
+ void MaybeAddWebKitStreamingThrottle(
+     content::NavigationThrottleRegistry& registry, bool profile_allowed) {
+   if (!profile_allowed)
+--- a/chrome/browser/ui/tabs/BUILD.gn
++++ b/chrome/browser/ui/tabs/BUILD.gn
+@@ -196,6 +196,10 @@
+       "//components/commerce/core:feature_list",
+       "//components/feed:feature_list",
+     ]
++
++    if (is_mac) {
++      deps += [ "//chrome/browser:helium_webkit_streaming" ]
++    }
+ 
+     # TODO(crbug.com/40031409): Fix code that adds exit-time destructors and
+     # enable the diagnostic by removing this line.
+--- a/chrome/browser/ui/tabs/tab_menu_model.cc
++++ b/chrome/browser/ui/tabs/tab_menu_model.cc
+@@ -71,6 +71,10 @@
+ #include "ui/base/window_open_disposition.h"
+ #include "ui/views/vector_icons.h"
+ 
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/helium_webkit_streaming_mac.h"
++#endif
++
+ #if BUILDFLAG(ENABLE_EXTENSIONS)
+ #include "chrome/browser/extensions/context_menu_matcher.h"
+ #include "chrome/browser/extensions/menu_manager.h"
+@@ -81,6 +85,17 @@
+ 
+ namespace {
+ constexpr int kTabMenuIconSize = 16;
++#if BUILDFLAG(IS_MAC)
++// Separate from pane settings (2000-2099) and Chromium's context commands.
++constexpr int kWebKitRendererCommand = 2100;
++
++bool WebKitProfileAllowed(content::WebContents* contents) {
++  if (!contents)
++    return false;
++  auto* profile = Profile::FromBrowserContext(contents->GetBrowserContext());
++  return !profile->IsOffTheRecord() && !profile->IsGuestSession();
++}
++#endif
+ 
+ struct PaneLayoutOption {
+   size_t count;
+@@ -412,6 +427,11 @@
+ // variants) to follow Apple Human Interface Guidelines (HIG), while other
+ // platforms use sentence case.
+ void TabMenuModel::Build(int index) {
++#if BUILDFLAG(IS_MAC)
++  if (helium::IsWebKitStreamingTabsEnabled()) {
++    AddCheckItem(kWebKitRendererCommand, u"Use WebKit renderer (reloads page)");
++  }
++#endif
+   std::vector<int> indices;
+   if (tab_strip_->IsTabSelected(index)) {
+     const ui::ListSelectionModel::SelectedIndices sel =
+@@ -795,6 +815,12 @@
+ // Overridden to check if the checked status of the item
+ // should be evaluated by the extension matcher instead of the simple model.
+ bool TabMenuModel::IsItemCheckedAt(size_t index) const {
++#if BUILDFLAG(IS_MAC)
++  if (GetCommandIdAt(index) == kWebKitRendererCommand) {
++    return tab_interface_ &&
++           !!helium::GetWebKitStreamingTabView(tab_interface_->GetContents());
++  }
++#endif
+ #if BUILDFLAG(ENABLE_EXTENSIONS)
+   if (auto* matcher = GetMatcherIfExtension(index)) {
+     return matcher->IsCommandIdChecked(GetCommandIdAt(index));
+@@ -806,6 +832,15 @@
+ // Overridden to check if the enabled status of the item
+ // should be evaluated by the extension matcher instead of the simple model.
+ bool TabMenuModel::IsEnabledAt(size_t index) const {
++#if BUILDFLAG(IS_MAC)
++  if (GetCommandIdAt(index) == kWebKitRendererCommand) {
++    auto* contents = tab_interface_ ? tab_interface_->GetContents() : nullptr;
++    return tab_interface_ &&
++           tab_strip_->GetIndexOfTab(tab_interface_.get()) != TabStripModel::kNoTab &&
++           helium::CanToggleWebKitStreamingTab(contents,
++                                               WebKitProfileAllowed(contents));
++  }
++#endif
+   if (GetCommandIdAt(index) == tabs::PaneSettingsMenuModel::kParentCommandId) {
+     return tab_interface_ && tab_strip_->GetIndexOfTab(tab_interface_.get()) !=
+                                  TabStripModel::kNoTab;
+@@ -836,6 +871,15 @@
+ // Overridden to execute core context menu command logic on activation for
+ // extension items.
+ void TabMenuModel::ActivatedAt(size_t index, int event_flags) {
++#if BUILDFLAG(IS_MAC)
++  if (GetCommandIdAt(index) == kWebKitRendererCommand) {
++    if (IsEnabledAt(index)) {
++      auto* contents = tab_interface_->GetContents();
++      helium::ToggleWebKitStreamingTab(contents, WebKitProfileAllowed(contents));
++    }
++    return;
++  }
++#endif
+   if (GetCommandIdAt(index) == tabs::PaneSettingsMenuModel::kParentCommandId) {
+     return;
+   }

@@ -381,3 +381,5 @@ helium/ui/split-active-pane-indicator.patch
 helium/ui/vertical-pinned-split-tabs.patch
 helium/ui/screenshot-source-documentation.patch
 helium/ui/macos-webkit-streaming.patch
+helium/ui/macos-webkit-streaming-tabs.patch
+helium/ui/macos-webkit-manual-renderer.patch

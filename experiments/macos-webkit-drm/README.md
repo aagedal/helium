@@ -83,3 +83,73 @@ For local lifecycle diagnostics, add
 `--enable-logging=stderr --vmodule=helium_webkit_streaming_mac=1` to the launcher.
 The optional messages report window opening/closing and navigation completion or
 numeric failure codes without collecting page URLs, cookies, or license data.
+
+## In-tab WebKit prototype
+
+`macos-webkit-streaming-tabs.patch` adds a separate, macOS-only prototype. Launch
+with the persistent launcher and `--helium-webkit-streaming-tabs`, or enable
+`chrome://flags/#helium-webkit-streaming-tabs` and restart. This mode takes
+precedence over the separate streaming-window flag.
+
+Opening an eligible Netflix, TV 2 Play, HBO Max, or Disney+ URL gives that tab its own
+WKWebView beneath Helium's tab strip and toolbar. Multiple streaming tabs have
+independent live pages and share only their profile's existing WebKit data store.
+The native Back/Forward/Reload buttons and address field inside the content area
+control WebKit. Authentication and other HTTP(S) links inside WebKit stay in
+WebKit. An automatically routed tab returns to Chromium for an ordinary omnibox
+URL; a manually selected WebKit tab keeps HTTP(S) omnibox navigation in WebKit.
+Private/guest profiles remain excluded.
+
+This is a hosting prototype, not complete browser-chrome integration. Helium's
+omnibox intentionally displays the blank Chromium shell (`about:blank`), and the
+tab can also be labelled `about:blank`. The inner address field displays the WebKit page.
+Browser Back/Forward/Reload, bookmarks, history, permission indicators, Find,
+downloads, extension commands, and site-data controls are not wired to WebKit.
+Use the inner navigation controls. The Chromium shell must not be interpreted as
+the displayed page's security identity. Existing native-window mode is unchanged.
+
+Switching away suspends media; returning pauses it before lifting suspension so
+playback requires an explicit resume. Closing the tab or navigating it back to
+Chromium releases the WebKit page. WebKit sessions are not serialized: restoring
+or duplicating the blank shell must not restore a hidden player. Split panes use
+separate native hosts, with native clicks activating their owning tab, but split
+focus, clipping, modal overlays, fullscreen, accessibility, and protected playback
+still require integrated manual verification.
+
+
+The prototype builds in the persistent component cache. On macOS 27.0.1, visual
+smoke tests confirmed both public service pages in tabs, tab switching alongside
+Chromium pages, ordinary omnibox fallback and subsequent streaming re-entry,
+and close/reopen without restoring the WebKit player. Protected playback and
+hidden-media behavior have not yet been tested in this tab host. The embedded
+WebKit content is absent from the current accessibility tree; this remains a
+prototype limitation. See [PLAN.md](PLAN.md) for the remaining integration work.
+
+## Manual renderer selection
+
+With `--helium-webkit-streaming-tabs` enabled on macOS 14+, right-click a tab and
+select **Use WebKit renderer (reloads page)**. This works for ordinary HTTP(S)
+pages, including streaming services outside the automatic list. The checkmark
+shows that the tab currently uses WebKit. Select it again to reload WebKit's
+current URL in Chromium. Switching reloads a GET URL; it does not transfer live
+page state, form submissions, cookies, or login sessions.
+
+A manual WebKit selection keeps subsequent HTTP(S) omnibox navigation in WebKit.
+Opening a browser-internal/local page or submitting a Chromium POST returns to
+Chromium. An explicit switch back to Chromium suppresses automatic service
+routing for that tab until WebKit is selected again. These choices are in memory
+for the current tab; they are not saved as site preferences or restored sessions.
+The menu item is disabled for private/guest tabs, browser-internal URLs, local
+files, and URLs containing credentials. Existing prototype limitations still apply.
+
+The automatic HTTPS list now covers `netflix.com`, `play.tv2.no`, `hbomax.com`,
+`max.com`, and `disneyplus.com`, including subdomains at hostname boundaries.
+The native-window mode uses separate service windows for HBO Max and Disney+ too.
+
+Manual-switch smoke tests on macOS 27.0.1 confirmed an unlisted page in WebKit,
+manual selection across another unlisted omnibox URL, return to the current WK
+URL in Chromium, and explicit Chromium opt-out overriding Netflix routing. The
+menu was disabled on an internal page and a private HTTP(S) tab. A separate run
+opened exactly three WK tabs for Disney+, HBO Max, and Max; two lookalike hostnames
+stayed in Chromium. Public Disney+ and HBO Max pages rendered successfully.
+Protected playback on these newly added services has not been verified.
