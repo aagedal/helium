@@ -250,6 +250,11 @@ The preview and clipboard are SDR. HDR already tone-mapped by the webpage,
 renderer or display pipeline cannot be recovered by screenshot capture.
 
 **Save capture** saves the image alone by default, with embedded IPTC metadata.
+Saved filenames include the capture time in UTC, source hostname and page title,
+so captures are easier to identify in a folder. Names use the page details recorded
+at capture time. Titles retain non-English characters; unsafe filename characters
+are replaced and long names are shortened. Direct saves add a unique suffix to
+protect earlier exports, including repeated saves of the same capture.
 **Save directly to screenshot folder** is enabled by default: choose a folder
 once, then subsequent captures save there without a location prompt. Use
 **Choose screenshot folder…** to change it, or turn off direct saving to choose

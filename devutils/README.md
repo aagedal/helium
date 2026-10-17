@@ -4,6 +4,24 @@ This is a collection of scripts written for developing on ungoogled-chromium. Se
 
 ## Screenshots with source documentation
 
+Export filenames use the frozen capture timestamp, hostname (without `www.`),
+and page title for both Save As suggestions and direct folder saves. The common
+`ScreenshotFilenameStem` helper replaces filesystem-unsafe characters, including
+Unicode formatting controls, collapses whitespace and bounds the hostname/title
+to 48/80 UTF-8 bytes without splitting code points. Missing hosts use `page`;
+empty titles are omitted. URL credentials, paths, queries and fragments are not
+used as filename components. Direct saves retain their full random UUID suffix
+to prevent overwriting previous exports. Archive members retain their fixed
+`screenshot.*`, `metadata.json` and `source.txt` names for compatibility.
+
+Filename validation: all 20 native screenshot documentation/export tests passed,
+including four filename cases covering source components, unsafe characters,
+long Unicode titles and missing details. Both GN header dependency checks,
+patch lint, patch-file checks and a no-fuzz reverse/apply round trip of the
+changed hunks passed. The capture dialog compiled and the persistent macOS
+development app rebuilt successfully. Save As and direct-folder downloads have
+not been exercised through the native UI for this change.
+
 `helium/ui/screenshot-source-documentation.patch` extends Chromium's existing
 manual region selector and screenshot review dialog. The context-menu command
 uses the clicked pane's `WebContents`, including an inactive pane in a split.

@@ -3416,7 +3416,7 @@
      "//ui/strings:ui_strings",
    ]
    if (!is_chromeos) {
-@@ -84,3 +94,43 @@
+@@ -84,3 +94,45 @@
      configs += [ "//build/config/compiler:no_exit_time_destructors" ]
    }
  }
@@ -3428,6 +3428,7 @@
 +  ]
 +  deps = [
 +    "//base",
++    "//base:i18n",
 +    "//chrome/browser/image_editor:screenshot_color",
 +    "//crypto",
 +    "//skia",
@@ -3457,12 +3458,13 @@
 +      "//third_party/zlib",
 +      "//third_party/zlib/google:zip",
 +      "//ui/gfx",
++      "//url",
 +    ]
 +  }
 +}
 --- a/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.cc
-@@ -3,242 +3,841 @@
+@@ -3,242 +3,836 @@
  // found in the LICENSE file.
  
  #include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h"
@@ -4465,20 +4467,15 @@
 -  return gfx::Size(scale_factor * image_.Width(),
 -                   scale_factor * image_.Height());
 +          web_contents_.get(), url, traffic_annotation);
-+  std::string filename = "helium-capture-" +
-+                         base::TimeFormatAsIso8601(capture_.capture_started_at);
-+  for (char& character : filename) {
-+    if (character == ':' || character == '.') {
-+      character = '-';
-+    }
-+  }
++  const std::string filename = ScreenshotFilenameStem(
++      capture_.page_url, capture_.page_title, capture_.capture_started_at);
 +  params->set_suggested_name(base::UTF8ToUTF16(filename + "." + extension));
 +  if (!save_directory_.empty()) {
 +    // Forced download paths bypass Save As. Give every save a fresh name,
 +    // including repeated saves of the same capture, to avoid overwrites.
-+    params->set_file_path(save_directory_.AppendASCII(
++    params->set_file_path(save_directory_.Append(base::FilePath::FromUTF8Unsafe(
 +        filename + "-" + base::Uuid::GenerateRandomV4().AsLowercaseString() +
-+        "." + extension));
++        "." + extension)));
 +    params->set_prompt(false);
 +  } else {
 +    params->set_prompt(true);
@@ -4662,7 +4659,7 @@
  
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.cc
-@@ -0,0 +1,537 @@
+@@ -0,0 +1,569 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -4680,9 +4677,12 @@
 +#include "base/containers/span.h"
 +#include "base/files/file_util.h"
 +#include "base/files/scoped_temp_dir.h"
++#include "base/i18n/file_util_icu.h"
++#include "base/i18n/time_formatting.h"
 +#include "base/json/json_writer.h"
 +#include "base/strings/string_number_conversions.h"
 +#include "base/strings/string_util.h"
++#include "base/strings/utf_string_conversions.h"
 +#include "chrome/browser/image_editor/screenshot_color.h"
 +#include "crypto/hash.h"
 +#include "third_party/boringssl/src/include/openssl/md5.h"
@@ -4927,6 +4927,35 @@
 +}
 +
 +}  // namespace
++
++std::string ScreenshotFilenameStem(const GURL& page_url,
++                                   const std::u16string& page_title,
++                                   base::Time capture_time) {
++  const auto component = [](const std::string& text, size_t max_bytes) {
++    auto name = base::FilePath::FromUTF8Unsafe(text).value();
++    // Chromium's cross-platform sanitizer also removes control and Unicode
++    // formatting characters. The fixed prefix/suffix avoid reserved basenames.
++    base::i18n::ReplaceIllegalCharactersInPath(&name, '-');
++    std::string result = base::CollapseWhitespaceASCII(
++        base::FilePath(name).AsUTF8Unsafe(), false);
++    base::ReplaceChars(result, " ", "-", &result);
++    result = std::string(base::TruncateUTF8ToByteSize(result, max_bytes));
++    base::TrimString(result, ".-", &result);
++    return result;
++  };
++  std::string timestamp = base::TimeFormatAsIso8601(capture_time);
++  base::ReplaceChars(timestamp, ":.", "-", &timestamp);
++  std::string host = page_url.SchemeIsHTTPOrHTTPS() ? std::string(page_url.host()) : "";
++  if (base::StartsWith(host, "www."))
++    host.erase(0, 4);
++  host = component(host, 48);
++  // Collapse Unicode whitespace before filesystem sanitization. Truncation
++  // uses UTF-8 byte boundaries so non-Latin titles stay valid and portable.
++  const std::string title = component(
++      base::UTF16ToUTF8(base::CollapseWhitespace(page_title, false)), 80);
++  return "helium-capture-" + timestamp + "-" + (host.empty() ? "page" : host) +
++         (title.empty() ? "" : "-" + title);
++}
 +
 +std::string ScreenshotCopyrightNotice(const base::DictValue& automatic,
 +                                      const base::DictValue& user_provided,
@@ -5202,7 +5231,7 @@
 +}  // namespace sharing_hub
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.h
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,79 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -5211,13 +5240,21 @@
 +#define CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 +
 +#include <string>
++#include "base/time/time.h"
 +#include "base/values.h"
 +#include "chrome/browser/image_editor/screenshot_color.h"
 +#include "ui/gfx/geometry/size.h"
 +
++class GURL;
 +class SkBitmap;
 +
 +namespace sharing_hub {
++
++// Frozen capture details provide a readable basename, without an extension.
++// Components are sanitized and bounded to leave room for a UUID and extension.
++std::string ScreenshotFilenameStem(const GURL& page_url,
++                                   const std::u16string& page_title,
++                                   base::Time capture_time);
 +
 +// Persisted in profile preferences. Do not reorder.
 +enum class ScreenshotFormat { kPng = 0, kJpeg = 1, kJpegXL = 2 };
@@ -5276,7 +5313,7 @@
 +#endif  // CHROME_BROWSER_UI_VIEWS_SHARING_HUB_SCREENSHOT_SCREENSHOT_DOCUMENTATION_H_
 --- /dev/null
 +++ b/chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation_unittest.cc
-@@ -0,0 +1,780 @@
+@@ -0,0 +1,831 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -5294,6 +5331,9 @@
 +#include "base/files/scoped_temp_dir.h"
 +#include "base/json/json_reader.h"
 +#include "base/strings/string_number_conversions.h"
++#include "base/strings/string_util.h"
++#include "base/strings/utf_string_conversions.h"
++#include "url/gurl.h"
 +#include "crypto/hash.h"
 +#include "testing/gtest/include/gtest/gtest.h"
 +#include "third_party/skia/include/core/SkBitmap.h"
@@ -5303,6 +5343,54 @@
 +
 +namespace sharing_hub {
 +namespace {
++
++TEST(ScreenshotDocumentationTest, FilenamesIdentifyTheCapturedPage) {
++  const auto name = ScreenshotFilenameStem(
++      GURL("https://user:secret@www.example.com/story?token=private#section"),
++      u"  Council\n  approves budget  ", base::Time::UnixEpoch());
++  EXPECT_EQ(name,
++            "helium-capture-1970-01-01T00-00-00-000Z-example.com-"
++            "Council-approves-budget");
++  EXPECT_EQ(name.find("secret"), std::string::npos);
++  EXPECT_EQ(name.find("private"), std::string::npos);
++  EXPECT_EQ(name.find("story"), std::string::npos);
++}
++
++TEST(ScreenshotDocumentationTest, FilenamesSanitizeUntrustedTitles) {
++  const auto name = ScreenshotFilenameStem(
++      GURL("https://news.example.com/"),
++      u"../Folder\\file: \"quoted\" <title>?*|\u202E\x0001",
++      base::Time::UnixEpoch());
++  EXPECT_EQ(name.find_first_of("/\\:\"<>?*|\n\r\t"), std::string::npos);
++  EXPECT_EQ(name.find("\xe2\x80\xae"), std::string::npos);
++  EXPECT_TRUE(base::IsStringUTF8(name));
++  EXPECT_EQ(base::FilePath::FromUTF8Unsafe(name).BaseName().AsUTF8Unsafe(), name);
++}
++
++TEST(ScreenshotDocumentationTest, FilenamesBoundLongUnicodeComponents) {
++  const GURL url("https://" + std::string(63, 'a') + ".example.com/");
++  std::u16string title;
++  for (int i = 0; i < 100; ++i)
++    title += u"Nyheter-\u00e6\u00f8\u00e5-\U0001F4F7-\u65b0\u805e";
++  const auto name = ScreenshotFilenameStem(url, title, base::Time::UnixEpoch());
++  EXPECT_TRUE(base::IsStringUTF8(name));
++  EXPECT_NE(name.find(base::UTF16ToUTF8(u"Nyheter-\u00e6\u00f8\u00e5-\U0001F4F7-\u65b0\u805e")),
++            std::string::npos);
++  // Reserve room for a hyphen, the complete UUID and any export extension.
++  EXPECT_LE(name.size() + 37u + 4u, 220u);
++}
++
++TEST(ScreenshotDocumentationTest, FilenamesHandleMissingSourceDetails) {
++  const std::string fallback =
++      "helium-capture-1970-01-01T00-00-00-000Z-page";
++  EXPECT_EQ(ScreenshotFilenameStem(GURL(), u"", base::Time::UnixEpoch()),
++            fallback);
++  EXPECT_EQ(ScreenshotFilenameStem(GURL("file:///private/path"), u" \t... ",
++                                   base::Time::UnixEpoch()), fallback);
++  EXPECT_EQ(ScreenshotFilenameStem(GURL("https://www.example.com"), u"CON",
++                                   base::Time::UnixEpoch()),
++            "helium-capture-1970-01-01T00-00-00-000Z-example.com-CON");
++}
 +
 +TEST(ScreenshotDocumentationTest, ExportsExactImageAndDistinctSourceFields) {
 +  SkBitmap bitmap;
