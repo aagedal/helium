@@ -1681,6 +1681,186 @@
     "message": "Norsk — Skjermbilde"
   },
   {
+    "name": "IDS_NEO_REFRESH_MINUTE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "One minute auto refresh interval.",
+    "message": "1 minute"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_EXPORT_BUSY",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Automatic export skipped because another monitored page is exporting.",
+    "message": "Change detected. Automatic export skipped because another page is exporting."
+  },
+  {
+    "name": "IDS_NEO_REFRESH_NINETY",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: refresh_ninety.",
+    "message": "1 minute 30 seconds"
+  },
+  {
+    "name": "IDS_NEO_REFRESH_HOUR",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: refresh_hour.",
+    "message": "1 hour"
+  },
+  {
+    "name": "IDS_NEO_REFRESH_MINUTES",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: refresh_minutes.",
+    "message": "<ph name=\"MINUTES\">$1<ex>5</ex></ph> minutes"
+  },
+  {
+    "name": "IDS_NEO_REFRESH_JITTER",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: refresh_jitter.",
+    "message": "Vary each refresh by ±5%"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_MAIN",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_main.",
+    "message": "Monitor article text for changes"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_SELECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_selection.",
+    "message": "Monitor selected section for changes"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_REVIEW",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_review.",
+    "message": "Review page changes…"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_SCREENSHOT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_screenshot.",
+    "message": "Automatically save a screenshot on change"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PDF",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_pdf.",
+    "message": "Automatically save a PDF on change"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_FOLDER",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_folder.",
+    "message": "Choose change export folder…"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_OFF",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_off.",
+    "message": "Change monitoring is off."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_WAITING",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_waiting.",
+    "message": "Waiting to establish a text baseline."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_NAVIGATED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_navigated.",
+    "message": "Monitoring stopped because this tab navigated to another page."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PAUSED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_paused.",
+    "message": "Check paused: the page is loading, sleeping, or unavailable."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_TIMEOUT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_timeout.",
+    "message": "Check timed out. The previous version is unchanged."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_FAILED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_failed.",
+    "message": "Could not read the watched text. The previous version is unchanged."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_BASELINE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_baseline.",
+    "message": "Baseline saved. Changes will be checked after page loads. Enable auto-refresh for regular checks."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_CHANGED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_changed.",
+    "message": "Text changed. The latest difference is shown below."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_UNCHANGED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_unchanged.",
+    "message": "No text changes in the last successful check."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_CLOSE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_close.",
+    "message": "Close"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_REMOVED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_removed.",
+    "message": "Removed / previous text (up to 16,000 characters):"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_ADDED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_added.",
+    "message": "Added / current text (up to 16,000 characters):"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_HELP",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_help.",
+    "message": "Checks run after page loads, not continuously. Only the latest two versions are kept in memory. Missing sections and scan failures do not count as changes. Review section selection after a site redesign. Automatic exports are off after restarting the browser."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_FOLDER_READY",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_folder_ready.",
+    "message": "Export folder selected. Automatic export choices apply to future changes."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_NEEDS_FOLDER",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_needs_folder.",
+    "message": "Change detected, but no export folder is selected. Choose a folder to enable saving."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_EXPORT_FAILED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_export_failed.",
+    "message": "Change detected. One or more exports failed, were unavailable, or were cancelled by navigation. Hidden panes cannot supply fresh screenshots."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_EXPORTED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Helium Neo page change monitoring: monitor_exported.",
+    "message": "Change detected and exported with a source record and SHA-256 checksum."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_EXPORT_TIMEOUT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "An automatic change export exceeded its timeout.",
+    "message": "Automatic export timed out and has been turned off. Text monitoring continues."
+  },
+  {
     "name": "IDS_CONTENT_CONTEXT_SYSTEM_TRANSLATE",
     "source": "chrome/app/generated_resources.grd",
     "context": "The name of the macOS system Translate command in the content area context menu",

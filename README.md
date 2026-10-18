@@ -40,9 +40,12 @@ page, including when it is part of a split.
 - **Mobile preview (402 wide, full height)** keeps the mobile width and uses
   the entire pane height, with no fixed portrait-height cap. Narrow panes scale
   the preview down to fit.
-- **Auto-refresh** can be turned off or set from 15 to 180 seconds in 15-second
-  steps. It skips loading, discarded, crashed, and POST pages, and pending
-  navigations.
+- **Auto-refresh** offers 5, 10, 15, 30 and 45 seconds; 1 minute; 1 minute
+  30 seconds; 2, 3, 5, 10 and 30 minutes; and 1 hour. Optional **Vary each
+  refresh by ±5%** chooses a fresh delay each time. This spreads requests;
+  it does not guarantee avoiding bot detection. Automatic reloads are limited
+  to two at once across the browser, with failure backoff. Loading, sleeping,
+  crashed and POST pages, and pending navigations are skipped.
 - **Create desktop/mobile workspace** makes desktop and mobile copies in a
   pinned saved tab group, with a side-by-side split. The original page is kept.
 
@@ -51,6 +54,39 @@ mobile viewport and touch emulation, plus an Android mobile Chromium identity
 in the user agent and Client Hints. Switching between desktop and mobile reloads
 eligible pages so device detection runs again. The rendering engine remains
 Chromium. Per-tab settings are restored locally and are not synced between devices.
+
+### Page change monitoring
+
+Under **Tab view**, enable **Monitor article text for changes**, or select text
+inside a paragraph or section and choose **Monitor selected section for changes**.
+The browser saves a text baseline and checks it once after each completed load.
+Enable auto-refresh for regular checks. A tab attention indicator signals a change;
+**Review page changes…** shows the latest removed and added text, the last successful
+check time, and export status. Reviewing acknowledges the indicator.
+
+Only the latest two versions are retained in memory. Checks exclude navigation,
+hidden elements and editable fields, and stop at bounded text, node and time limits.
+Missing sections, empty text and failed scans retain the previous baseline instead
+of reporting a deletion. Positional section selectors may need reselecting after
+a site redesign. Checks do not continuously observe live page mutations or inspect
+cross-origin frames. Navigating to another URL stops monitoring. The experimental
+WebKit renderer is not supported.
+
+Optionally enable **Automatically save a screenshot on change** and/or
+**Automatically save a PDF on change**, then choose a change export folder.
+Screenshots preserve the visible pane as an SDR PNG, capped at eight megapixels;
+hidden panes cannot supply fresh screenshots. PDFs preserve the page's print
+layout, which may differ from its interactive display. Each export has a JSON
+source record with the previous/current text, observed change time, URL and SHA-256
+checksum. PNGs also embed source metadata. Exports follow detection and may reflect
+later page updates; they do not establish authenticity or original publication time.
+
+Only one monitored tab exports at a time; competing exports are skipped and reported
+in **Review page changes…**. Encoding and file writes run off the browser UI thread.
+Automatic refresh waits while the tab is scanning or exporting. An export timeout
+turns automatic exports off while allowing text monitoring to continue. Interval,
+jitter and watched section restore locally; text history and export opt-ins do not
+persist after restarting the browser. Automatic exports require enabling again.
 
 ### Experimental WebKit playback on macOS
 
