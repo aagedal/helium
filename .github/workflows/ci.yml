@@ -46,6 +46,11 @@ jobs:
       - name: Test devutils
         run: ./devutils/run_devutils_tests.sh
 
+      - name: Test tab geometry, refresh presets, and change excerpts
+        run: |
+          python devutils/test_tab_preview.py
+          python devutils/test_page_change_diff.py
+
   validate-config:
     runs-on: ubuntu-latest
     steps:

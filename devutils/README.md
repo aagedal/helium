@@ -2,6 +2,60 @@
 
 This is a collection of scripts written for developing on ungoogled-chromium. See the descriptions at the top of each script for more information.
 
+## Page change monitoring
+
+`helium/ui/page-change-monitor.patch` extends `PaneSettings` with explicit refresh
+presets, optional uniform ±5% jitter, a shared FIFO reload queue and error backoff.
+The queue allows two active automatic reloads, spaces starts by 250 ms, and
+sleeps while both slots are occupied. Requests are cancelled when settings change
+or tabs close, and newly due tabs cannot jump ahead of tabs already waiting.
+Legacy 15-second-multiple intervals through 180 seconds remain accepted when
+restoring old sessions, but are not offered as new menu choices. Monitoring is an
+opt-in `WebContentsObserver`; its isolated-world text read runs once after loading
+settles, without a MutationObserver, interval scan, hidden-tab wakeup, or pixel diff.
+The scan stops at 4,000 nodes, 65,536 UTF-16 text units or 12 ms, with a two-second
+browser-side reply timeout. These are best-effort work limits, not a hard bound on
+one expensive browser DOM/style operation. Empty, missing and incomplete results
+never replace a valid baseline. Changed-span extraction runs only on review.
+
+Run `python3 devutils/test_tab_preview.py` for sanitizer-backed viewport, interval
+and jitter checks. Run `python3 devutils/test_page_change_diff.py` for changed-line
+context, insertion/deletion and UTF-8 excerpt checks. Native `PaneSettingsTest.*`
+covers timer deadlines, blocking, restoration and tab lifecycle; it requires an unpruned Chromium test build.
+Run `python3 devutils/page_change_monitor_server.py`, open
+`http://127.0.0.1:8240/`, and choose **Run production-script checks** for DOM fixtures.
+The server extracts the exact production script from the fork patch. The same page
+has a statement-change button for native change indicator, review and export QA.
+
+Automatic PNG exports reuse the existing screenshot metadata encoder. PNG and PDF
+exports include JSON sidecars with both text versions, capture limitations and a
+SHA-256 digest of the finished file. Filenames use frozen source details and a UUID.
+Files are written atomically on background workers. A single monitored tab may
+export at a time; there is no unbounded export queue. Each tab's exports time out
+after 30 seconds, disabling its export opt-ins and releasing refresh blocking.
+Hidden tabs cannot export compositor screenshots, because their surface may be
+stale. Printing and screenshot policy preferences are honored. Exports remain
+opt-in each session; text baselines and differences are never session-serialized.
+
+Validation on the persistent Apple Silicon development build: all 17 production
+DOM fixtures passed, along with 132 viewport cases, 7,501 interval checks, 1,414
+jitter samples and 209 changed-line excerpt cases under sanitizers. The final app
+rebuilt and was restarted through the persistent launcher. Native QA verified
+the full interval menu, five-second reloads with optional jitter, unchanged pages
+not creating duplicate exports, change review with complete changed sentences,
+automatic PNG and one-page PDF exports, matching JSON SHA-256 digests, and PNG
+Creator Tool metadata. A second capture preserved the observed URL fragment in
+its source record. Native content was controlled local test content, not a live
+news site. A 200-paragraph DOM fixture took roughly 0.2 ms median per extraction
+(100 checks); this is not a multi-site browser performance benchmark.
+
+The scheduler and tab menu GN header dependency checks passed. The broad `:ui`
+check still reports existing dependencies for `autofill_ml_internals_ui.h` and
+`async_check_tracker.h`; it reports no new monitoring include errors. Native
+`PaneSettingsTest.*` regression cases were added but have not been executed in
+the pruned development tree. Broader live-site and multi-tab load testing remains
+useful before a release.
+
 ## Screenshots with source documentation
 
 Export filenames use the frozen capture timestamp, hostname (without `www.`),

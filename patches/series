@@ -385,3 +385,4 @@ helium/ui/macos-webkit-streaming-tabs.patch
 helium/ui/macos-webkit-manual-renderer.patch
 helium/ui/macos-webkit-browser-navigation.patch
 helium/core/neo-update-feeds.patch
+helium/ui/page-change-monitor.patch

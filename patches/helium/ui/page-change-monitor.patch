@@ -1,0 +1,1926 @@
+--- a/chrome/app/generated_resources.grd
++++ b/chrome/app/generated_resources.grd
+@@ -20475,6 +20475,96 @@
+     <message name="IDS_OSCRYPTASYNC_AVAILABILITY_INFOBAR_BUTTON" desc="The text of the button to proceed with relaunching the entire browser to resolve keychain permission issues.">
+       Relaunch
+     </message>
++    <message name="IDS_NEO_REFRESH_MINUTE" desc="One minute auto refresh interval.">
++      1 minute
++    </message>
++    <message name="IDS_NEO_MONITOR_EXPORT_BUSY" desc="Automatic export skipped because another monitored page is exporting.">
++      Change detected. Automatic export skipped because another page is exporting.
++    </message>
++    <message name="IDS_NEO_REFRESH_NINETY" desc="Helium Neo page change monitoring: refresh_ninety.">
++      1 minute 30 seconds
++    </message>
++    <message name="IDS_NEO_REFRESH_HOUR" desc="Helium Neo page change monitoring: refresh_hour.">
++      1 hour
++    </message>
++    <message name="IDS_NEO_REFRESH_MINUTES" desc="Helium Neo page change monitoring: refresh_minutes.">
++      <ph name="MINUTES">$1<ex>5</ex></ph> minutes
++    </message>
++    <message name="IDS_NEO_REFRESH_JITTER" desc="Helium Neo page change monitoring: refresh_jitter.">
++      Vary each refresh by ±5%
++    </message>
++    <message name="IDS_NEO_MONITOR_MAIN" desc="Helium Neo page change monitoring: monitor_main.">
++      Monitor article text for changes
++    </message>
++    <message name="IDS_NEO_MONITOR_SELECTION" desc="Helium Neo page change monitoring: monitor_selection.">
++      Monitor selected section for changes
++    </message>
++    <message name="IDS_NEO_MONITOR_REVIEW" desc="Helium Neo page change monitoring: monitor_review.">
++      Review page changes…
++    </message>
++    <message name="IDS_NEO_MONITOR_SCREENSHOT" desc="Helium Neo page change monitoring: monitor_screenshot.">
++      Automatically save a screenshot on change
++    </message>
++    <message name="IDS_NEO_MONITOR_PDF" desc="Helium Neo page change monitoring: monitor_pdf.">
++      Automatically save a PDF on change
++    </message>
++    <message name="IDS_NEO_MONITOR_FOLDER" desc="Helium Neo page change monitoring: monitor_folder.">
++      Choose change export folder…
++    </message>
++    <message name="IDS_NEO_MONITOR_OFF" desc="Helium Neo page change monitoring: monitor_off.">
++      Change monitoring is off.
++    </message>
++    <message name="IDS_NEO_MONITOR_WAITING" desc="Helium Neo page change monitoring: monitor_waiting.">
++      Waiting to establish a text baseline.
++    </message>
++    <message name="IDS_NEO_MONITOR_NAVIGATED" desc="Helium Neo page change monitoring: monitor_navigated.">
++      Monitoring stopped because this tab navigated to another page.
++    </message>
++    <message name="IDS_NEO_MONITOR_PAUSED" desc="Helium Neo page change monitoring: monitor_paused.">
++      Check paused: the page is loading, sleeping, or unavailable.
++    </message>
++    <message name="IDS_NEO_MONITOR_TIMEOUT" desc="Helium Neo page change monitoring: monitor_timeout.">
++      Check timed out. The previous version is unchanged.
++    </message>
++    <message name="IDS_NEO_MONITOR_FAILED" desc="Helium Neo page change monitoring: monitor_failed.">
++      Could not read the watched text. The previous version is unchanged.
++    </message>
++    <message name="IDS_NEO_MONITOR_BASELINE" desc="Helium Neo page change monitoring: monitor_baseline.">
++      Baseline saved. Changes will be checked after page loads. Enable auto-refresh for regular checks.
++    </message>
++    <message name="IDS_NEO_MONITOR_CHANGED" desc="Helium Neo page change monitoring: monitor_changed.">
++      Text changed. The latest difference is shown below.
++    </message>
++    <message name="IDS_NEO_MONITOR_UNCHANGED" desc="Helium Neo page change monitoring: monitor_unchanged.">
++      No text changes in the last successful check.
++    </message>
++    <message name="IDS_NEO_MONITOR_CLOSE" desc="Helium Neo page change monitoring: monitor_close.">
++      Close
++    </message>
++    <message name="IDS_NEO_MONITOR_REMOVED" desc="Helium Neo page change monitoring: monitor_removed.">
++      Removed / previous text (up to 16,000 characters):
++    </message>
++    <message name="IDS_NEO_MONITOR_ADDED" desc="Helium Neo page change monitoring: monitor_added.">
++      Added / current text (up to 16,000 characters):
++    </message>
++    <message name="IDS_NEO_MONITOR_HELP" desc="Helium Neo page change monitoring: monitor_help.">
++      Checks run after page loads, not continuously. Only the latest two versions are kept in memory. Missing sections and scan failures do not count as changes. Review section selection after a site redesign. Automatic exports are off after restarting the browser.
++    </message>
++    <message name="IDS_NEO_MONITOR_FOLDER_READY" desc="Helium Neo page change monitoring: monitor_folder_ready.">
++      Export folder selected. Automatic export choices apply to future changes.
++    </message>
++    <message name="IDS_NEO_MONITOR_NEEDS_FOLDER" desc="Helium Neo page change monitoring: monitor_needs_folder.">
++      Change detected, but no export folder is selected. Choose a folder to enable saving.
++    </message>
++    <message name="IDS_NEO_MONITOR_EXPORT_FAILED" desc="Helium Neo page change monitoring: monitor_export_failed.">
++      Change detected. One or more exports failed, were unavailable, or were cancelled by navigation. Hidden panes cannot supply fresh screenshots.
++    </message>
++    <message name="IDS_NEO_MONITOR_EXPORTED" desc="Helium Neo page change monitoring: monitor_exported.">
++      Change detected and exported with a source record and SHA-256 checksum.
++    </message>
++    <message name="IDS_NEO_MONITOR_EXPORT_TIMEOUT" desc="An automatic change export exceeded its timeout.">
++      Automatic export timed out and has been turned off. Text monitoring continues.
++    </message>
+   </messages>
+ </release>
+ </grit>
+\ No newline at end of file
+--- a/chrome/browser/ui/BUILD.gn
++++ b/chrome/browser/ui/BUILD.gn
+@@ -400,7 +400,6 @@
+       "//chrome/browser:browser_public_dependencies",
+     ]
+     deps = [
+-      "//chrome/browser/ui/tabs:pane_settings",
+       ":tab_ui_helper",
+       "//base",
+       "//chrome/browser/apps/app_service",
+@@ -409,6 +408,7 @@
+       "//chrome/browser/sessions",
+       "//chrome/browser/ui/browser_window",
+       "//chrome/browser/ui/send_tab_to_self",
++      "//chrome/browser/ui/tabs:pane_settings",
+       "//chrome/browser/ui/tabs:tab_enums",
+       "//chrome/browser/ui/tabs:tab_group",
+       "//chrome/browser/ui/tabs:tab_strip",
+@@ -1033,8 +1033,8 @@
+     "//components/lens",
+     "//components/lens:buildflags",
+     "//components/lens:enterprise_policy",
++    "//components/metrics:metrics_pref_names",
+     "//components/metrics/debug:resources",
+-    "//components/metrics:metrics_pref_names",
+     "//components/metrics/private_metrics",
+     "//components/omnibox/browser:vector_icons",
+     "//components/optimization_guide/content/browser",
+@@ -1518,16 +1518,6 @@
+       # that //chrome/browser:browser has no remaining sources. It registers
+       # WebUI interface binders for desktop, which need this target's headers.
+       "//chrome/browser/chrome_browser_interface_binders_webui_parts_desktop.cc",
+-      "browser_shortcuts/browser_shortcut_metadata.cc",
+-      "browser_shortcuts/browser_shortcut_metadata.h",
+-      "browser_shortcuts/browser_shortcut_prefs.cc",
+-      "browser_shortcuts/browser_shortcut_prefs.h",
+-      "browser_shortcuts/browser_shortcut_serialization.cc",
+-      "browser_shortcuts/browser_shortcut_serialization.h",
+-      "browser_shortcuts/browser_shortcut_service.cc",
+-      "browser_shortcuts/browser_shortcut_service.h",
+-      "browser_shortcuts/browser_shortcut_service_factory.cc",
+-      "browser_shortcuts/browser_shortcut_service_factory.h",
+       "browser.cc",
+       "browser.h",
+       "browser_command_controller.cc",
+@@ -1539,6 +1529,16 @@
+       "browser_manager_service.h",
+       "browser_manager_service_factory.cc",
+       "browser_manager_service_factory.h",
++      "browser_shortcuts/browser_shortcut_metadata.cc",
++      "browser_shortcuts/browser_shortcut_metadata.h",
++      "browser_shortcuts/browser_shortcut_prefs.cc",
++      "browser_shortcuts/browser_shortcut_prefs.h",
++      "browser_shortcuts/browser_shortcut_serialization.cc",
++      "browser_shortcuts/browser_shortcut_serialization.h",
++      "browser_shortcuts/browser_shortcut_service.cc",
++      "browser_shortcuts/browser_shortcut_service.h",
++      "browser_shortcuts/browser_shortcut_service_factory.cc",
++      "browser_shortcuts/browser_shortcut_service_factory.h",
+       "browser_tab_restorer.cc",
+       "browser_tab_strip_model_delegate.cc",
+       "browser_tabstrip.cc",
+@@ -1551,14 +1551,21 @@
+       "scoped_tabbed_browser_displayer.h",
+       "singleton_tabs.cc",
+       "singleton_tabs.h",
++      "tabs/page_change_monitor.cc",
++      "tabs/page_change_monitor_diff.h",
++      "tabs/page_change_monitor_script.h",
+       "unload_controller.cc",
+       "unload_controller.h",
+     ]
+ 
+     if (enable_dice_support) {
+       deps += [
++        "//chrome/browser/sharing_hub",
++        "//chrome/browser/ui/select_file_policy",
++        "//chrome/browser/ui/tabs:page_change_monitor",
+         "//chrome/browser/ui/views/search_ai_mode",
+         "//chrome/browser/ui/views/search_ai_mode:impl",
++        "//chrome/browser/ui/views/sharing_hub:screenshot_documentation",
+       ]
+       allow_circular_includes_from += [
+         # TODO(crbug.com/364667551): Remove this circular dependency when
+@@ -1703,10 +1710,10 @@
+       "//chrome/browser/ui/tabs",
+       "//chrome/browser/ui/tabs:favicon_theming",
+       "//chrome/browser/ui/tabs:impl",
++      "//chrome/browser/ui/tabs:pane_settings",
+       "//chrome/browser/ui/tabs:tab_group_impl",
+       "//chrome/browser/ui/tabs:tab_menu",
+       "//chrome/browser/ui/tabs:tab_menu_impl",
+-      "//chrome/browser/ui/tabs:pane_settings",
+       "//chrome/browser/ui/tabs:tab_model_impl",
+       "//chrome/browser/ui/tabs:tab_strip_impl",
+       "//chrome/browser/ui/tabs:tab_strip_model_observer_impl",
+--- a/chrome/browser/ui/tab_helpers.cc
++++ b/chrome/browser/ui/tab_helpers.cc
+@@ -158,6 +158,10 @@
+ #include "rlz/buildflags/buildflags.h"
+ #include "ui/accessibility/accessibility_features.h"
+ 
++#if !BUILDFLAG(IS_ANDROID)
++#include "chrome/browser/ui/tabs/page_change_monitor.h"
++#endif
++
+ #if BUILDFLAG(IS_ANDROID)
+ #include "base/android/android_info.h"
+ #include "base/functional/bind.h"
+@@ -764,6 +768,7 @@
+ #endif
+ 
+ #if !BUILDFLAG(IS_ANDROID)
++  tabs::PageChangeMonitor::GetOrCreate(web_contents);
+   webapps::PreRedirectionURLObserver::CreateForWebContents(web_contents);
+ #endif
+ 
+--- a/chrome/browser/ui/tabs/BUILD.gn
++++ b/chrome/browser/ui/tabs/BUILD.gn
+@@ -86,6 +86,16 @@
+ }
+ 
+ if (!is_android) {
++  source_set("page_change_monitor") {
++    public = [ "page_change_monitor.h" ]
++    public_deps = [
++      "//base",
++      "//content/public/browser",
++      "//ui/shell_dialogs",
++      "//url",
++    ]
++  }
++
+   source_set("pane_settings") {
+     sources = [
+       "pane_settings.cc",
+@@ -101,6 +111,7 @@
+       "//chrome/browser/sessions",
+       "//components/embedder_support:user_agent",
+       "//components/sessions",
++      "//net",
+     ]
+   }
+ 
+@@ -274,9 +285,9 @@
+       "existing_base_sub_menu_model.h",
+       "existing_tab_group_sub_menu_model.h",
+       "existing_window_sub_menu_model.h",
++      "pane_settings_menu_model.h",
+       "recent_tabs_builder.h",
+       "recent_tabs_sub_menu_model.h",
+-      "pane_settings_menu_model.h",
+       "split_tab_menu_model.h",
+       "split_tab_swap_menu_model.h",
+       "split_view_layout_menu_model.h",
+@@ -322,6 +333,7 @@
+     ]
+ 
+     deps = [
++      ":page_change_monitor",
+       ":pane_settings",
+       ":tab_group",
+       ":tab_menu",
+@@ -883,8 +895,8 @@
+   source_set("unit_tests") {
+     testonly = true
+     sources = [
++      "inactive_window_mouse_event_controller_unittest.cc",
+       "pane_settings_unittest.cc",
+-      "inactive_window_mouse_event_controller_unittest.cc",
+       "split_view_iph_controller_unittest.cc",
+       "tab_collection_storage_unittest.cc",
+       "tab_collection_unittest.cc",
+@@ -908,8 +920,8 @@
+     ]
+ 
+     deps = [
++      ":page_context_eligibility_helper_unit_tests",
+       ":pane_settings",
+-      ":page_context_eligibility_helper_unit_tests",
+       ":tab_enums",
+       ":tab_group",
+       ":tab_menu",
+--- /dev/null
++++ b/chrome/browser/ui/tabs/page_change_monitor.cc
+@@ -0,0 +1,621 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/ui/tabs/page_change_monitor.h"
++
++#include <algorithm>
++#include <cmath>
++#include <variant>
++
++#include "base/files/file_util.h"
++#include "base/files/important_file_writer.h"
++#include "base/functional/bind.h"
++#include "base/i18n/time_formatting.h"
++#include "base/json/json_writer.h"
++#include "base/strings/string_number_conversions.h"
++#include "base/strings/utf_string_conversions.h"
++#include "base/task/bind_post_task.h"
++#include "base/task/thread_pool.h"
++#include "base/uuid.h"
++#include "build/build_config.h"
++#include "chrome/browser/profiles/profile.h"
++#include "chrome/browser/sharing_hub/sharing_hub_features.h"
++#include "chrome/browser/ui/select_file_policy/chrome_select_file_policy.h"
++#include "chrome/browser/ui/tab_ui_helper.h"
++#include "chrome/browser/ui/tabs/page_change_monitor_diff.h"
++#include "chrome/browser/ui/tabs/page_change_monitor_script.h"
++#include "chrome/browser/ui/tabs/pane_settings.h"
++#include "chrome/browser/ui/tabs/pane_settings_menu_model.h"
++#include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.h"
++#include "chrome/common/chrome_isolated_world_ids.h"
++#include "chrome/common/pref_names.h"
++#include "chrome/grit/generated_resources.h"
++#include "components/prefs/pref_service.h"
++#include "components/tabs/public/tab_interface.h"
++#include "components/version_info/version_info.h"
++#include "components/viz/common/frame_sinks/copy_output_result.h"
++#include "content/public/browser/navigation_controller.h"
++#include "content/public/browser/navigation_entry.h"
++#include "content/public/browser/navigation_handle.h"
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/web_contents.h"
++#include "crypto/sha2.h"
++#include "printing/buildflags/buildflags.h"
++#include "ui/base/l10n/l10n_util.h"
++#include "ui/base/mojom/dialog_button.mojom.h"
++#include "ui/shell_dialogs/selected_file_info.h"
++#include "ui/views/accessibility/view_accessibility.h"
++#include "ui/views/controls/label.h"
++#include "ui/views/controls/textarea/textarea.h"
++#include "ui/views/layout/box_layout.h"
++#include "ui/views/window/dialog_delegate.h"
++
++#if BUILDFLAG(ENABLE_PRINTING)
++#if BUILDFLAG(ENABLE_PRINT_PREVIEW)
++#include "chrome/browser/printing/print_view_manager.h"
++#else
++#include "chrome/browser/printing/print_view_manager_basic.h"
++#endif
++#include "components/printing/browser/print_to_pdf/pdf_print_utils.h"
++#endif
++
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/helium_webkit_streaming_mac.h"
++#endif
++
++namespace tabs {
++namespace {
++int g_active_monitor_exports = 0;
++
++std::u16string Text(int id) {
++  return l10n_util::GetStringUTF16(id);
++}
++
++bool WriteExport(const base::FilePath& path,
++                 std::string bytes,
++                 base::DictValue record) {
++  if (bytes.empty() || bytes.size() > 32 * 1024 * 1024) {
++    return false;
++  }
++  record.Set("sha256", base::HexEncodeLower(crypto::SHA256HashString(bytes)));
++  std::string json;
++  if (!base::JSONWriter::WriteWithOptions(
++          record, base::JSONWriter::OPTIONS_PRETTY_PRINT, &json)) {
++    return false;
++  }
++  if (!base::ImportantFileWriter::WriteFileAtomically(path, bytes)) {
++    return false;
++  }
++  if (!base::ImportantFileWriter::WriteFileAtomically(
++          path.AddExtension(FILE_PATH_LITERAL("json")), json)) {
++    base::DeleteFile(path);
++    return false;
++  }
++  return true;
++}
++}  // namespace
++
++WEB_CONTENTS_USER_DATA_KEY_IMPL(PageChangeMonitor);
++
++PageChangeMonitor::PageChangeMonitor(content::WebContents* contents)
++    : content::WebContentsObserver(contents),
++      content::WebContentsUserData<PageChangeMonitor>(*contents) {
++  settings_subscription_ =
++      PaneSettings::GetOrCreate(contents)->RegisterChanged(base::BindRepeating(
++          &PageChangeMonitor::SettingsChanged, base::Unretained(this)));
++  status_ = Text(IDS_NEO_MONITOR_OFF);
++  SettingsChanged();
++}
++
++PageChangeMonitor::~PageChangeMonitor() {
++  if (exports_pending_ > 0) {
++    --g_active_monitor_exports;
++  }
++  if (folder_dialog_) {
++    folder_dialog_->ListenerDestroyed();
++  }
++}
++
++PageChangeMonitor* PageChangeMonitor::GetOrCreate(
++    content::WebContents* contents) {
++  CreateForWebContents(contents);
++  return FromWebContents(contents);
++}
++
++void PageChangeMonitor::UpdateBlocked() {
++  if (web_contents()) {
++    PaneSettings::GetOrCreate(web_contents())
++        ->SetRefreshBlocked(scanning_ || settle_timer_.IsRunning() ||
++                            exports_pending_ > 0);
++  }
++}
++
++void PageChangeMonitor::CancelPending() {
++  ++generation_;
++  settle_timer_.Stop();
++  scan_timeout_.Stop();
++  scanning_ = false;
++  UpdateBlocked();
++}
++
++void PageChangeMonitor::SettingsChanged() {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  if (selector_ == settings->monitor_selector()) {
++    return;
++  }
++  CancelPending();
++  selector_ = settings->monitor_selector();
++  watched_url_ = web_contents()->GetLastCommittedURL().GetWithoutRef();
++  baseline_.clear();
++  before_.clear();
++  after_.clear();
++  has_change_ = false;
++  SetAttention(false);
++  status_ =
++      Text(selector_.empty() ? IDS_NEO_MONITOR_OFF : IDS_NEO_MONITOR_WAITING);
++  if (!selector_.empty()) {
++    ScheduleScan();
++  }
++}
++
++void PageChangeMonitor::ScheduleScan() {
++  if (selector_.empty() || scanning_ || exports_pending_ ||
++      web_contents()->IsLoading()) {
++    return;
++  }
++  settle_timer_.Start(FROM_HERE, base::Milliseconds(750),
++                      base::BindOnce(&PageChangeMonitor::Scan,
++                                     weak_factory_.GetWeakPtr(), false));
++  UpdateBlocked();
++}
++
++void PageChangeMonitor::DidStopLoading() {
++  if (!selector_.empty()) {
++    ScheduleScan();
++  }
++}
++
++void PageChangeMonitor::DidStartNavigation(content::NavigationHandle* handle) {
++  if (handle->IsInPrimaryMainFrame() && !handle->IsSameDocument()) {
++    CancelPending();
++  }
++}
++
++void PageChangeMonitor::DidFinishNavigation(content::NavigationHandle* handle) {
++  if (!handle->IsInPrimaryMainFrame() || !handle->HasCommitted()) {
++    return;
++  }
++  if (!selector_.empty() && !watched_url_.is_empty() &&
++      handle->GetURL().GetWithoutRef() != watched_url_) {
++    // Never carry a watched region or automatic exports onto another page.
++    PaneSettings::GetOrCreate(web_contents())->SetMonitorSelector("");
++    PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
++        TabInterface::MaybeGetFromContents(web_contents()));
++    status_ = Text(IDS_NEO_MONITOR_NAVIGATED);
++  }
++}
++
++void PageChangeMonitor::WebContentsDestroyed() {
++  CancelPending();
++  settings_subscription_ = {};
++  weak_factory_.InvalidateWeakPtrs();
++  if (folder_dialog_) {
++    folder_dialog_->ListenerDestroyed();
++    folder_dialog_ = nullptr;
++  }
++}
++
++void PageChangeMonitor::WatchSelection() {
++  CancelPending();
++  Scan(true);
++}
++
++void PageChangeMonitor::Scan(bool selection) {
++#if BUILDFLAG(IS_MAC)
++  if (helium::GetWebKitStreamingTabView(web_contents())) {
++    status_ = Text(IDS_NEO_MONITOR_PAUSED);
++    UpdateBlocked();
++    return;
++  }
++#endif
++  auto* frame = web_contents()->GetPrimaryMainFrame();
++  const auto* entry = web_contents()->GetController().GetLastCommittedEntry();
++  if ((!selection && selector_.empty()) || scanning_ || exports_pending_ ||
++      web_contents()->IsLoading() || !entry ||
++      entry->GetPageType() != content::PAGE_TYPE_NORMAL ||
++      !web_contents()->GetLastCommittedURL().SchemeIsHTTPOrHTTPS() ||
++      web_contents()->GetController().NeedsReload() || !frame ||
++      !frame->IsRenderFrameLive()) {
++    status_ = Text(IDS_NEO_MONITOR_PAUSED);
++    UpdateBlocked();
++    return;
++  }
++  std::string argument;
++  base::JSONWriter::Write(base::Value(selection ? "@selection" : selector_),
++                          &argument);
++  scanning_ = true;
++  UpdateBlocked();
++  scan_timeout_.Start(FROM_HERE, base::Seconds(2),
++                      base::BindOnce(&PageChangeMonitor::ScanTimedOut,
++                                     weak_factory_.GetWeakPtr(), generation_));
++  frame->ExecuteJavaScriptInIsolatedWorld(
++      base::UTF8ToUTF16(std::string(kPageChangeMonitorScript) + "(" + argument +
++                        ")"),
++      base::BindOnce(&PageChangeMonitor::ScanComplete,
++                     weak_factory_.GetWeakPtr(), generation_, selection),
++      ISOLATED_WORLD_ID_CHROME_INTERNAL);
++}
++
++void PageChangeMonitor::ScanTimedOut(int generation) {
++  if (generation != generation_) {
++    return;
++  }
++  ++generation_;  // Ignore a late renderer reply.
++  scanning_ = false;
++  status_ = Text(IDS_NEO_MONITOR_TIMEOUT);
++  UpdateBlocked();
++}
++
++void PageChangeMonitor::ScanComplete(int generation,
++                                     bool selection,
++                                     base::Value result) {
++  if (generation != generation_) {
++    return;
++  }
++  scan_timeout_.Stop();
++  scanning_ = false;
++  UpdateBlocked();
++  const auto* data = result.GetIfDict();
++  const auto* text = data ? data->FindString("text") : nullptr;
++  if (!text || text->empty() || text->size() > 262144) {
++    const auto* error = data ? data->FindString("error") : nullptr;
++    status_ = error ? base::UTF8ToUTF16(*error) : Text(IDS_NEO_MONITOR_FAILED);
++    if (selection) {
++      ShowChanges();
++    }
++    return;
++  }
++  if (selection) {
++    const auto* selector = data->FindString("selector");
++    if (!selector || selector->empty() || selector->size() > 2048) {
++      return;
++    }
++    PaneSettings::GetOrCreate(web_contents())->SetMonitorSelector(*selector);
++    PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
++        TabInterface::MaybeGetFromContents(web_contents()));
++    // SettingsChanged established the new region; this read is its baseline.
++    settle_timer_.Stop();
++    UpdateBlocked();
++  }
++  if (watched_url_.is_empty()) {
++    watched_url_ = web_contents()->GetLastCommittedURL().GetWithoutRef();
++  }
++  last_check_ = base::TimeFormatAsIso8601(base::Time::Now());
++  if (baseline_.empty()) {
++    baseline_ = *text;
++    status_ = Text(IDS_NEO_MONITOR_BASELINE);
++  } else if (baseline_ != *text) {
++    before_ = std::move(baseline_);
++    after_ = *text;
++    baseline_ = *text;
++    change_time_ = last_check_;
++    has_change_ = true;
++    status_ = Text(IDS_NEO_MONITOR_CHANGED);
++    SetAttention(true);
++    ExportChange();
++  } else {
++    status_ =
++        Text(has_change_ ? IDS_NEO_MONITOR_CHANGED : IDS_NEO_MONITOR_UNCHANGED);
++  }
++}
++
++void PageChangeMonitor::SetAttention(bool attention) {
++  if (auto* tab = TabInterface::MaybeGetFromContents(web_contents())) {
++    if (auto* helper = TabUIHelper::From(tab)) {
++      helper->SetNeedsAttention(attention);
++    }
++  }
++}
++
++void PageChangeMonitor::ShowChanges() {
++  auto dialog = std::make_unique<views::DialogDelegate>();
++  auto body = std::make_unique<views::View>();
++  dialog->SetTitle(Text(IDS_NEO_MONITOR_REVIEW));
++  dialog->SetButtons(static_cast<int>(ui::mojom::DialogButton::kOk));
++  dialog->SetButtonLabel(ui::mojom::DialogButton::kOk,
++                         Text(IDS_NEO_MONITOR_CLOSE));
++  body->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(16), 10));
++  auto label = std::make_unique<views::Label>(status_);
++  label->SetMultiLine(true);
++  label->SetMaximumWidth(640);
++  body->AddChildView(std::move(label));
++  std::string report = watched_url_.spec();
++  if (!last_check_.empty()) {
++    report += "\nLast successful check (UTC): " + last_check_;
++  }
++  if (!change_time_.empty()) {
++    report += "\nLatest change observed (UTC): " + change_time_;
++  }
++  if (!export_folder_.empty()) {
++    report += "\nExport folder: " + export_folder_.AsUTF8Unsafe();
++  }
++  if (!before_.empty() || !after_.empty()) {
++    const auto [removed, added] = BuildPageChangeDiff(before_, after_);
++    report += "\n\n" + base::UTF16ToUTF8(Text(IDS_NEO_MONITOR_REMOVED)) + "\n" +
++              removed;
++    report +=
++        "\n\n" + base::UTF16ToUTF8(Text(IDS_NEO_MONITOR_ADDED)) + "\n" + added;
++  }
++  auto area = std::make_unique<views::Textarea>();
++  area->SetReadOnly(true);
++  area->SetText(base::UTF8ToUTF16(report));
++  area->SetPreferredSize(gfx::Size(640, 400));
++  area->GetViewAccessibility().SetName(Text(IDS_NEO_MONITOR_REVIEW));
++  body->AddChildView(std::move(area));
++  auto help = std::make_unique<views::Label>(Text(IDS_NEO_MONITOR_HELP));
++  help->SetMultiLine(true);
++  help->SetMaximumWidth(640);
++  body->AddChildView(std::move(help));
++  dialog->SetContentsView(std::move(body));
++  views::DialogDelegate::CreateDialogWidget(
++      std::move(dialog), web_contents()->GetTopLevelNativeWindow(),
++      gfx::NativeView())
++      ->Show();
++  has_change_ = false;
++  SetAttention(false);
++}
++
++void PageChangeMonitor::ChooseExportFolder() {
++  if (folder_dialog_) {
++    return;
++  }
++  base::FilePath initial_folder;
++#if !BUILDFLAG(IS_CHROMEOS)
++  auto* prefs = Profile::FromBrowserContext(web_contents()->GetBrowserContext())
++                    ->GetPrefs();
++  initial_folder = prefs->GetFilePath(sharing_hub::kScreenshotDirectoryPref);
++#endif
++  folder_dialog_ = ui::SelectFileDialog::Create(
++      this, std::make_unique<ChromeSelectFilePolicy>(web_contents()));
++  folder_dialog_->SelectFile(ui::SelectFileDialog::SELECT_FOLDER,
++                             Text(IDS_NEO_MONITOR_FOLDER), initial_folder,
++                             nullptr, 0, base::FilePath::StringType(),
++                             web_contents()->GetTopLevelNativeWindow());
++}
++
++void PageChangeMonitor::FileSelected(const ui::SelectedFileInfo& file,
++                                     int index) {
++  folder_dialog_ = nullptr;
++  export_folder_ = file.path();
++  status_ = Text(IDS_NEO_MONITOR_FOLDER_READY);
++}
++void PageChangeMonitor::FileSelectionCanceled() {
++  folder_dialog_ = nullptr;
++  if (export_folder_.empty()) {
++    PaneSettings::GetOrCreate(web_contents())->SetMonitorExports(false, false);
++    status_ = Text(IDS_NEO_MONITOR_NEEDS_FOLDER);
++  }
++}
++
++void PageChangeMonitor::ToggleScreenshot() {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetMonitorExports(!settings->monitor_screenshot(),
++                              settings->monitor_pdf());
++  if (settings->monitor_screenshot() && export_folder_.empty()) {
++    ChooseExportFolder();
++  }
++}
++void PageChangeMonitor::TogglePdf() {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetMonitorExports(settings->monitor_screenshot(),
++                              !settings->monitor_pdf());
++  if (settings->monitor_pdf() && export_folder_.empty()) {
++    ChooseExportFolder();
++  }
++}
++
++void PageChangeMonitor::ExportChange() {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  if ((!settings->monitor_screenshot() && !settings->monitor_pdf()) ||
++      exports_pending_) {
++    return;
++  }
++  if (export_folder_.empty()) {
++    status_ = Text(IDS_NEO_MONITOR_NEEDS_FOLDER);
++    return;
++  }
++  if (g_active_monitor_exports >= 1) {
++    status_ = Text(IDS_NEO_MONITOR_EXPORT_BUSY);
++    return;
++  }
++  ++g_active_monitor_exports;
++  export_title_ = web_contents()->GetTitle();
++  export_url_ = web_contents()->GetLastCommittedURL();
++  export_generation_ = generation_;
++  export_failed_ = false;
++  export_stem_ = export_folder_.Append(base::FilePath::FromUTF8Unsafe(
++      sharing_hub::ScreenshotFilenameStem(watched_url_, export_title_,
++                                          base::Time::Now()) +
++      "_" + base::Uuid::GenerateRandomV4().AsLowercaseString()));
++  const bool screenshot = settings->monitor_screenshot();
++  const bool pdf = settings->monitor_pdf();
++  exports_pending_ = static_cast<int>(screenshot) + static_cast<int>(pdf);
++  UpdateBlocked();
++  export_timeout_.Start(
++      FROM_HERE, base::Seconds(30),
++      base::BindOnce(&PageChangeMonitor::ExportTimedOut,
++                     weak_factory_.GetWeakPtr(), generation_));
++  if (screenshot) {
++    auto* view = web_contents()->GetRenderWidgetHostView();
++    if (!sharing_hub::DesktopScreenshotsFeatureEnabled(
++            web_contents()->GetBrowserContext()) ||
++        !view || !view->IsSurfaceAvailableForCopy() ||
++        web_contents()->GetVisibility() != content::Visibility::VISIBLE) {
++      // A hidden tab can have stale compositor pixels. Never save them as new
++      // evidence.
++      ExportFinished(generation_, false);
++    } else {
++      auto size = view->GetViewBounds().size();
++      const double scale = std::min(
++          1.0, std::sqrt(8000000.0 /
++                         std::max(1.0, static_cast<double>(size.width()) *
++                                           size.height())));
++      size = gfx::Size(std::max(1, static_cast<int>(size.width() * scale)),
++                       std::max(1, static_cast<int>(size.height() * scale)));
++      screenshot_started_at_ = base::TimeFormatAsIso8601(base::Time::Now());
++      view->CopyFromSurface(gfx::Rect(), size, base::Seconds(5),
++                            base::BindPostTaskToCurrentDefault(base::BindOnce(
++                                &PageChangeMonitor::ScreenshotReady,
++                                weak_factory_.GetWeakPtr(), generation_)));
++    }
++  }
++  if (pdf) {
++#if BUILDFLAG(ENABLE_PRINTING)
++#if BUILDFLAG(ENABLE_PRINT_PREVIEW)
++    auto* manager = printing::PrintViewManager::FromWebContents(web_contents());
++#else
++    auto* manager =
++        printing::PrintViewManagerBasic::FromWebContents(web_contents());
++#endif
++    auto* prefs =
++        Profile::FromBrowserContext(web_contents()->GetBrowserContext())
++            ->GetPrefs();
++    auto params = print_to_pdf::GetPrintPagesParams(
++        export_url_, false, true, true, 1.0, 8.27, 11.69, 0.4, 0.4, 0.4, 0.4,
++        std::nullopt, std::nullopt, false, true, false);
++    if (!manager || !prefs->GetBoolean(prefs::kPrintingEnabled) ||
++        !std::holds_alternative<printing::mojom::PrintPagesParamsPtr>(params)) {
++      ExportFinished(generation_, false);
++    } else {
++      manager->PrintToPdf(
++          web_contents()->GetPrimaryMainFrame(), "",
++          std::move(std::get<printing::mojom::PrintPagesParamsPtr>(params)),
++          base::BindOnce(
++              [](base::WeakPtr<PageChangeMonitor> self, int generation,
++                 print_to_pdf::PdfPrintResult result,
++                 scoped_refptr<base::RefCountedMemory> bytes) {
++                if (!self) {
++                  return;
++                }
++                if (result != print_to_pdf::PdfPrintResult::kPrintSuccess ||
++                    !bytes || bytes->size() > 32 * 1024 * 1024) {
++                  self->ExportFinished(generation, false);
++                } else {
++                  self->SaveExport(
++                      generation, "pdf",
++                      std::string(reinterpret_cast<const char*>(bytes->data()),
++                                  bytes->size()));
++                }
++              },
++              weak_factory_.GetWeakPtr(), generation_));
++    }
++#else
++    ExportFinished(generation_, false);
++#endif
++  }
++}
++
++void PageChangeMonitor::ScreenshotReady(
++    int generation,
++    const content::CopyFromSurfaceResult& result) {
++  if (generation != generation_ || !result.has_value()) {
++    ExportFinished(generation, false);
++    return;
++  }
++  base::DictValue automatic;
++  automatic.Set("page_url", export_url_.spec());
++  automatic.Set("browser", "Helium Neo / Chromium " +
++                               std::string(version_info::GetVersionNumber()));
++  automatic.Set("page_title", base::UTF16ToUTF8(export_title_));
++  automatic.Set("capture_started_at_utc", screenshot_started_at_);
++  automatic.Set("capture_completed_at_utc",
++                base::TimeFormatAsIso8601(base::Time::Now()));
++  automatic.Set("capture_trigger", "text_change_monitor");
++  automatic.Set("monitor_selector", selector_);
++  automatic.Set("screenshot_scope", "visible_pane_sdr_at_most_8_megapixels");
++  base::ThreadPool::PostTaskAndReplyWithResult(
++      FROM_HERE, {base::MayBlock(), base::TaskPriority::BEST_EFFORT},
++      base::BindOnce(
++          [](SkBitmap bitmap, base::DictValue automatic) {
++            return sharing_hub::CreateScreenshotExport(
++                bitmap, std::move(automatic), base::DictValue(),
++                sharing_hub::ScreenshotFormat::kPng, false, false);
++          },
++          result->bitmap, std::move(automatic)),
++      base::BindOnce(
++          [](base::WeakPtr<PageChangeMonitor> self, int generation,
++             sharing_hub::ScreenshotExport output) {
++            if (self) {
++              self->SaveExport(generation, "png", std::move(output.bytes));
++            }
++          },
++          weak_factory_.GetWeakPtr(), generation));
++}
++
++void PageChangeMonitor::SaveExport(int generation,
++                                   std::string extension,
++                                   std::string bytes) {
++  if (generation != generation_ || bytes.empty()) {
++    ExportFinished(generation, false);
++    return;
++  }
++  base::DictValue record;
++  record.Set("schema_version", 1);
++  record.Set("page_url", export_url_.spec());
++  record.Set("page_title", base::UTF16ToUTF8(export_title_));
++  record.Set("monitor_selector", selector_);
++  record.Set("change_observed_at_utc", change_time_);
++  record.Set("export_completed_at_utc",
++             base::TimeFormatAsIso8601(base::Time::Now()));
++  record.Set("previous_text", before_);
++  record.Set("current_text", after_);
++  record.Set("export_type", extension);
++  record.Set("limitations",
++             "Text change observed using the computer clock; not proof of "
++             "authenticity. "
++             "Export follows detection and may reflect later page updates. PNG "
++             "captures only the visible pane; "
++             "PDF uses print layout and may omit interactive content. No "
++             "original publication time is inferred.");
++  const auto path = export_stem_.AddExtensionASCII(extension);
++  base::ThreadPool::PostTaskAndReplyWithResult(
++      FROM_HERE, {base::MayBlock(), base::TaskPriority::BEST_EFFORT},
++      base::BindOnce(&WriteExport, path, std::move(bytes), std::move(record)),
++      base::BindOnce(&PageChangeMonitor::ExportFinished,
++                     weak_factory_.GetWeakPtr(), generation));
++}
++
++void PageChangeMonitor::ExportTimedOut(int generation) {
++  if (generation != export_generation_ || exports_pending_ <= 0) {
++    return;
++  }
++  // Stop adding work if a renderer or print job fails to answer. Existing
++  // callbacks are generation-checked and cannot save a later page as this one.
++  ++generation_;
++  exports_pending_ = 0;
++  --g_active_monitor_exports;
++  PaneSettings::GetOrCreate(web_contents())->SetMonitorExports(false, false);
++  status_ = Text(IDS_NEO_MONITOR_EXPORT_TIMEOUT);
++  UpdateBlocked();
++}
++
++void PageChangeMonitor::ExportFinished(int generation, bool success) {
++  if (generation != export_generation_ || exports_pending_ <= 0) {
++    return;
++  }
++  --exports_pending_;
++  export_failed_ |= !success || generation != generation_;
++  if (!exports_pending_) {
++    export_timeout_.Stop();
++    --g_active_monitor_exports;
++    status_ = Text(export_failed_ ? IDS_NEO_MONITOR_EXPORT_FAILED
++                                  : IDS_NEO_MONITOR_EXPORTED);
++    UpdateBlocked();
++    if (baseline_.empty() && !selector_.empty()) {
++      ScheduleScan();
++    }
++  }
++}
++}  // namespace tabs
+--- /dev/null
++++ b/chrome/browser/ui/tabs/page_change_monitor.h
+@@ -0,0 +1,91 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_H_
++#define CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_H_
++
++#include <string>
++
++#include "base/callback_list.h"
++#include "base/files/file_path.h"
++#include "base/memory/ref_counted_memory.h"
++#include "base/memory/weak_ptr.h"
++#include "base/timer/timer.h"
++#include "base/values.h"
++#include "content/public/browser/render_widget_host_view.h"
++#include "content/public/browser/web_contents_observer.h"
++#include "content/public/browser/web_contents_user_data.h"
++#include "ui/shell_dialogs/select_file_dialog.h"
++#include "url/gurl.h"
++
++namespace tabs {
++// No timer, renderer work or stored text until monitoring is explicitly
++// enabled.
++class PageChangeMonitor
++    : public content::WebContentsObserver,
++      public content::WebContentsUserData<PageChangeMonitor>,
++      public ui::SelectFileDialog::Listener {
++ public:
++  ~PageChangeMonitor() override;
++  static PageChangeMonitor* GetOrCreate(content::WebContents* contents);
++  void WatchSelection();
++  void ShowChanges();
++  void ChooseExportFolder();
++  void ToggleScreenshot();
++  void TogglePdf();
++  bool has_change() const { return has_change_; }
++  const std::u16string& status() const { return status_; }
++  void DidStopLoading() override;
++  void DidStartNavigation(content::NavigationHandle* handle) override;
++  void DidFinishNavigation(content::NavigationHandle* handle) override;
++  void WebContentsDestroyed() override;
++  void FileSelected(const ui::SelectedFileInfo& file, int index) override;
++  void FileSelectionCanceled() override;
++
++ private:
++  explicit PageChangeMonitor(content::WebContents* contents);
++  friend class content::WebContentsUserData<PageChangeMonitor>;
++  void SettingsChanged();
++  void ScheduleScan();
++  void Scan(bool selection);
++  void ScanComplete(int generation, bool selection, base::Value result);
++  void ScanTimedOut(int generation);
++  void SetAttention(bool attention);
++  void UpdateBlocked();
++  void ExportChange();
++  void ExportTimedOut(int generation);
++  void ScreenshotReady(int generation,
++                       const content::CopyFromSurfaceResult& result);
++  void SaveExport(int generation, std::string extension, std::string bytes);
++  void ExportFinished(int generation, bool success);
++  void CancelPending();
++
++  base::CallbackListSubscription settings_subscription_;
++  base::OneShotTimer settle_timer_;
++  base::OneShotTimer scan_timeout_;
++  base::OneShotTimer export_timeout_;
++  scoped_refptr<ui::SelectFileDialog> folder_dialog_;
++  std::string selector_;
++  GURL watched_url_;
++  GURL export_url_;
++  std::string baseline_;
++  std::string before_;
++  std::string after_;
++  std::string change_time_;
++  std::string last_check_;
++  std::string screenshot_started_at_;
++  std::u16string export_title_;
++  std::u16string status_;
++  bool has_change_ = false;
++  bool scanning_ = false;
++  int generation_ = 0;
++  int exports_pending_ = 0;
++  int export_generation_ = 0;
++  bool export_failed_ = false;
++  base::FilePath export_stem_;
++  base::FilePath export_folder_;
++  base::WeakPtrFactory<PageChangeMonitor> weak_factory_{this};
++  WEB_CONTENTS_USER_DATA_KEY_DECL();
++};
++}  // namespace tabs
++#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_H_
+--- /dev/null
++++ b/chrome/browser/ui/tabs/page_change_monitor_diff.h
+@@ -0,0 +1,73 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_DIFF_H_
++#define CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_DIFF_H_
++
++#include <algorithm>
++#include <string>
++#include <string_view>
++#include <utility>
++#include <vector>
++
++namespace tabs {
++// Linear, bounded review-only diff. Expand the changed span to complete text
++// lines so shared word endings cannot turn Wednesday/Thursday into Wedne/Thur.
++inline std::pair<std::string, std::string> BuildPageChangeDiff(
++    std::string_view before,
++    std::string_view after) {
++  if (before == after) {
++    return {};
++  }
++  const auto lines = [](std::string_view text) {
++    std::vector<std::string_view> result;
++    if (text.empty()) {
++      return result;
++    }
++    size_t start = 0;
++    while (start <= text.size()) {
++      const auto newline = text.find('\n', start);
++      const auto end =
++          newline == std::string_view::npos ? text.size() : newline;
++      result.push_back(text.substr(start, end - start));
++      if (newline == std::string_view::npos) {
++        break;
++      }
++      start = end + 1;
++    }
++    return result;
++  };
++  const auto old_lines = lines(before), new_lines = lines(after);
++  size_t prefix = 0;
++  while (prefix < old_lines.size() && prefix < new_lines.size() &&
++         old_lines[prefix] == new_lines[prefix]) {
++    ++prefix;
++  }
++  size_t suffix = 0;
++  while (suffix < old_lines.size() - prefix &&
++         suffix < new_lines.size() - prefix &&
++         old_lines[old_lines.size() - 1 - suffix] ==
++             new_lines[new_lines.size() - 1 - suffix]) {
++    ++suffix;
++  }
++  const auto excerpt = [prefix, suffix](std::string_view text,
++                                        const auto& parts) {
++    if (parts.size() == prefix + suffix) {
++      return std::string();
++    }
++    const size_t start = parts[prefix].data() - text.data();
++    const auto last = parts[parts.size() - 1 - suffix];
++    size_t end =
++        std::min(static_cast<size_t>(last.data() - text.data()) + last.size(),
++                 start + 16000);
++    // Do not cut the UTF-8 sequence at the byte budget.
++    while (end > start && end < text.size() &&
++           (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) {
++      --end;
++    }
++    return std::string(text.substr(start, end - start));
++  };
++  return {excerpt(before, old_lines), excerpt(after, new_lines)};
++}
++}  // namespace tabs
++#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_DIFF_H_
+--- /dev/null
++++ b/chrome/browser/ui/tabs/page_change_monitor_script.h
+@@ -0,0 +1,87 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_SCRIPT_H_
++#define CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_SCRIPT_H_
++
++namespace tabs {
++// Evaluated only on opt-in and after a completed load, in an isolated world.
++// Limits fail closed: incomplete text must never become a new baseline.
++inline constexpr char kPageChangeMonitorScript[] = R"JS(
++(scope => {
++  const started = performance.now();
++  const MAX_NODES = 4000, MAX_TEXT = 65536, MAX_MS = 12;
++  const excluded = 'script,style,noscript,template,nav,header,footer,aside,[hidden],[aria-hidden="true"],input,textarea,select,[contenteditable]:not([contenteditable="false"])';
++  let root, selector = scope;
++  if (scope === '@selection') {
++    const selection = window.getSelection();
++    if (!selection || selection.isCollapsed || !selection.rangeCount)
++      return {error: 'Select text in the section you want to watch first.'};
++    const range = selection.getRangeAt(0);
++    root = range.commonAncestorContainer;
++    if (root.nodeType !== Node.ELEMENT_NODE) root = root.parentElement;
++    root = root.closest('p,li,section,article,main,div,td,blockquote') || root;
++    const parts = [];
++    for (let element = root; element && element !== document.documentElement;
++         element = element.parentElement) {
++      if (parts.length >= 24) return {error: 'This section cannot be reliably located after a refresh.'};
++      if (element.id && element.id.length <= 256 && document.querySelectorAll('#' + CSS.escape(element.id)).length === 1) {
++        parts.unshift('#' + CSS.escape(element.id)); break;
++      }
++      let index = 1;
++      for (let sibling = element.previousElementSibling; sibling; sibling = sibling.previousElementSibling) {
++        if (sibling.localName === element.localName) ++index;
++        if (performance.now() - started > MAX_MS) return {error: 'Section selection exceeded the time limit.'};
++      }
++      parts.unshift(element.localName + ':nth-of-type(' + index + ')');
++    }
++    selector = parts.join(' > ');
++    if (!selector || selector.length > 2048) return {error: 'This section cannot be reliably located.'};
++  } else if (scope === '@main') {
++    // Prefer article text; ordinary documents can fall back to their body.
++    root = document.querySelector('article') || document.querySelector('main') || document.body;
++  } else {
++    try { root = document.querySelector(scope); }
++    catch (_) { return {error: 'The watched section selector is invalid.'}; }
++  }
++  if (!root || root.closest(excluded)) return {error: 'The watched section is missing. Keeping the previous version.'};
++  let visited = 0, size = 0;
++  const lines = [];
++  for (let ancestor = root; ancestor; ancestor = ancestor.parentElement) {
++    if (++visited > MAX_NODES || performance.now() - started > MAX_MS)
++      return {error: 'Scan limit reached. Select a smaller section to watch.'};
++    const style = getComputedStyle(ancestor);
++    if (style.display === 'none' || style.visibility !== 'visible' ||
++        style.contentVisibility === 'hidden' || style.opacity === '0')
++      return {error: 'The watched section is hidden. Keeping the previous version.'};
++  }
++  // Manual traversal can stop immediately; TreeWalker filters can otherwise
++  // keep visiting rejected siblings after a budget is exhausted.
++  let node = root.firstChild;
++  while (node) {
++    if (++visited > MAX_NODES || performance.now() - started > MAX_MS)
++      return {error: 'Scan limit reached. Select a smaller section to watch.'};
++    let descend = true;
++    if (node.nodeType === Node.ELEMENT_NODE) {
++      const style = getComputedStyle(node);
++      descend = !node.matches(excluded) && style.display !== 'none' &&
++        style.visibility === 'visible' && style.contentVisibility !== 'hidden' && style.opacity !== '0';
++    } else if (node.nodeType === Node.TEXT_NODE) {
++      if (node.length > MAX_TEXT || size + node.length + 1 > MAX_TEXT)
++        return {error: 'Too much text. Select a smaller section to watch.'};
++      const text = node.data.replace(/\s+/g, ' ').trim();
++      size += node.length + 1;
++      if (text) lines.push(text);
++    }
++    if (descend && node.firstChild) { node = node.firstChild; continue; }
++    while (node && node !== root && !node.nextSibling) node = node.parentNode;
++    if (!node || node === root) break;
++    node = node.nextSibling;
++  }
++  const text = lines.join('\n');
++  if (!text) return {error: 'No readable text found. Keeping the previous version.'};
++  return {text, selector, nodes: visited};
++})
++)JS";
++}  // namespace tabs
++#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_SCRIPT_H_
+--- a/chrome/browser/ui/tabs/pane_settings.cc
++++ b/chrome/browser/ui/tabs/pane_settings.cc
+@@ -4,12 +4,17 @@
+ 
+ #include "chrome/browser/ui/tabs/pane_settings.h"
+ 
++#include <deque>
+ #include <string_view>
+ #include <utility>
+ 
++#include "base/auto_reset.h"
++#include "base/check_op.h"
+ #include "base/functional/bind.h"
+ #include "base/json/json_reader.h"
+ #include "base/json/json_writer.h"
++#include "base/no_destructor.h"
++#include "base/rand_util.h"
+ #include "base/strings/string_number_conversions.h"
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/sessions/session_service.h"
+@@ -19,13 +24,72 @@
+ #include "content/public/browser/devtools_agent_host.h"
+ #include "content/public/browser/navigation_controller.h"
+ #include "content/public/browser/navigation_entry.h"
++#include "content/public/browser/navigation_handle.h"
+ #include "content/public/browser/render_frame_host.h"
+ #include "content/public/browser/web_contents.h"
++#include "net/http/http_response_headers.h"
+ 
+ namespace tabs {
+ namespace {
+ constexpr char kMobileKey[] = "helium.mobile_preview";
+ constexpr char kRefreshKey[] = "helium.auto_refresh_seconds";
++constexpr char kJitterKey[] = "helium.refresh_jitter";
++constexpr char kMonitorKey[] = "helium.monitor_selector";
++// Bound timer-driven reloads across every pane and window.
++int g_active_refreshes = 0;
++base::TimeTicks g_last_refresh;
++
++// A single FIFO wakeup avoids synchronized-tab starvation and per-tab retry
++// polling. Never retain a tab: requests bind a WeakPtr and cancel on settings
++// changes, disposal, or destruction. No queue work exists for ordinary tabs.
++class RefreshQueue {
++ public:
++  static RefreshQueue& Get() {
++    static base::NoDestructor<RefreshQueue> queue;
++    return *queue;
++  }
++  bool has_requests() const { return !requests_.empty(); }
++  void Cancel(const PaneSettings* key) {
++    std::erase_if(requests_,
++                  [key](const Request& request) { return request.key == key; });
++    if (requests_.empty()) {
++      timer_.Stop();
++    }
++  }
++  void Enqueue(const PaneSettings* key, base::OnceClosure callback) {
++    Cancel(key);
++    requests_.push_back({key, std::move(callback)});
++    Pump();
++  }
++  void Pump() {
++    if (pumping_) {
++      return;
++    }
++    base::AutoReset<bool> pumping(&pumping_, true);
++    timer_.Stop();
++    while (!requests_.empty() && g_active_refreshes < 2) {
++      const auto remaining =
++          base::Milliseconds(250) - (base::TimeTicks::Now() - g_last_refresh);
++      if (!g_last_refresh.is_null() && remaining.is_positive()) {
++        timer_.Start(FROM_HERE, remaining, this, &RefreshQueue::Pump);
++        return;
++      }
++      auto callback = std::move(requests_.front().callback);
++      requests_.pop_front();
++      std::move(callback).Run();
++    }
++    // Full slots are resumed by ReleaseRefreshSlot, with no retry timer.
++  }
++
++ private:
++  struct Request {
++    const PaneSettings* key;
++    base::OnceClosure callback;
++  };
++  std::deque<Request> requests_;
++  base::OneShotTimer timer_;
++  bool pumping_ = false;
++};
+ }  // namespace
+ 
+ WEB_CONTENTS_USER_DATA_KEY_IMPL(PaneSettings);
+@@ -35,6 +99,8 @@
+       content::WebContentsUserData<PaneSettings>(*contents) {}
+ 
+ PaneSettings::~PaneSettings() {
++  RefreshQueue::Get().Cancel(this);
++  ReleaseRefreshSlot();
+   Detach();
+ }
+ 
+@@ -50,13 +116,16 @@
+                               ? (settings->mobile_full_height() ? "2" : "1")
+                               : "0";
+     (*data)[kRefreshKey] = base::NumberToString(settings->refresh_seconds());
++    (*data)[kJitterKey] = settings->refresh_jitter() ? "1" : "0";
++    (*data)[kMonitorKey] = settings->monitor_selector();
+   }
+ }
+ 
+ void PaneSettings::RestoreFromExtraData(
+     content::WebContents* contents,
+     const std::map<std::string, std::string>& data) {
+-  if (!data.contains(kMobileKey) && !data.contains(kRefreshKey)) {
++  if (!data.contains(kMobileKey) && !data.contains(kRefreshKey) &&
++      !data.contains(kMonitorKey) && !data.contains(kJitterKey)) {
+     return;
+   }
+   auto* settings = GetOrCreate(contents);
+@@ -64,6 +133,13 @@
+     settings->SetMobileEnabled(it->second == "1" || it->second == "2",
+                                it->second == "2", /*reload=*/false);
+   }
++  settings->SetRefreshJitter(data.contains(kJitterKey) &&
++                             data.at(kJitterKey) == "1");
++  if (auto it = data.find(kMonitorKey); it != data.end()) {
++    settings->SetMonitorSelector(it->second);
++  }
++  // Automatic exports require fresh opt-in each browser session. An unattended
++  // restored session must not start filling a folder without the reporter.
+   int seconds = 0;
+   if (auto it = data.find(kRefreshKey);
+       it != data.end() && base::StringToInt(it->second, &seconds) &&
+@@ -72,7 +148,9 @@
+   }
+ }
+ 
+-void PaneSettings::SetMobileEnabled(bool enabled, bool full_height, bool reload) {
++void PaneSettings::SetMobileEnabled(bool enabled,
++                                    bool full_height,
++                                    bool reload) {
+   full_height = enabled && full_height;
+   if (mobile_enabled_ == enabled && mobile_full_height_ == full_height) {
+     return;
+@@ -107,23 +185,128 @@
+     return;
+   }
+   refresh_timer_.Stop();
++  RefreshQueue::Get().Cancel(this);
++  refresh_queued_ = false;
+   refresh_seconds_ = seconds;
+-  if (seconds > 0) {
+-    refresh_timer_.Start(FROM_HERE, base::Seconds(seconds), this,
+-                         &PaneSettings::Refresh);
+-  }
++  refresh_failures_ = 0;
++  ScheduleRefresh();
+   Save();
+   changed_callbacks_.Notify();
+ }
+ 
++void PaneSettings::ResetRefreshBudgetForTesting() {
++  CHECK_EQ(g_active_refreshes, 0);
++  g_last_refresh = base::TimeTicks();
++  CHECK(!RefreshQueue::Get().has_requests());
++}
++
++void PaneSettings::SetRefreshJitter(bool enabled) {
++  if (refresh_jitter_ == enabled) {
++    return;
++  }
++  refresh_jitter_ = enabled;
++  RefreshQueue::Get().Cancel(this);
++  refresh_queued_ = false;
++  ScheduleRefresh();
++  Save();
++  changed_callbacks_.Notify();
++}
++
++void PaneSettings::SetMonitorSelector(std::string selector) {
++  if (selector.size() > 2048 || selector == monitor_selector_) {
++    return;
++  }
++  monitor_selector_ = std::move(selector);
++  if (monitor_selector_.empty()) {
++    monitor_screenshot_ = false;
++    monitor_pdf_ = false;
++  }
++  Save();
++  changed_callbacks_.Notify();
++}
++
++void PaneSettings::SetMonitorExports(bool screenshot, bool pdf) {
++  monitor_screenshot_ = !monitor_selector_.empty() && screenshot;
++  monitor_pdf_ = !monitor_selector_.empty() && pdf;
++  changed_callbacks_.Notify();
++}
++
++void PaneSettings::ScheduleRefresh() {
++  refresh_timer_.Stop();
++  if (refresh_seconds_ == 0) {
++    return;
++  }
++  const double seconds =
++      RefreshDelaySeconds(refresh_seconds_, refresh_jitter_,
++                          refresh_jitter_ ? base::RandDouble() : 0.5);
++  const int backoff = 1 << std::min(refresh_failures_, 4);
++  refresh_timer_.Start(FROM_HERE, base::Seconds(seconds * backoff), this,
++                       &PaneSettings::Refresh);
++}
++
++void PaneSettings::ReleaseRefreshSlot() {
++  if (owns_refresh_slot_) {
++    owns_refresh_slot_ = false;
++    --g_active_refreshes;
++    RefreshQueue::Get().Pump();
++  }
++}
++
++void PaneSettings::DidStopLoading() {
++  ReleaseRefreshSlot();
++}
++
++void PaneSettings::DidFinishNavigation(content::NavigationHandle* handle) {
++  if (!owns_refresh_slot_ || !handle->IsInPrimaryMainFrame()) {
++    return;
++  }
++  const auto* headers = handle->GetResponseHeaders();
++  const bool failed =
++      handle->IsErrorPage() || (headers && (headers->response_code() == 429 ||
++                                            headers->response_code() >= 500));
++  refresh_failures_ = failed ? std::min(4, refresh_failures_ + 1) : 0;
++  ScheduleRefresh();
++}
++
+ void PaneSettings::Refresh() {
++  RefreshImpl(false);
++}
++
++void PaneSettings::RefreshQueued() {
++  refresh_queued_ = false;
++  RefreshImpl(true);
++}
++
++void PaneSettings::RefreshImpl(bool from_queue) {
++  if (!refresh_seconds_ || web_contents()->IsBeingDestroyed()) {
++    return;
++  }
++  ScheduleRefresh();
+   const auto* entry = web_contents()->GetController().GetLastCommittedEntry();
+-  if (web_contents()->IsLoading() || web_contents()->IsCrashed() || !entry ||
++  if (refresh_blocked_ || web_contents()->IsLoading() ||
++      web_contents()->IsCrashed() || !entry ||
+       !entry->GetURL().SchemeIsHTTPOrHTTPS() || entry->GetHasPostData() ||
++      !web_contents()->GetPrimaryMainFrame()->IsRenderFrameLive() ||
+       web_contents()->GetController().NeedsReload() ||
+       web_contents()->GetController().GetPendingEntry()) {
+     return;
+   }
++  if ((!from_queue && RefreshQueue::Get().has_requests()) ||
++      g_active_refreshes >= 2 ||
++      (!g_last_refresh.is_null() &&
++       base::TimeTicks::Now() - g_last_refresh < base::Milliseconds(250))) {
++    refresh_timer_.Stop();
++    if (!refresh_queued_) {
++      refresh_queued_ = true;
++      RefreshQueue::Get().Enqueue(this,
++                                  base::BindOnce(&PaneSettings::RefreshQueued,
++                                                 weak_factory_.GetWeakPtr()));
++    }
++    return;
++  }
++  owns_refresh_slot_ = true;
++  ++g_active_refreshes;
++  g_last_refresh = base::TimeTicks::Now();
+   web_contents()->GetController().Reload(content::ReloadType::NORMAL, true);
+ }
+ 
+@@ -140,11 +323,12 @@
+   if (!service) {
+     return;
+   }
+-  service->AddTabExtraData(
+-      helper->window_id(), helper->session_id(), kMobileKey,
+-      mobile_enabled_ ? (mobile_full_height_ ? "2" : "1") : "0");
+-  service->AddTabExtraData(helper->window_id(), helper->session_id(),
+-                           kRefreshKey, base::NumberToString(refresh_seconds_));
++  std::map<std::string, std::string> data;
++  PopulateExtraData(web_contents(), &data);
++  for (const auto& [key, value] : data) {
++    service->AddTabExtraData(helper->window_id(), helper->session_id(),
++                             key.c_str(), value);
++  }
+ }
+ 
+ base::CallbackListSubscription PaneSettings::RegisterChanged(
+@@ -201,10 +385,10 @@
+     form_factors.Append("Mobile");
+     metadata.Set("formFactors", std::move(form_factors));
+     base::DictValue identity;
+-    identity.Set("userAgent", embedder_support::BuildUserAgentFromOSAndProduct(
+-                                  "Linux; Android 10; K",
+-                                  embedder_support::GetProductAndVersion() +
+-                                      " Mobile"));
++    identity.Set("userAgent",
++                 embedder_support::BuildUserAgentFromOSAndProduct(
++                     "Linux; Android 10; K",
++                     embedder_support::GetProductAndVersion() + " Mobile"));
+     identity.Set("platform", "Linux armv81");
+     identity.Set("userAgentMetadata", std::move(metadata));
+     SendCommand("Emulation.setUserAgentOverride", std::move(identity));
+@@ -284,6 +468,9 @@
+ 
+ void PaneSettings::WebContentsDestroyed() {
+   refresh_timer_.Stop();
++  RefreshQueue::Get().Cancel(this);
++  refresh_queued_ = false;
++  ReleaseRefreshSlot();
+   mobile_enabled_ = false;
+   Detach();
+ }
+--- a/chrome/browser/ui/tabs/pane_settings.h
++++ b/chrome/browser/ui/tabs/pane_settings.h
+@@ -9,7 +9,9 @@
+ #include <string>
+ 
+ #include "base/callback_list.h"
++#include "base/files/file_path.h"
+ #include "base/memory/scoped_refptr.h"
++#include "base/memory/weak_ptr.h"
+ #include "base/timer/timer.h"
+ #include "base/values.h"
+ #include "chrome/browser/ui/tabs/pane_settings_geometry.h"
+@@ -39,9 +41,22 @@
+   bool mobile_enabled() const { return mobile_enabled_; }
+   bool mobile_full_height() const { return mobile_full_height_; }
+   int refresh_seconds() const { return refresh_seconds_; }
+-  void SetMobileEnabled(bool enabled, bool full_height = false,
++  void SetMobileEnabled(bool enabled,
++                        bool full_height = false,
+                         bool reload = true);
+   void SetRefreshSeconds(int seconds);
++  static void ResetRefreshBudgetForTesting();
++  bool refresh_jitter() const { return refresh_jitter_; }
++  void SetRefreshJitter(bool enabled);
++  const std::string& monitor_selector() const { return monitor_selector_; }
++  void SetMonitorSelector(std::string selector);
++  bool monitor_screenshot() const { return monitor_screenshot_; }
++  bool monitor_pdf() const { return monitor_pdf_; }
++  void SetMonitorExports(bool screenshot, bool pdf);
++  // Transient: do not reload while reading or exporting this document.
++  void SetRefreshBlocked(bool blocked) { refresh_blocked_ = blocked; }
++  void DidStopLoading() override;
++  void DidFinishNavigation(content::NavigationHandle* handle) override;
+   void SetPreviewBounds(int width, int height);
+   base::CallbackListSubscription RegisterChanged(
+       base::RepeatingClosure callback);
+@@ -60,6 +75,10 @@
+   void ApplyMobileEmulation(bool metrics_only = false);
+   void SendCommand(const char* method, base::DictValue params);
+   void Refresh();
++  void RefreshQueued();
++  void RefreshImpl(bool from_queue);
++  void ScheduleRefresh();
++  void ReleaseRefreshSlot();
+   void Save();
+   void Detach();
+ 
+@@ -70,8 +89,17 @@
+   double preview_scale_ = 1.0;
+   int next_command_id_ = 0;
+   scoped_refptr<content::DevToolsAgentHost> agent_host_;
+-  base::RepeatingTimer refresh_timer_;
++  bool refresh_jitter_ = false;
++  bool refresh_blocked_ = false;
++  bool owns_refresh_slot_ = false;
++  bool refresh_queued_ = false;
++  int refresh_failures_ = 0;
++  std::string monitor_selector_;
++  bool monitor_screenshot_ = false;
++  bool monitor_pdf_ = false;
++  base::OneShotTimer refresh_timer_;
+   base::RepeatingClosureList changed_callbacks_;
++  base::WeakPtrFactory<PaneSettings> weak_factory_{this};
+   WEB_CONTENTS_USER_DATA_KEY_DECL();
+ };
+ }  // namespace tabs
+--- a/chrome/browser/ui/tabs/pane_settings_geometry.h
++++ b/chrome/browser/ui/tabs/pane_settings_geometry.h
+@@ -6,18 +6,28 @@
+ #define CHROME_BROWSER_UI_TABS_PANE_SETTINGS_GEOMETRY_H_
+ 
+ #include <algorithm>
++#include <array>
+ #include <cmath>
+ 
+ namespace tabs {
+ inline constexpr int kMobilePreviewWidth = 402;
+ inline constexpr int kMobilePreviewHeight = 874;
+ inline constexpr double kMobilePreviewDeviceScaleFactor = 3.0;
+-inline constexpr int kAutoRefreshStepSeconds = 15;
+-inline constexpr int kAutoRefreshMaxSeconds = 180;
++inline constexpr std::array kAutoRefreshIntervals = {
++    0, 5, 10, 15, 30, 45, 60, 90, 120, 180, 300, 600, 1800, 3600};
++// Accept old session intervals, but offer only the new presets in the menu.
++inline constexpr int kAutoRefreshMaxSeconds = 3600;
++inline constexpr double RefreshDelaySeconds(int seconds,
++                                            bool jitter,
++                                            double random_unit) {
++  return seconds *
++         (jitter ? 0.95 + 0.10 * std::clamp(random_unit, 0.0, 1.0) : 1.0);
++}
+ 
+ constexpr bool IsValidAutoRefreshInterval(int seconds) {
+-  return seconds >= 0 && seconds <= kAutoRefreshMaxSeconds &&
+-         seconds % kAutoRefreshStepSeconds == 0;
++  return std::ranges::find(kAutoRefreshIntervals, seconds) !=
++             kAutoRefreshIntervals.end() ||
++         (seconds > 0 && seconds <= 180 && seconds % 15 == 0);
+ }
+ 
+ struct MobilePreviewBounds {
+--- a/chrome/browser/ui/tabs/pane_settings_menu_model.cc
++++ b/chrome/browser/ui/tabs/pane_settings_menu_model.cc
+@@ -13,6 +13,7 @@
+ #include "chrome/browser/sessions/session_service_factory.h"
+ #include "chrome/browser/tab_group_sync/tab_group_sync_service_factory.h"
+ #include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
++#include "chrome/browser/ui/tabs/page_change_monitor.h"
+ #include "chrome/browser/ui/tabs/pane_settings.h"
+ #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_pref_names.h"
+ #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_utils.h"
+@@ -45,18 +46,37 @@
+   AddItemWithStringId(kWorkspaceCommandId, IDS_HELIUM_CREATE_PREVIEW_WORKSPACE);
+   AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
+   refresh_menu_ = std::make_unique<ui::SimpleMenuModel>(this);
+-  for (int seconds = 0; seconds <= kAutoRefreshMaxSeconds;
+-       seconds += kAutoRefreshStepSeconds) {
++  for (size_t i = 0; i < kAutoRefreshIntervals.size(); ++i) {
++    const int seconds = kAutoRefreshIntervals[i];
+     const std::u16string label =
+-        seconds == 0
+-            ? l10n_util::GetStringUTF16(IDS_HELIUM_AUTO_REFRESH_OFF)
++        seconds == 0    ? l10n_util::GetStringUTF16(IDS_HELIUM_AUTO_REFRESH_OFF)
++        : seconds == 60 ? l10n_util::GetStringUTF16(IDS_NEO_REFRESH_MINUTE)
++        : seconds == 90 ? l10n_util::GetStringUTF16(IDS_NEO_REFRESH_NINETY)
++        : seconds == 3600 ? l10n_util::GetStringUTF16(IDS_NEO_REFRESH_HOUR)
++        : seconds >= 60
++            ? l10n_util::GetStringFUTF16(IDS_NEO_REFRESH_MINUTES,
++                                         base::NumberToString16(seconds / 60))
+             : l10n_util::GetStringFUTF16(IDS_HELIUM_AUTO_REFRESH_SECONDS,
+                                          base::NumberToString16(seconds));
+-    refresh_menu_->AddRadioItem(
+-        kRefreshFirstCommandId + seconds / kAutoRefreshStepSeconds, label, 1);
+-  }
++    refresh_menu_->AddRadioItem(kRefreshFirstCommandId + static_cast<int>(i),
++                                label, 1);
++  }
++  refresh_menu_->AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
++  refresh_menu_->AddCheckItem(
++      kJitterCommandId, l10n_util::GetStringUTF16(IDS_NEO_REFRESH_JITTER));
+   AddSubMenuWithStringId(kRefreshParentCommandId, IDS_HELIUM_AUTO_REFRESH,
+                          refresh_menu_.get());
++  AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
++  AddCheckItem(kMonitorCommandId,
++               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_MAIN));
++  AddCheckItem(kMonitorSelectionCommandId,
++               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_SELECTION));
++  AddItemWithStringId(kReviewChangesCommandId, IDS_NEO_MONITOR_REVIEW);
++  AddCheckItem(kAutoScreenshotCommandId,
++               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_SCREENSHOT));
++  AddCheckItem(kAutoPdfCommandId,
++               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_PDF));
++  AddItemWithStringId(kExportFolderCommandId, IDS_NEO_MONITOR_FOLDER);
+ }
+ 
+ PaneSettingsMenuModel::~PaneSettingsMenuModel() = default;
+@@ -74,15 +94,46 @@
+     return settings && settings->mobile_enabled() &&
+            settings->mobile_full_height();
+   }
+-  const int seconds =
+-      (command_id - kRefreshFirstCommandId) * kAutoRefreshStepSeconds;
+-  return IsValidAutoRefreshInterval(seconds) &&
+-         seconds == (settings ? settings->refresh_seconds() : 0);
++  if (command_id == kJitterCommandId) {
++    return settings && settings->refresh_jitter();
++  }
++  if (command_id == kMonitorCommandId) {
++    return settings && settings->monitor_selector() == "@main";
++  }
++  if (command_id == kMonitorSelectionCommandId) {
++    return settings && !settings->monitor_selector().empty() &&
++           settings->monitor_selector() != "@main";
++  }
++  if (command_id == kAutoScreenshotCommandId) {
++    return settings && settings->monitor_screenshot();
++  }
++  if (command_id == kAutoPdfCommandId) {
++    return settings && settings->monitor_pdf();
++  }
++  const int index = command_id - kRefreshFirstCommandId;
++  return index >= 0 &&
++         static_cast<size_t>(index) < kAutoRefreshIntervals.size() &&
++         kAutoRefreshIntervals[index] ==
++             (settings ? settings->refresh_seconds() : 0);
+ }
+ 
+ bool PaneSettingsMenuModel::IsCommandIdEnabled(int command_id) const {
+   if (!tab_ || model_->GetIndexOfTab(tab_.get()) == TabStripModel::kNoTab) {
+     return false;
++  }
++  if (command_id == kJitterCommandId || command_id == kReviewChangesCommandId) {
++    return true;
++  }
++  if (command_id == kAutoScreenshotCommandId ||
++      command_id == kAutoPdfCommandId || command_id == kExportFolderCommandId) {
++    auto* settings = PaneSettings::FromWebContents(tab_->GetContents());
++    return settings && !settings->monitor_selector().empty() &&
++           tab_->GetContents()->GetVisibleURL().SchemeIsHTTPOrHTTPS();
++  }
++  if ((command_id == kMonitorCommandId ||
++       command_id == kMonitorSelectionCommandId) &&
++      IsCommandIdChecked(command_id)) {
++    return true;
+   }
+   if (command_id == kWorkspaceCommandId) {
+     auto* browser = model_->delegate()->GetBrowserWindowInterface();
+@@ -111,17 +162,36 @@
+     return;
+   }
+   auto* settings = PaneSettings::GetOrCreate(tab_->GetContents());
+-  if (command_id == kMobileCommandId ||
+-      command_id == kMobileFullHeightCommandId) {
++  auto* monitor = PageChangeMonitor::GetOrCreate(tab_->GetContents());
++  if (command_id == kJitterCommandId) {
++    settings->SetRefreshJitter(!settings->refresh_jitter());
++  } else if (command_id == kMonitorCommandId) {
++    settings->SetMonitorSelector(IsCommandIdChecked(command_id) ? "" : "@main");
++  } else if (command_id == kMonitorSelectionCommandId) {
++    if (IsCommandIdChecked(command_id)) {
++      settings->SetMonitorSelector("");
++    } else {
++      monitor->WatchSelection();
++    }
++  } else if (command_id == kReviewChangesCommandId) {
++    monitor->ShowChanges();
++  } else if (command_id == kAutoScreenshotCommandId) {
++    monitor->ToggleScreenshot();
++  } else if (command_id == kAutoPdfCommandId) {
++    monitor->TogglePdf();
++  } else if (command_id == kExportFolderCommandId) {
++    monitor->ChooseExportFolder();
++  } else if (command_id == kMobileCommandId ||
++             command_id == kMobileFullHeightCommandId) {
+     settings->SetMobileEnabled(!IsCommandIdChecked(command_id),
+                                command_id == kMobileFullHeightCommandId);
+   } else {
+-    const int seconds =
+-        (command_id - kRefreshFirstCommandId) * kAutoRefreshStepSeconds;
+-    if (!IsValidAutoRefreshInterval(seconds)) {
++    const int index = command_id - kRefreshFirstCommandId;
++    if (index < 0 ||
++        static_cast<size_t>(index) >= kAutoRefreshIntervals.size()) {
+       return;
+     }
+-    settings->SetRefreshSeconds(seconds);
++    settings->SetRefreshSeconds(kAutoRefreshIntervals[index]);
+   }
+   SaveWorkspaceSettings();
+ }
+@@ -191,25 +261,30 @@
+ }
+ 
+ void PaneSettingsMenuModel::SaveWorkspaceSettings() {
+-  if (!tab_ || !tab_->GetGroup()) {
+-    return;
+-  }
+-  auto* browser = model_->delegate()->GetBrowserWindowInterface();
++  SaveWorkspaceSettingsForTab(tab_.get());
++}
++
++void PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
++    tabs::TabInterface* tab) {
++  if (!tab || !tab->GetGroup()) {
++    return;
++  }
++  auto* browser = tab->GetBrowserWindowInterface();
+   if (!browser || browser->GetProfile()->IsOffTheRecord()) {
+     return;
+   }
+   auto* service = tab_groups::TabGroupSyncServiceFactory::GetForProfile(
+       browser->GetProfile());
+-  auto saved = service ? service->GetGroup(*tab_->GetGroup()) : std::nullopt;
++  auto saved = service ? service->GetGroup(*tab->GetGroup()) : std::nullopt;
+   if (!saved) {
+     return;
+   }
+-  const auto* saved_tab = saved->GetTab(tab_->GetHandle().raw_value());
++  const auto* saved_tab = saved->GetTab(tab->GetHandle().raw_value());
+   if (!saved_tab) {
+     return;
+   }
+   std::map<std::string, std::string> data;
+-  PaneSettings::PopulateExtraData(tab_->GetContents(), &data);
++  PaneSettings::PopulateExtraData(tab->GetContents(), &data);
+   base::DictValue settings;
+   for (const auto& [key, value] : data) {
+     settings.Set(key, value);
+--- a/chrome/browser/ui/tabs/pane_settings_menu_model.h
++++ b/chrome/browser/ui/tabs/pane_settings_menu_model.h
+@@ -25,12 +25,21 @@
+   static constexpr int kWorkspaceCommandId = 2002;
+   static constexpr int kRefreshParentCommandId = 2003;
+   static constexpr int kRefreshFirstCommandId = 2010;
++  static constexpr int kJitterCommandId = 2030;
++  static constexpr int kMonitorCommandId = 2031;
++  static constexpr int kMonitorSelectionCommandId = 2032;
++  static constexpr int kReviewChangesCommandId = 2033;
++  static constexpr int kAutoScreenshotCommandId = 2034;
++  static constexpr int kAutoPdfCommandId = 2035;
++  static constexpr int kExportFolderCommandId = 2036;
+ 
+   PaneSettingsMenuModel(TabStripModel* model, tabs::TabInterface* tab);
+   ~PaneSettingsMenuModel() override;
+   bool IsCommandIdChecked(int command_id) const override;
+   bool IsCommandIdEnabled(int command_id) const override;
+   void ExecuteCommand(int command_id, int event_flags) override;
++  // Selection scopes resolve asynchronously after the context menu closes.
++  static void SaveWorkspaceSettingsForTab(tabs::TabInterface* tab);
+ 
+  private:
+   void CreateWorkspace();
+--- a/chrome/browser/ui/tabs/pane_settings_unittest.cc
++++ b/chrome/browser/ui/tabs/pane_settings_unittest.cc
+@@ -36,6 +36,7 @@
+             base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
+   void SetUp() override {
+     ChromeRenderViewHostTestHarness::SetUp();
++    PaneSettings::ResetRefreshBudgetForTesting();
+     NavigateAndCommit(GURL("https://example.test/"));
+   }
+ };
+@@ -48,7 +49,9 @@
+   EXPECT_EQ(counter.count, 0);
+   task_environment()->FastForwardBy(base::Seconds(1));
+   EXPECT_EQ(counter.count, 1);
+-  content::NavigationSimulator::CreateFromPending(web_contents()->GetController())->Commit();
++  content::NavigationSimulator::CreateFromPending(
++      web_contents()->GetController())
++      ->Commit();
+   settings->SetRefreshSeconds(0);
+   task_environment()->FastForwardBy(base::Minutes(6));
+   EXPECT_EQ(counter.count, 1);
+@@ -154,7 +157,7 @@
+                                        {{"helium.auto_refresh_seconds", bad}});
+     EXPECT_EQ(settings->refresh_seconds(), 0);
+   }
+-  for (int seconds = 0; seconds <= 180; seconds += 15) {
++  for (int seconds : kAutoRefreshIntervals) {
+     settings->SetRefreshSeconds(seconds);
+     std::map<std::string, std::string> data;
+     PaneSettings::PopulateExtraData(web_contents(), &data);
+@@ -183,4 +186,94 @@
+   EXPECT_FALSE(settings->mobile_full_height());
+ }
+ 
++TEST_F(PaneSettingsTest, FiveSecondIntervalAndExportBlock) {
++  ReloadCounter counter(web_contents());
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetRefreshSeconds(5);
++  settings->SetRefreshBlocked(true);
++  task_environment()->FastForwardBy(base::Seconds(10));
++  EXPECT_EQ(counter.count, 0);
++  settings->SetRefreshBlocked(false);
++  task_environment()->FastForwardBy(base::Seconds(5));
++  EXPECT_EQ(counter.count, 1);
++}
++
++TEST_F(PaneSettingsTest, JitterStaysWithinFivePercent) {
++  ReloadCounter counter(web_contents());
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetRefreshJitter(true);
++  settings->SetRefreshSeconds(10);
++  task_environment()->FastForwardBy(base::Milliseconds(9499));
++  EXPECT_EQ(counter.count, 0);
++  task_environment()->FastForwardBy(base::Milliseconds(1002));
++  EXPECT_EQ(counter.count, 1);
++}
++
++TEST_F(PaneSettingsTest, LongIntervalDoesNotReloadEarly) {
++  ReloadCounter counter(web_contents());
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetRefreshSeconds(3600);
++  task_environment()->FastForwardBy(base::Seconds(3599));
++  EXPECT_EQ(counter.count, 0);
++  task_environment()->FastForwardBy(base::Seconds(1));
++  EXPECT_EQ(counter.count, 1);
++}
++
++TEST_F(PaneSettingsTest, MonitoringRestoresWithoutUnattendedExports) {
++  auto* settings = PaneSettings::GetOrCreate(web_contents());
++  settings->SetMonitorSelector("#statement");
++  settings->SetMonitorExports(true, true);
++  settings->SetRefreshJitter(true);
++  std::map<std::string, std::string> data;
++  PaneSettings::PopulateExtraData(web_contents(), &data);
++  settings->SetMonitorSelector("");
++  settings->SetRefreshJitter(false);
++  PaneSettings::RestoreFromExtraData(web_contents(), data);
++  EXPECT_EQ(settings->monitor_selector(), "#statement");
++  EXPECT_TRUE(settings->refresh_jitter());
++  EXPECT_FALSE(settings->monitor_screenshot());
++  EXPECT_FALSE(settings->monitor_pdf());
++}
++
++TEST_F(PaneSettingsTest, LegacyRefreshIntervalsRemainRestorable) {
++  PaneSettings::RestoreFromExtraData(web_contents(),
++                                     {{"helium.auto_refresh_seconds", "75"}});
++  EXPECT_EQ(PaneSettings::GetOrCreate(web_contents())->refresh_seconds(), 75);
++}
++
++TEST_F(PaneSettingsTest, QueuedRefreshIsCancelledWhenDisabled) {
++  auto other = content::WebContents::Create(
++      content::WebContents::CreateParams(profile()));
++  content::NavigationSimulator::NavigateAndCommitFromBrowser(
++      other.get(), GURL("https://other.test/"));
++  ReloadCounter first(web_contents());
++  ReloadCounter second(other.get());
++  auto* one = PaneSettings::GetOrCreate(web_contents());
++  auto* two = PaneSettings::GetOrCreate(other.get());
++  one->SetRefreshSeconds(5);
++  two->SetRefreshSeconds(5);
++  task_environment()->FastForwardBy(base::Seconds(5));
++  EXPECT_EQ(first.count, 1);
++  EXPECT_EQ(second.count, 0);
++  two->SetRefreshSeconds(0);
++  task_environment()->FastForwardBy(base::Milliseconds(300));
++  EXPECT_EQ(second.count, 0);
++}
++
++TEST_F(PaneSettingsTest, SynchronizedTabsReceiveFairRefreshTurns) {
++  auto other = content::WebContents::Create(
++      content::WebContents::CreateParams(profile()));
++  content::NavigationSimulator::NavigateAndCommitFromBrowser(
++      other.get(), GURL("https://other.test/"));
++  ReloadCounter first(web_contents());
++  ReloadCounter second(other.get());
++  PaneSettings::GetOrCreate(web_contents())->SetRefreshSeconds(5);
++  PaneSettings::GetOrCreate(other.get())->SetRefreshSeconds(5);
++  task_environment()->FastForwardBy(base::Seconds(5));
++  EXPECT_EQ(first.count, 1);
++  EXPECT_EQ(second.count, 0);
++  task_environment()->FastForwardBy(base::Milliseconds(250));
++  EXPECT_EQ(second.count, 1);
++}
++
+ }  // namespace tabs

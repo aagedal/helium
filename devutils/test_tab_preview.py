@@ -62,15 +62,29 @@ int main() {
   assert(tall.width == 402 && tall.height == 2000 && tall.scale == 1);
   const auto narrow = tabs::FitMobilePreview(201, 2000, true);
   assert(narrow.width == 201 && narrow.height == 2000 && narrow.scale == 0.5);
-  for (int seconds = -300; seconds <= 300; ++seconds) {
-    const bool expected = seconds == 0 || seconds == 15 || seconds == 30 ||
-        seconds == 45 || seconds == 60 || seconds == 75 || seconds == 90 ||
-        seconds == 105 || seconds == 120 || seconds == 135 || seconds == 150 ||
-        seconds == 165 || seconds == 180;
+  for (int seconds = -300; seconds <= 7200; ++seconds) {
+    const bool expected = seconds == 0 || seconds == 5 || seconds == 10 ||
+        seconds == 15 || seconds == 30 || seconds == 45 || seconds == 60 ||
+        seconds == 90 || seconds == 120 || seconds == 180 || seconds == 300 ||
+        seconds == 600 || seconds == 1800 || seconds == 3600 ||
+        (seconds > 0 && seconds <= 180 && seconds % 15 == 0);
     assert(tabs::IsValidAutoRefreshInterval(seconds) == expected);
   }
+  assert(tabs::kAutoRefreshIntervals.size() == 14);
+  assert(tabs::kAutoRefreshIntervals[1] == 5);
+  assert(tabs::kAutoRefreshIntervals.back() == 3600);
+  for (int seconds : tabs::kAutoRefreshIntervals) {
+    for (int i = 0; i <= 100; ++i) {
+      const double unit = i / 100.0;
+      const double jittered = tabs::RefreshDelaySeconds(seconds, true, unit);
+      assert(jittered >= seconds * 0.95 - 1e-9);
+      assert(jittered <= seconds * 1.05 + 1e-9);
+      assert(tabs::RefreshDelaySeconds(seconds, false, unit) == seconds);
+    }
+  }
+
   std::cout << "PASS: " << cases
-            << " viewport cases and 601 interval checks\n";
+            << " viewport cases, 7501 interval checks and 1414 jitter checks\n";
 }
 '''
 
@@ -82,6 +96,14 @@ def extract_header():
     lines = ''.join(line.value for hunk in file for line in hunk if line.is_added).splitlines(True)
     followup = PatchSet((REPO / 'patches/helium/ui/pinned-split-pane-state.patch').read_text())
     changes = next(file for file in followup if file.path == HEADER)
+    for hunk in reversed(changes):
+        start = hunk.source_start - 1
+        before = [line.value for line in hunk if not line.is_added]
+        after = [line.value for line in hunk if not line.is_removed]
+        assert lines[start:start + len(before)] == before
+        lines[start:start + len(before)] = after
+    monitoring = PatchSet((REPO / 'patches/helium/ui/page-change-monitor.patch').read_text())
+    changes = next(file for file in monitoring if file.path == HEADER)
     for hunk in reversed(changes):
         start = hunk.source_start - 1
         before = [line.value for line in hunk if not line.is_added]

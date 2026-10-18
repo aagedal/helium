@@ -1,0 +1,84 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Helium Neo change monitoring fixtures</title>
+<style>body{font:16px system-ui;padding:24px;max-width:900px;margin:auto}pre{white-space:pre-wrap}</style>
+<h1>Change monitoring fixtures</h1>
+<button onclick="runFixtures()">Run production-script checks</button>
+<button onclick="fetch('/change',{method:'POST'}).then(() => location.reload())">Change statement for native capture QA</button>
+<pre id="results">Ready.</pre>
+<article id="fixture"><h2>Public statement</h2><p id="statement">The meeting will be on Wednesday.</p></article>
+<script src="/monitor.js"></script>
+<script>
+window.runFixtures = () => {
+  const fixture = document.querySelector('#fixture'), results = [];
+  function test(name, html, check) {
+    fixture.innerHTML = html;
+    try { check(); results.push({name, passed: true}); }
+    catch (error) { results.push({name, passed: false, error: String(error)}); }
+  }
+  const assert = (condition, message) => { if (!condition) throw Error(message || 'Assertion failed'); };
+  const scan = () => window.monitorText('@main');
+  test('Article text preferred to sidebar', '<h2>Title</h2><p>Statement.</p>', () => {
+    assert(scan().text === 'Title\nStatement.', JSON.stringify(scan()));
+  });
+  test('Whitespace normalization', '<p>First    second\n third.</p>', () => {
+    assert(scan().text === 'First second third.');
+  });
+  test('Text edits detectable', '<p>Before.</p>', () => {
+    const before = scan().text; fixture.querySelector('p').textContent = 'After.';
+    assert(scan().text !== before);
+  });
+  test('Identical reload content unchanged', '<p>Unchanged.</p>', () => {
+    const before = scan().text; fixture.innerHTML = '<p>Unchanged.</p>';
+    assert(scan().text === before);
+  });
+  test('Hidden, navigation, scripts and inputs excluded', '<p>Visible.</p><nav>Navigation</nav><span hidden>Hidden</span><div style="display:none">Hidden</div><span aria-hidden="true">Hidden</span><textarea>Private draft</textarea><input value="Private input"><script>var secret=1;<\/script><style>.irrelevant{color:red}</style><div contenteditable="true">Draft</div>', () => {
+    assert(scan().text === 'Visible.', JSON.stringify(scan()));
+  });
+  test('Empty region is an error, not a deletion', '<p></p>', () => assert(!!scan().error));
+  test('Missing region does not fall back to whole article', '<p>Other text.</p>', () => {
+    assert(!!window.monitorText('#missing').error);
+  });
+  test('Invalid selector fails closed', '<p>Text.</p>', () => assert(!!window.monitorText('[').error));
+  test('Hidden root fails closed', '<div id="hidden" style="display:none">Text.</div>', () => assert(!!window.monitorText('#hidden').error));
+  test('CSS-hidden ancestor fails closed', '<div style="display:none"><p id="covered">Invisible.</p></div>', () => {
+    assert(!!window.monitorText('#covered').error);
+  });
+  test('Editable and transparent content excluded', '<p>Visible.</p><div contenteditable>Private draft.</div><span style="opacity:0">Transparent.</span>', () => {
+    assert(scan().text === 'Visible.', JSON.stringify(scan()));
+  });
+  test('Character budget fails closed', '<p>' + 'x'.repeat(65537) + '</p>', () => assert(!!scan().error));
+  test('Node budget fails closed', '<i></i>'.repeat(5000) + '<p>Beyond budget.</p>', () => assert(!!scan().error));
+  test('Selected paragraph survives a document replacement', '<p id="chosen">Selected paragraph.</p><p>Other paragraph.</p>', () => {
+    const range = document.createRange(); range.selectNodeContents(document.querySelector('#chosen'));
+    const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    const selected = window.monitorText('@selection');
+    assert(selected.text === 'Selected paragraph.', JSON.stringify(selected));
+    fixture.innerHTML = '<p id="chosen">Updated selected paragraph.</p><p>Unrelated changes.</p>';
+    assert(window.monitorText(selected.selector).text === 'Updated selected paragraph.');
+    selection.removeAllRanges();
+  });
+  test('Selected paragraph without ID has a stable positional path', '<div><p>First.</p><p>Second.</p></div>', () => {
+    const range = document.createRange(); range.selectNodeContents(fixture.querySelectorAll('p')[1]);
+    const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    const selected = window.monitorText('@selection');
+    assert(selected.text === 'Second.', JSON.stringify(selected));
+    fixture.innerHTML = '<div><p>First.</p><p>Changed second.</p></div>';
+    assert(window.monitorText(selected.selector).text === 'Changed second.');
+    selection.removeAllRanges();
+  });
+  test('No selection is an explicit error', '<p>Text.</p>', () => {
+    getSelection().removeAllRanges(); assert(!!window.monitorText('@selection').error);
+  });
+  test('UTF-8 source text retained', '<p>Rødgrønn 日本語 Україна.</p>', () => assert(scan().text === 'Rødgrønn 日本語 Україна.'));
+  fixture.innerHTML = '<h2>Public statement</h2><p id="statement">The meeting will be on Wednesday.</p>';
+  const times = [];
+  for (let i = 0; i < 100; ++i) { const start = performance.now(); scan(); times.push(performance.now() - start); }
+  times.sort((a,b) => a-b);
+  const report = {passed: results.filter(r => r.passed).length, total: results.length,
+    failures: results.filter(r => !r.passed), benchmark: {iterations: 100, medianMs: times[50], p95Ms: times[95], maxMs: times[99]}};
+  window.fixtureResults = report;
+  document.querySelector('#results').textContent = JSON.stringify(report, null, 2);
+  return report;
+};
+</script>
