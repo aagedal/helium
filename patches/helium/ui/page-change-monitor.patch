@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -20475,6 +20475,96 @@
+@@ -20936,6 +20936,96 @@
      <message name="IDS_OSCRYPTASYNC_AVAILABILITY_INFOBAR_BUTTON" desc="The text of the button to proceed with relaunching the entire browser to resolve keychain permission issues.">
        Relaunch
      </message>
@@ -97,10 +97,9 @@
    </messages>
  </release>
  </grit>
-\ No newline at end of file
 --- a/chrome/browser/ui/BUILD.gn
 +++ b/chrome/browser/ui/BUILD.gn
-@@ -400,7 +400,6 @@
+@@ -399,7 +399,6 @@
        "//chrome/browser:browser_public_dependencies",
      ]
      deps = [
@@ -108,7 +107,7 @@
        ":tab_ui_helper",
        "//base",
        "//chrome/browser/apps/app_service",
-@@ -409,6 +408,7 @@
+@@ -408,6 +407,7 @@
        "//chrome/browser/sessions",
        "//chrome/browser/ui/browser_window",
        "//chrome/browser/ui/send_tab_to_self",
@@ -116,7 +115,7 @@
        "//chrome/browser/ui/tabs:tab_enums",
        "//chrome/browser/ui/tabs:tab_group",
        "//chrome/browser/ui/tabs:tab_strip",
-@@ -1033,8 +1033,8 @@
+@@ -1032,8 +1032,8 @@
      "//components/lens",
      "//components/lens:buildflags",
      "//components/lens:enterprise_policy",
