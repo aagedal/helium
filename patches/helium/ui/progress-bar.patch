@@ -58,7 +58,7 @@
        settings_api::PrefType::kBoolean;
 --- a/chrome/browser/resources/settings/appearance_page/appearance_layout_page.html.ts
 +++ b/chrome/browser/resources/settings/appearance_page/appearance_layout_page.html.ts
-@@ -54,6 +54,10 @@ export function getHtml(this: SettingsAp
+@@ -47,6 +47,10 @@ export function getHtml(this: SettingsAp
        label="$i18n{minimalLocationBar}">
    </settings-toggle-button>
    <settings-toggle-button class="hr"
