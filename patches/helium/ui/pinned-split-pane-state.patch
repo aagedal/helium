@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -297,6 +297,7 @@
+@@ -297,6 +297,7 @@ are declared in tools/grit/grit_args.gni
        <message name="IDS_HELIUM_CREATE_FOUR_PANE_SPLIT" desc="Tab context menu action creating a grid with this tab and three new tabs.">Create Four-Way Split</message>
        <message name="IDS_HELIUM_EXPAND_FOUR_PANE_SPLIT" desc="Tab context menu action adding new tabs to fill an existing split to four panes.">Expand to Four-Way Split</message>
        <message name="IDS_HELIUM_TAB_VIEW" desc="Tab menu submenu for individual tab preview and refresh settings.">Tab view</message>
@@ -10,7 +10,7 @@
        <message name="IDS_HELIUM_PREVIEW_WORKSPACE_TITLE" desc="Default name for a desktop and mobile preview tab group.">Desktop + mobile</message>
 --- a/chrome/browser/ui/browser_commands.cc
 +++ b/chrome/browser/ui/browser_commands.cc
-@@ -747,15 +747,14 @@
+@@ -757,15 +757,14 @@ void ReloadInternal(BrowserWindowInterfa
  
    std::vector<tabs::TabInterface*> tabs_to_reload;
  
@@ -36,7 +36,7 @@
      // Reloading a tab may change the selection (see crbug.com/339061099), so
 --- a/chrome/browser/ui/browser_commands_browsertest.cc
 +++ b/chrome/browser/ui/browser_commands_browsertest.cc
-@@ -155,6 +155,34 @@
+@@ -160,6 +160,34 @@ IN_PROC_BROWSER_TEST_F(BrowserCommandsTe
    EXPECT_EQ(kTabCount, load_sum);
  }
  
@@ -73,7 +73,7 @@
    constexpr int kTabCount = 5;
 --- a/chrome/browser/ui/startup/BUILD.gn
 +++ b/chrome/browser/ui/startup/BUILD.gn
-@@ -27,7 +27,10 @@
+@@ -27,7 +27,10 @@ source_set("startup_tab") {
      "startup_tab.h",
    ]
  
@@ -85,7 +85,7 @@
  }
  
  source_set("startup") {
-@@ -217,6 +220,7 @@
+@@ -217,6 +220,7 @@ source_set("impl") {
      ]
      deps += [
        ":startup_tab",
@@ -103,7 +103,7 @@
  #include <memory>
  #include <utility>
  #include <vector>
-@@ -53,6 +54,7 @@
+@@ -51,6 +52,7 @@
  #include "chrome/browser/ui/startup/startup_tab.h"
  #include "chrome/browser/ui/startup/startup_tab_provider.h"
  #include "chrome/browser/ui/startup/startup_types.h"
@@ -111,7 +111,7 @@
  #include "chrome/browser/ui/tabs/shared_tab_group_version_upgrade_modal.h"
  #include "chrome/browser/ui/tabs/tab_enums.h"
  #include "chrome/browser/ui/tabs/tab_strip_model.h"
-@@ -71,6 +73,7 @@
+@@ -69,6 +71,7 @@
  #include "components/sessions/core/serialized_navigation_entry.h"
  #include "components/sessions/core/serialized_user_agent_override.h"
  #include "components/signin/public/base/signin_switches.h"
@@ -119,7 +119,7 @@
  #include "components/tab_groups/tab_group_id.h"
  #include "content/public/browser/child_process_security_policy.h"
  #include "content/public/browser/dom_storage_context.h"
-@@ -220,12 +223,13 @@
+@@ -218,12 +221,13 @@ BrowserWindowInterface* GetExistingBrows
    return workspace_browser;
  }
  
@@ -136,7 +136,7 @@
        browser, base::span_from_ref(navigation),
        browser->tab_strip_model()->IndexOfFirstNonPinnedTab(),
        /*selected_navigation=*/0, /*extension_app_id=*/std::string(),
-@@ -387,6 +391,20 @@
+@@ -385,6 +389,20 @@ BrowserWindowInterface* StartupBrowserCr
    }
    CHECK(profile_);
  
@@ -157,7 +157,7 @@
    bool first_tab = true;
    bool process_headless_commands = headless::ShouldProcessHeadlessCommands();
    custom_handlers::ProtocolHandlerRegistry* registry =
-@@ -456,7 +474,7 @@
+@@ -454,7 +472,7 @@ BrowserWindowInterface* StartupBrowserCr
      // Pinned tabs from the startup-tab provider do not pass through the session
      // restore tab loader, so add background ones without loading them.
      if (!first_tab && tab.type == StartupTab::Type::kPinned) {
@@ -166,13 +166,13 @@
        continue;
      }
  
-@@ -487,7 +505,24 @@
+@@ -485,8 +503,25 @@ BrowserWindowInterface* StartupBrowserCr
  #endif  // BUILDFLAG(ENABLE_RLZ)
  
      Navigate(&params);
 +    restore_pane(tab, params.navigated_or_inserted_contents);
      first_tab = false;
-+  }
+   }
 +  for (const auto& [id, panes] : pinned_splits) {
 +    if (panes.size() < 2 || panes.size() > split_tabs::kMaxSplitPanes) {
 +      continue;
@@ -188,12 +188,13 @@
 +    }
 +    model->RestoreSplit(split_tabs::SplitTabId::GenerateNew(), indices,
 +                        pinned_visuals.at(id));
-   }
++  }
    if (!browser->GetTabStripModel()->GetActiveWebContents() &&
        !process_headless_commands) {
+     // TODO(sky): this is a work around for 110909. Figure out why it's needed.
 --- a/chrome/browser/ui/startup/startup_tab.h
 +++ b/chrome/browser/ui/startup/startup_tab.h
-@@ -5,7 +5,12 @@
+@@ -5,8 +5,13 @@
  #ifndef CHROME_BROWSER_UI_STARTUP_STARTUP_TAB_H_
  #define CHROME_BROWSER_UI_STARTUP_STARTUP_TAB_H_
  
@@ -201,12 +202,13 @@
 +#include <optional>
 +#include <string>
  #include <vector>
-+
-+#include "components/split_tabs/split_tab_visual_data.h"
  
++#include "components/split_tabs/split_tab_visual_data.h"
++
  #include "url/gurl.h"
  
-@@ -28,6 +33,11 @@
+ // Represents tab data at startup.
+@@ -28,6 +33,11 @@ struct StartupTab {
  
    Type type = Type::kNormal;
  
@@ -220,7 +222,7 @@
    bool is_untrusted_launch = false;
 --- a/chrome/browser/ui/tabs/BUILD.gn
 +++ b/chrome/browser/ui/tabs/BUILD.gn
-@@ -537,6 +537,7 @@
+@@ -556,6 +556,7 @@ if (!is_android) {
      }
  
      deps = [
@@ -228,7 +230,7 @@
        ":tab_group",
        ":tab_model",
        ":tab_strip",
-@@ -791,6 +792,7 @@
+@@ -867,6 +868,7 @@ if (!is_android) {
      ]
  
      deps = [
@@ -238,7 +240,7 @@
        ":tab_menu",
 --- a/chrome/browser/ui/tabs/pane_settings.cc
 +++ b/chrome/browser/ui/tabs/pane_settings.cc
-@@ -45,7 +45,9 @@
+@@ -45,7 +45,9 @@ PaneSettings* PaneSettings::GetOrCreate(
  void PaneSettings::PopulateExtraData(content::WebContents* contents,
                                       std::map<std::string, std::string>* data) {
    if (auto* settings = FromWebContents(contents)) {
@@ -249,7 +251,7 @@
      (*data)[kRefreshKey] = base::NumberToString(settings->refresh_seconds());
    }
  }
-@@ -58,7 +60,8 @@
+@@ -58,7 +60,8 @@ void PaneSettings::RestoreFromExtraData(
    }
    auto* settings = GetOrCreate(contents);
    if (auto it = data.find(kMobileKey); it != data.end()) {
@@ -259,7 +261,7 @@
    }
    int seconds = 0;
    if (auto it = data.find(kRefreshKey);
-@@ -68,11 +71,13 @@
+@@ -68,11 +71,13 @@ void PaneSettings::RestoreFromExtraData(
    }
  }
  
@@ -275,7 +277,7 @@
    if (enabled) {
      ApplyMobileEmulation();
    } else {
-@@ -121,8 +126,9 @@
+@@ -121,8 +126,9 @@ void PaneSettings::Save() {
    if (!service) {
      return;
    }
@@ -287,15 +289,12 @@
    service->AddTabExtraData(helper->window_id(), helper->session_id(),
                             kRefreshKey, base::NumberToString(refresh_seconds_));
  }
-@@ -132,11 +138,20 @@
+@@ -132,11 +138,20 @@ base::CallbackListSubscription PaneSetti
    return changed_callbacks_.Add(std::move(callback));
  }
  
 -void PaneSettings::SetPreviewScale(double scale) {
 -  if (scale <= 0 || scale == preview_scale_) {
--    return;
--  }
--  preview_scale_ = scale;
 +void PaneSettings::SetPreviewBounds(int width, int height) {
 +  const auto fitted = FitMobilePreview(width, height, mobile_full_height_);
 +  if (fitted.scale <= 0) {
@@ -306,14 +305,15 @@
 +          ? std::max(1, static_cast<int>(std::round(height / fitted.scale)))
 +          : kMobilePreviewHeight;
 +  if (fitted.scale == preview_scale_ && css_height == preview_height_) {
-+    return;
-+  }
+     return;
+   }
+-  preview_scale_ = scale;
 +  preview_scale_ = fitted.scale;
 +  preview_height_ = css_height;
    ApplyMobileEmulation(/*metrics_only=*/true);
  }
  
-@@ -159,9 +174,11 @@
+@@ -159,9 +174,11 @@ void PaneSettings::ApplyMobileEmulation(
    }
    base::DictValue metrics;
    metrics.Set("width", kMobilePreviewWidth);
@@ -329,7 +329,7 @@
    metrics.Set("scale", preview_scale_);
 --- a/chrome/browser/ui/tabs/pane_settings.h
 +++ b/chrome/browser/ui/tabs/pane_settings.h
-@@ -37,10 +37,11 @@
+@@ -37,10 +37,11 @@ class PaneSettings : public content::Web
        const std::map<std::string, std::string>& data);
  
    bool mobile_enabled() const { return mobile_enabled_; }
@@ -343,7 +343,7 @@
    base::CallbackListSubscription RegisterChanged(
        base::RepeatingClosure callback);
  
-@@ -62,6 +63,8 @@
+@@ -62,6 +63,8 @@ class PaneSettings : public content::Web
    void Detach();
  
    bool mobile_enabled_ = false;
@@ -354,7 +354,7 @@
    int next_command_id_ = 0;
 --- a/chrome/browser/ui/tabs/pane_settings_geometry.h
 +++ b/chrome/browser/ui/tabs/pane_settings_geometry.h
-@@ -29,9 +29,17 @@
+@@ -29,10 +29,18 @@ struct MobilePreviewBounds {
  };
  
  // Fit the entire fixed CSS viewport, without stretching or upscaling it.
@@ -364,18 +364,19 @@
 +                                            bool full_height = false) {
    if (width <= 0 || height <= 0) {
      return {0, 0, 0, 0, 0};
-+  }
+   }
 +  if (full_height) {
 +    const double scale =
 +        std::min(1.0, static_cast<double>(width) / kMobilePreviewWidth);
 +    const int fitted_width = std::min(width, kMobilePreviewWidth);
 +    return {(width - fitted_width) / 2, 0, fitted_width, height, scale};
-   }
++  }
    const double scale =
        std::min({1.0, static_cast<double>(width) / kMobilePreviewWidth,
+                 static_cast<double>(height) / kMobilePreviewHeight});
 --- a/chrome/browser/ui/tabs/pane_settings_menu_model.cc
 +++ b/chrome/browser/ui/tabs/pane_settings_menu_model.cc
-@@ -39,6 +39,9 @@
+@@ -39,6 +39,9 @@ PaneSettingsMenuModel::PaneSettingsMenuM
      : ui::SimpleMenuModel(this), model_(model), tab_(tab->GetWeakPtr()) {
    AddCheckItem(kMobileCommandId,
                 l10n_util::GetStringUTF16(IDS_HELIUM_MOBILE_PREVIEW));
@@ -385,7 +386,7 @@
    AddItemWithStringId(kWorkspaceCommandId, IDS_HELIUM_CREATE_PREVIEW_WORKSPACE);
    AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
    refresh_menu_ = std::make_unique<ui::SimpleMenuModel>(this);
-@@ -64,7 +67,12 @@
+@@ -64,7 +67,12 @@ bool PaneSettingsMenuModel::IsCommandIdC
    }
    auto* settings = PaneSettings::FromWebContents(tab_->GetContents());
    if (command_id == kMobileCommandId) {
@@ -399,7 +400,7 @@
    }
    const int seconds =
        (command_id - kRefreshFirstCommandId) * kAutoRefreshStepSeconds;
-@@ -86,7 +94,9 @@
+@@ -86,7 +94,9 @@ bool PaneSettingsMenuModel::IsCommandIdE
    }
    // Off always remains available, even after navigating to a browser page.
    if (command_id == kRefreshFirstCommandId ||
@@ -410,7 +411,7 @@
      return true;
    }
    return tab_->GetContents()->GetVisibleURL().SchemeIsHTTPOrHTTPS();
-@@ -101,8 +111,10 @@
+@@ -101,8 +111,10 @@ void PaneSettingsMenuModel::ExecuteComma
      return;
    }
    auto* settings = PaneSettings::GetOrCreate(tab_->GetContents());
@@ -425,7 +426,7 @@
          (command_id - kRefreshFirstCommandId) * kAutoRefreshStepSeconds;
 --- a/chrome/browser/ui/tabs/pane_settings_menu_model.h
 +++ b/chrome/browser/ui/tabs/pane_settings_menu_model.h
-@@ -21,6 +21,7 @@
+@@ -21,6 +21,7 @@ class PaneSettingsMenuModel : public ui:
    // Separate from Chromium's tab context command enum and other submenus.
    static constexpr int kParentCommandId = 2000;
    static constexpr int kMobileCommandId = 2001;
@@ -435,7 +436,7 @@
    static constexpr int kRefreshFirstCommandId = 2010;
 --- a/chrome/browser/ui/tabs/pane_settings_unittest.cc
 +++ b/chrome/browser/ui/tabs/pane_settings_unittest.cc
-@@ -163,4 +163,24 @@
+@@ -163,4 +163,24 @@ TEST_F(PaneSettingsTest, RestoreRejectsI
      EXPECT_EQ(settings->refresh_seconds(), seconds);
    }
  }
@@ -483,7 +484,7 @@
  #include "content/public/browser/navigation_controller.h"
  #include "content/public/browser/navigation_entry.h"
  #include "content/public/browser/web_contents.h"
-@@ -29,9 +32,28 @@
+@@ -29,9 +32,28 @@ namespace {
  const char kURL[] = "url";
  
  // Returns a base::DictValue representing the supplied StartupTab.
@@ -514,7 +515,7 @@
    return dict;
  }
  
-@@ -48,7 +70,15 @@
+@@ -48,7 +70,15 @@ void EncodePinnedTabs(BrowserWindowInter
      NavigationEntry* entry =
          web_contents->GetController().GetLastCommittedEntry();
      if (entry) {
@@ -531,7 +532,7 @@
      }
    }
  }
-@@ -57,9 +87,47 @@
+@@ -57,9 +87,47 @@ void EncodePinnedTabs(BrowserWindowInter
  // on success.
  std::optional<StartupTab> DecodeTab(const base::DictValue& value) {
    const std::string* const url_string = value.FindString(kURL);
@@ -582,7 +583,7 @@
  }
  
  }  // namespace
-@@ -101,7 +169,7 @@
+@@ -101,7 +169,7 @@ void PinnedTabCodec::WritePinnedTabs(Pro
    base::ListValue& values = update.Get();
    values.clear();
    for (const auto& tab : tabs) {
@@ -614,7 +615,7 @@
  #include "content/public/test/browser_test.h"
  #include "testing/gtest/include/gtest/gtest.h"
  #include "ui/base/page_transition_types.h"
-@@ -76,3 +82,70 @@
+@@ -76,3 +82,70 @@ IN_PROC_BROWSER_TEST_F(PinnedTabCodecBro
        PinnedTabCodec::ReadPinnedTabs(browser()->GetProfile()));
    EXPECT_EQ("https://www.google.com/:pinned", result);
  }
@@ -687,7 +688,7 @@
 +}
 --- a/chrome/browser/ui/views/frame/contents_container_view.cc
 +++ b/chrome/browser/ui/views/frame/contents_container_view.cc
-@@ -395,9 +395,8 @@
+@@ -397,9 +397,8 @@ void ContentsContainerView::Layout(PassK
    if (contents) {
      auto* settings = tabs::PaneSettings::FromWebContents(contents);
      if (settings && settings->mobile_enabled()) {
@@ -699,7 +700,7 @@
      }
    }
  
-@@ -605,8 +604,9 @@
+@@ -607,8 +606,9 @@ views::ProposedLayout ContentsContainerV
    if (auto* contents = contents_view_->web_contents()) {
      auto* settings = tabs::PaneSettings::FromWebContents(contents);
      if (settings && settings->mobile_enabled()) {

@@ -1,6 +1,6 @@
 --- a/chrome/browser/ui/views/tabs/tab.cc
 +++ b/chrome/browser/ui/views/tabs/tab.cc
-@@ -170,8 +170,14 @@
+@@ -170,8 +170,14 @@ class TabStyleViewDelegateImpl : public
    ~TabStyleViewDelegateImpl() override = default;
  
    const views::View* GetView() const override { return tab_; }
@@ -17,7 +17,7 @@
    bool IsHovering() const override { return tab_->IsHovering(); }
    bool IsClosing() const override { return tab_->closing(); }
    bool IsDragging() const override { return tab_->dragging(); }
-@@ -1054,6 +1060,7 @@
+@@ -1073,6 +1079,7 @@ views::BubbleBorder::Arrow Tab::GetAncho
  }
  
  void Tab::ActiveStateChanged() {
@@ -27,7 +27,7 @@
    icon_->SetActiveState(IsActive());
 --- a/chrome/browser/ui/views/tabs/browser_tab_strip_controller.cc
 +++ b/chrome/browser/ui/views/tabs/browser_tab_strip_controller.cc
-@@ -246,11 +246,12 @@
+@@ -246,11 +246,12 @@ bool BrowserTabStripController::IsBrowse
  
  void BrowserTabStripController::SelectTab(int model_index,
                                            const ui::Event& event) {

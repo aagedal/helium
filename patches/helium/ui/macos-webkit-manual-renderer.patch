@@ -20,7 +20,7 @@
       "window mode. Helium flag.",
 --- a/chrome/browser/helium_webkit_streaming_mac.h
 +++ b/chrome/browser/helium_webkit_streaming_mac.h
-@@ -27,6 +27,17 @@
+@@ -27,6 +27,17 @@ COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING
  void PauseWebKitStreamingTab(content::WebContents* contents);
  
  COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
@@ -40,7 +40,7 @@
  }
 --- a/chrome/browser/helium_webkit_streaming_mac.mm
 +++ b/chrome/browser/helium_webkit_streaming_mac.mm
-@@ -35,9 +35,29 @@
+@@ -35,9 +35,29 @@ constexpr char kStreamingSwitch[] = "hel
  constexpr char kStreamingTabsSwitch[] = "helium-webkit-streaming-tabs";
  const void* const kStreamingTabKey = &kStreamingTabKey;
  
@@ -72,7 +72,7 @@
  }
  }  // namespace
  
-@@ -96,6 +116,7 @@
+@@ -96,6 +116,7 @@ bool IsStreamingURL(const GURL& url) {
                    windowKey:(NSString*)windowKey;
  - (void)loadURL:(NSURL*)url;
  - (NSView*)streamingView;
@@ -80,7 +80,7 @@
  - (void)shutdown;
  - (void)pauseMedia;
  @end
-@@ -205,6 +226,9 @@
+@@ -205,6 +226,9 @@ bool IsStreamingURL(const GURL& url) {
    return self;
  }
  
@@ -90,7 +90,7 @@
  - (NSView*)streamingView {
    return _root;
  }
-@@ -318,6 +342,7 @@
+@@ -318,6 +342,7 @@ class StreamingTab : public base::Suppor
    ~StreamingTab() override { Deactivate(); }
  
    void Open(const GURL& url) {
@@ -98,7 +98,7 @@
      if (!controller_) {
        auto* profile = web_contents()->GetBrowserContext();
        std::string digest = base::SHA1HashString(profile->GetPath().value());
-@@ -352,6 +377,31 @@
+@@ -352,6 +377,31 @@ class StreamingTab : public base::Suppor
      return changed_.Add(std::move(callback));
    }
    void Pause() { [controller_ pauseMedia]; }
@@ -130,7 +130,7 @@
    void Activate() {
      if (web_contents() && web_contents()->GetDelegate())
        web_contents()->GetDelegate()->ActivateContents(web_contents());
-@@ -365,10 +415,15 @@
+@@ -365,10 +415,15 @@ class StreamingTab : public base::Suppor
        preparing_shell_ = false;
        return;
      }
@@ -149,7 +149,7 @@
    }
    void DidFinishNavigation(content::NavigationHandle* handle) override {
      if (!controller_ || !handle->HasCommitted() ||
-@@ -393,6 +448,9 @@
+@@ -393,6 +448,9 @@ class StreamingTab : public base::Suppor
    }
    HeliumStreamingWindow* __strong controller_ = nil;
    bool preparing_shell_ = false;
@@ -159,7 +159,7 @@
    base::RepeatingClosureList changed_;
    base::WeakPtrFactory<StreamingTab> activation_factory_{this};
    base::WeakPtrFactory<StreamingTab> weak_factory_{this};
-@@ -422,7 +480,7 @@
+@@ -422,7 +480,7 @@ bool OpenStreamingWindow(content::Browse
    std::string digest = base::SHA1HashString(profile->GetPath().value());
    NSUUID* identifier = [[NSUUID alloc]
        initWithUUIDBytes:reinterpret_cast<const unsigned char*>(digest.data())];
@@ -168,7 +168,7 @@
    NSString* key =
        [NSString stringWithFormat:@"%@/%@", identifier.UUIDString, service];
    if (!g_streaming_windows)
-@@ -442,8 +500,7 @@
+@@ -442,8 +500,7 @@ bool OpenStreamingWindow(content::Browse
    }
    [controller showWindow:nil];
    [controller.window makeKeyAndOrderFront:nil];
@@ -178,7 +178,7 @@
    return true;
  }
  
-@@ -460,15 +517,17 @@
+@@ -460,15 +517,17 @@ class WebKitStreamingThrottle : public c
    ThrottleCheckResult MaybeOpen() {
      auto* handle = navigation_handle();
      if (!handle->IsInPrimaryMainFrame() || handle->IsPost() ||
@@ -199,7 +199,7 @@
      return (in_tab ? OpenStreamingTab(handle->GetWebContents(), handle->GetURL())
                     : OpenStreamingWindow(profile, handle->GetURL())) ? CANCEL_AND_IGNORE
                                                            : PROCEED;
-@@ -497,6 +556,35 @@
+@@ -497,6 +556,35 @@ void PauseWebKitStreamingTab(content::We
      tab->Pause();
  }
  
@@ -237,20 +237,20 @@
    if (!profile_allowed)
 --- a/chrome/browser/ui/tabs/BUILD.gn
 +++ b/chrome/browser/ui/tabs/BUILD.gn
-@@ -196,6 +196,10 @@
-       "//components/commerce/core:feature_list",
+@@ -207,6 +207,10 @@ if (!is_android) {
        "//components/feed:feature_list",
      ]
-+
+ 
 +    if (is_mac) {
 +      deps += [ "//chrome/browser:helium_webkit_streaming" ]
 +    }
- 
++
      # TODO(crbug.com/40031409): Fix code that adds exit-time destructors and
      # enable the diagnostic by removing this line.
+     configs += [ "//build/config/compiler:no_exit_time_destructors" ]
 --- a/chrome/browser/ui/tabs/tab_menu_model.cc
 +++ b/chrome/browser/ui/tabs/tab_menu_model.cc
-@@ -71,6 +71,10 @@
+@@ -72,6 +72,10 @@
  #include "ui/base/window_open_disposition.h"
  #include "ui/views/vector_icons.h"
  
@@ -261,7 +261,7 @@
  #if BUILDFLAG(ENABLE_EXTENSIONS)
  #include "chrome/browser/extensions/context_menu_matcher.h"
  #include "chrome/browser/extensions/menu_manager.h"
-@@ -81,6 +85,17 @@
+@@ -82,6 +86,17 @@ using base::UserMetricsAction;
  
  namespace {
  constexpr int kTabMenuIconSize = 16;
@@ -279,7 +279,7 @@
  
  struct PaneLayoutOption {
    size_t count;
-@@ -412,6 +427,11 @@
+@@ -413,6 +428,11 @@ void TabMenuModel::AppendGlicItems(int i
  // variants) to follow Apple Human Interface Guidelines (HIG), while other
  // platforms use sentence case.
  void TabMenuModel::Build(int index) {
@@ -291,7 +291,7 @@
    std::vector<int> indices;
    if (tab_strip_->IsTabSelected(index)) {
      const ui::ListSelectionModel::SelectedIndices sel =
-@@ -795,6 +815,12 @@
+@@ -803,6 +823,12 @@ extensions::ContextMenuMatcher* TabMenuM
  // Overridden to check if the checked status of the item
  // should be evaluated by the extension matcher instead of the simple model.
  bool TabMenuModel::IsItemCheckedAt(size_t index) const {
@@ -304,7 +304,7 @@
  #if BUILDFLAG(ENABLE_EXTENSIONS)
    if (auto* matcher = GetMatcherIfExtension(index)) {
      return matcher->IsCommandIdChecked(GetCommandIdAt(index));
-@@ -806,6 +832,15 @@
+@@ -814,6 +840,15 @@ bool TabMenuModel::IsItemCheckedAt(size_
  // Overridden to check if the enabled status of the item
  // should be evaluated by the extension matcher instead of the simple model.
  bool TabMenuModel::IsEnabledAt(size_t index) const {
@@ -320,7 +320,7 @@
    if (GetCommandIdAt(index) == tabs::PaneSettingsMenuModel::kParentCommandId) {
      return tab_interface_ && tab_strip_->GetIndexOfTab(tab_interface_.get()) !=
                                   TabStripModel::kNoTab;
-@@ -836,6 +871,15 @@
+@@ -844,6 +879,15 @@ void TabMenuModel::ActivatedAt(size_t in
  // Overridden to execute core context menu command logic on activation for
  // extension items.
  void TabMenuModel::ActivatedAt(size_t index, int event_flags) {

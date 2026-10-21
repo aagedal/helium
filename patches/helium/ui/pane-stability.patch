@@ -1,6 +1,6 @@
 --- a/chrome/browser/ui/tabs/pane_settings.cc
 +++ b/chrome/browser/ui/tabs/pane_settings.cc
-@@ -84,7 +84,7 @@
+@@ -84,7 +84,7 @@ void PaneSettings::SetMobileEnabled(bool
  }
  
  void PaneSettings::SetRefreshSeconds(int seconds) {
@@ -9,7 +9,7 @@
      return;
    }
    refresh_timer_.Stop();
-@@ -101,7 +101,8 @@
+@@ -101,7 +101,8 @@ void PaneSettings::Refresh() {
    const auto* entry = web_contents()->GetController().GetLastCommittedEntry();
    if (web_contents()->IsLoading() || web_contents()->IsCrashed() || !entry ||
        !entry->GetURL().SchemeIsHTTPOrHTTPS() || entry->GetHasPostData() ||
@@ -19,22 +19,20 @@
      return;
    }
    web_contents()->GetController().Reload(content::ReloadType::NORMAL, true);
-@@ -136,10 +137,10 @@
+@@ -136,10 +137,10 @@ void PaneSettings::SetPreviewScale(doubl
      return;
    }
    preview_scale_ = scale;
 -  ApplyMobileEmulation();
--}
--
--void PaneSettings::ApplyMobileEmulation() {
 +  ApplyMobileEmulation(/*metrics_only=*/true);
-+}
-+
+ }
+ 
+-void PaneSettings::ApplyMobileEmulation() {
 +void PaneSettings::ApplyMobileEmulation(bool metrics_only) {
    if (!mobile_enabled_ ||
        !web_contents()->GetPrimaryMainFrame()->IsRenderFrameLive()) {
      return;
-@@ -154,6 +155,7 @@
+@@ -154,6 +155,7 @@ void PaneSettings::ApplyMobileEmulation(
        return;
      }
      agent_host_ = std::move(host);
@@ -42,7 +40,7 @@
    }
    base::DictValue metrics;
    metrics.Set("width", kMobilePreviewWidth);
-@@ -166,6 +168,9 @@
+@@ -166,6 +168,9 @@ void PaneSettings::ApplyMobileEmulation(
    // Native view bounds are supplied by ContentsContainerView.
    metrics.Set("dontSetVisibleSize", true);
    SendCommand("Emulation.setDeviceMetricsOverride", std::move(metrics));
@@ -54,7 +52,7 @@
    touch.Set("maxTouchPoints", 5);
 --- a/chrome/browser/ui/tabs/pane_settings.h
 +++ b/chrome/browser/ui/tabs/pane_settings.h
-@@ -55,7 +55,7 @@
+@@ -55,7 +55,7 @@ class PaneSettings : public content::Web
   private:
    friend class content::WebContentsUserData<PaneSettings>;
    explicit PaneSettings(content::WebContents* contents);
@@ -65,7 +63,7 @@
    void Save();
 --- a/chrome/browser/ui/tabs/pane_settings_unittest.cc
 +++ b/chrome/browser/ui/tabs/pane_settings_unittest.cc
-@@ -48,10 +48,35 @@
+@@ -48,12 +48,37 @@ TEST_F(PaneSettingsTest, RefreshStartsAt
    EXPECT_EQ(counter.count, 0);
    task_environment()->FastForwardBy(base::Seconds(1));
    EXPECT_EQ(counter.count, 1);
@@ -74,8 +72,8 @@
    settings->SetRefreshSeconds(0);
    task_environment()->FastForwardBy(base::Minutes(6));
    EXPECT_EQ(counter.count, 1);
-+}
-+
+ }
+ 
 +TEST_F(PaneSettingsTest, SameIntervalPreservesDeadline) {
 +  ReloadCounter counter(web_contents());
 +  auto* settings = PaneSettings::GetOrCreate(web_contents());
@@ -99,12 +97,14 @@
 +  navigation->Commit();
 +  EXPECT_EQ(GURL("https://example.test/next"),
 +            web_contents()->GetLastCommittedURL());
- }
- 
++}
++
  TEST_F(PaneSettingsTest, ChangingIntervalReplacesTimer) {
+   ReloadCounter counter(web_contents());
+   auto* settings = PaneSettings::GetOrCreate(web_contents());
 --- a/chrome/browser/ui/tabs/split_tab_menu_model.h
 +++ b/chrome/browser/ui/tabs/split_tab_menu_model.h
-@@ -9,11 +9,17 @@
+@@ -9,12 +9,18 @@
  #include <optional>
  #include <string>
  
@@ -115,14 +115,15 @@
  #include "ui/menus/simple_menu_model.h"
  
  class TabStripModel;
-+
+ 
 +namespace tabs {
 +class TabInterface;
 +}
- 
++
  namespace content {
  class WebContents;
-@@ -78,6 +84,8 @@
+ }  // namespace content
+@@ -78,6 +84,8 @@ class SplitTabMenuModel : public ui::Sim
    void ExecuteCommand(int command_id, int event_flags) override;
  
   private:
@@ -131,7 +132,7 @@
    // Returns the split id for the split tabs that this menu is acting on.
    split_tabs::SplitTabId GetSplitTabId() const;
    const gfx::VectorIcon& GetReversePositionIcon(
-@@ -91,9 +99,11 @@
+@@ -91,9 +99,11 @@ class SplitTabMenuModel : public ui::Sim
    // purposes.
    MenuSource menu_source_;
  
@@ -148,7 +149,7 @@
  #endif  // CHROME_BROWSER_UI_TABS_SPLIT_TAB_MENU_MODEL_H_
 --- a/chrome/browser/ui/tabs/split_tab_menu_model.cc
 +++ b/chrome/browser/ui/tabs/split_tab_menu_model.cc
-@@ -100,7 +100,11 @@
+@@ -100,7 +100,11 @@ SplitTabMenuModel::SplitTabMenuModel(Tab
      : ui::SimpleMenuModel(this),
        tab_strip_model_(tab_strip_model),
        menu_source_(menu_source),
@@ -161,7 +162,7 @@
    AddItemWithStringIdAndIcon(
        GetCommandIdInt(CommandId::kExitSplit), IDS_SPLIT_TAB_SEPARATE_VIEWS,
        ui::ImageModel::FromVectorIcon(
-@@ -158,7 +162,22 @@
+@@ -158,7 +162,22 @@ SplitTabMenuModel::SplitTabMenuModel(Tab
  
  SplitTabMenuModel::~SplitTabMenuModel() = default;
  
@@ -184,7 +185,7 @@
    const auto id = GetCommandIdEnum(command_id);
    if (tab_strip_model_->GetSplitData(GetSplitTabId())->ListTabs().size() > 2) {
      return id != CommandId::kReversePosition && id != CommandId::kCloseStartTab &&
-@@ -174,6 +193,9 @@
+@@ -174,6 +193,9 @@ bool SplitTabMenuModel::IsItemForCommand
  }
  
  std::u16string SplitTabMenuModel::GetLabelForCommandId(int command_id) const {
@@ -194,7 +195,7 @@
    const CommandId id = GetCommandIdEnum(command_id);
  
    if (id == CommandId::kReversePosition) {
-@@ -200,6 +222,9 @@
+@@ -200,6 +222,9 @@ std::u16string SplitTabMenuModel::GetLab
  }
  
  ui::ImageModel SplitTabMenuModel::GetIconForCommandId(int command_id) const {
@@ -204,7 +205,7 @@
    const split_tabs::SplitTabActiveLocation active_split_tab_location =
        split_tabs::GetLastActiveTabLocation(tab_strip_model_, GetSplitTabId());
  
-@@ -251,8 +276,7 @@
+@@ -251,8 +276,7 @@ void SplitTabMenuModel::ExecuteCommand(i
        tab_strip_model_->ReverseTabsInSplit(split_id);
        break;
      case CommandId::kCloseSpecifiedTab:
@@ -214,7 +215,7 @@
        break;
      case CommandId::kCloseStartTab: {
        int startIndex = reverse_close_indices ? 1 : 0;
-@@ -307,12 +331,7 @@
+@@ -307,12 +331,7 @@ void SplitTabMenuModel::ExecuteCommand(i
  }
  
  split_tabs::SplitTabId SplitTabMenuModel::GetSplitTabId() const {
@@ -230,7 +231,7 @@
  const gfx::VectorIcon& SplitTabMenuModel::GetReversePositionIcon(
 --- a/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
 +++ b/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
-@@ -31,6 +31,7 @@
+@@ -29,6 +29,7 @@
  #include "chrome/browser/ui/tabs/split_view_layout_menu_model.h"
  #include "chrome/browser/ui/tabs/tab_menu_model_delegate.h"
  #include "chrome/browser/ui/tabs/tab_strip_model.h"
@@ -238,7 +239,7 @@
  #include "chrome/browser/ui/tabs/test_tab_strip_model_delegate.h"
  #include "chrome/browser/ui/ui_features.h"
  #include "chrome/browser/ui/views/tabs/tab/tab_accessibility.h"
-@@ -801,7 +802,7 @@
+@@ -799,7 +800,7 @@ IN_PROC_BROWSER_TEST_F(TabMenuModelSendT
  IN_PROC_BROWSER_TEST_F(TabMenuModelBrowserTest, FourPaneSplitAccessibleLabels) {
    auto* model = browser()->tab_strip_model();
    for (int i = 0; i < 3; ++i) {
@@ -247,7 +248,7 @@
    }
    for (auto layout : {split_tabs::SplitTabLayout::kSideBySide,
                        split_tabs::SplitTabLayout::kStacked}) {
-@@ -896,3 +897,61 @@
+@@ -894,3 +895,61 @@ IN_PROC_BROWSER_TEST_F(TabMenuModelBrows
              data->visual_data()->split_layout());
    EXPECT_FALSE(layouts->IsEnabledAt(*layouts->GetIndexOfCommandId(2050)));
  }

@@ -1,6 +1,6 @@
 --- a/components/tabs/public/tab_context_menu_command.h
 +++ b/components/tabs/public/tab_context_menu_command.h
-@@ -42,6 +42,7 @@
+@@ -42,6 +42,7 @@ enum TabContextMenuCommand {
    CommandToggleFocusGroup,
    CommandDiscard,
    CommandToggleTabMuted,
@@ -10,7 +10,7 @@
  
 --- a/chrome/browser/ui/tabs/tab_menu_model.cc
 +++ b/chrome/browser/ui/tabs/tab_menu_model.cc
-@@ -425,6 +425,15 @@
+@@ -426,6 +426,15 @@ void TabMenuModel::Build(int index) {
      SetElementIdentifierAt(GetItemCount() - 1, kArrangeSplitTabsMenuItem);
    }
  
@@ -23,12 +23,12 @@
 +                      : IDS_HELIUM_CREATE_FOUR_PANE_SPLIT);
 +  }
 +
-   if (base::FeatureList::IsEnabled(features::kTabGroupsFocusing) &&
-       tab_strip_->SupportsTabGroups()) {
-     std::optional<tab_groups::TabGroupId> group_id =
+   if (tab_strip_->SupportsTabGroups() &&
+       base::FeatureList::IsEnabled(features::kTabGroupsFocusing)) {
+     if (std::optional<tab_groups::TabGroupId> group =
 --- a/chrome/browser/ui/tabs/tab_strip_model.cc
 +++ b/chrome/browser/ui/tabs/tab_strip_model.cc
-@@ -2737,6 +2737,11 @@
+@@ -2808,6 +2808,11 @@ bool TabStripModel::IsContextMenuCommand
      case CommandAddToExistingGroup:
        return SupportsTabGroups();
  
@@ -40,13 +40,10 @@
      case CommandAddToSplit:
      case CommandSwapWithActiveSplit:
      case CommandArrangeSplit:
-@@ -3059,6 +3064,43 @@
-           selection_model_.size());
-       // Do nothing. The submenu's delegate will invoke
-       // ExecuteAddToExistingGroupCommand with the correct group later.
-+      break;
-+    }
-+
+@@ -3147,6 +3152,43 @@ void TabStripModel::ExecuteContextMenuCo
+       break;
+     }
+ 
 +    case CommandCreateFourPaneSplit: {
 +      if (!IsContextMenuCommandEnabled(context_index, command_id)) {
 +        break;
@@ -81,12 +78,15 @@
 +      ActivateTabAt(GetIndexOfTab(context_tab));
 +      AddToNewSplit(indices, visual_data,
 +                    split_tabs::SplitTabCreatedSource::kTabContextMenu);
-       break;
-     }
- 
++      break;
++    }
++
+     case CommandAddToSplit: {
+       ExecuteAddToNewSplitCommand(context_index,
+                                   split_tabs::SplitTabLayout::kSideBySide);
 --- a/chrome/browser/ui/views/tabs/tab/tab_accessibility.cc
 +++ b/chrome/browser/ui/views/tabs/tab/tab_accessibility.cc
-@@ -115,9 +115,30 @@
+@@ -115,9 +115,30 @@ std::u16string GetAccessibleTabLabel(con
      int tab_index_in_split = std::distance(
          tabs_in_split.begin(),
          std::find(tabs_in_split.begin(), tabs_in_split.end(), tab));
@@ -121,7 +121,7 @@
  
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -277,6 +277,8 @@
+@@ -277,6 +277,8 @@ are declared in tools/grit/grit_args.gni
    <release seq="1">
      <!-- IMPORTANT: .grdp files must be in the same directory as this file -->
      <messages fallback_to_english="true">
@@ -132,7 +132,7 @@
        <message name="IDS_HELIUM_CREATE_PREVIEW_WORKSPACE" desc="Create a pinned tab group containing desktop and mobile copies of this page.">Create desktop/mobile workspace</message>
 --- a/tools/metrics/histograms/metadata/tab/histograms.xml
 +++ b/tools/metrics/histograms/metadata/tab/histograms.xml
-@@ -82,6 +82,7 @@
+@@ -77,6 +77,7 @@ chromium-metrics-reviews@google.com.
    <variant name="CloseTabsToRight"
        summary="the Close Tabs to the Right command"/>
    <variant name="CopyURL" summary="the Copy URL command"/>
@@ -142,7 +142,7 @@
        summary="the Start New Chat with Gemini command"/>
 --- a/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
 +++ b/chrome/browser/ui/tabs/tab_menu_model_browsertest.cc
-@@ -33,6 +33,7 @@
+@@ -31,6 +31,7 @@
  #include "chrome/browser/ui/tabs/tab_strip_model.h"
  #include "chrome/browser/ui/tabs/test_tab_strip_model_delegate.h"
  #include "chrome/browser/ui/ui_features.h"
@@ -150,7 +150,7 @@
  #include "chrome/common/chrome_features.h"
  #include "chrome/grit/generated_resources.h"
  #include "chrome/test/base/in_process_browser_test.h"
-@@ -795,3 +796,52 @@
+@@ -793,3 +794,52 @@ IN_PROC_BROWSER_TEST_F(TabMenuModelSendT
    }
    EXPECT_THAT(sent_urls, testing::UnorderedElementsAre(url2, url3));
  }

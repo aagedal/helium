@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -20936,6 +20936,96 @@
+@@ -21060,6 +21060,96 @@ Please help our engineers fix this probl
      <message name="IDS_OSCRYPTASYNC_AVAILABILITY_INFOBAR_BUTTON" desc="The text of the button to proceed with relaunching the entire browser to resolve keychain permission issues.">
        Relaunch
      </message>
@@ -99,15 +99,7 @@
  </grit>
 --- a/chrome/browser/ui/BUILD.gn
 +++ b/chrome/browser/ui/BUILD.gn
-@@ -399,7 +399,6 @@
-       "//chrome/browser:browser_public_dependencies",
-     ]
-     deps = [
--      "//chrome/browser/ui/tabs:pane_settings",
-       ":tab_ui_helper",
-       "//base",
-       "//chrome/browser/apps/app_service",
-@@ -408,6 +407,7 @@
+@@ -478,6 +478,7 @@ if (!is_android) {
        "//chrome/browser/sessions",
        "//chrome/browser/ui/browser_window",
        "//chrome/browser/ui/send_tab_to_self",
@@ -115,59 +107,23 @@
        "//chrome/browser/ui/tabs:tab_enums",
        "//chrome/browser/ui/tabs:tab_group",
        "//chrome/browser/ui/tabs:tab_strip",
-@@ -1032,8 +1032,8 @@
+@@ -1790,8 +1791,8 @@ static_library("ui") {
      "//components/lens",
      "//components/lens:buildflags",
      "//components/lens:enterprise_policy",
-+    "//components/metrics:metrics_pref_names",
-     "//components/metrics/debug:resources",
--    "//components/metrics:metrics_pref_names",
+-    "//components/metrics/debug:resources",
+     "//components/metrics:metrics_pref_names",
++    "//components/metrics/debug:resources",
      "//components/metrics/private_metrics",
      "//components/omnibox/browser:vector_icons",
      "//components/optimization_guide/content/browser",
-@@ -1518,16 +1518,6 @@
-       # that //chrome/browser:browser has no remaining sources. It registers
-       # WebUI interface binders for desktop, which need this target's headers.
-       "//chrome/browser/chrome_browser_interface_binders_webui_parts_desktop.cc",
--      "browser_shortcuts/browser_shortcut_metadata.cc",
--      "browser_shortcuts/browser_shortcut_metadata.h",
--      "browser_shortcuts/browser_shortcut_prefs.cc",
--      "browser_shortcuts/browser_shortcut_prefs.h",
--      "browser_shortcuts/browser_shortcut_serialization.cc",
--      "browser_shortcuts/browser_shortcut_serialization.h",
--      "browser_shortcuts/browser_shortcut_service.cc",
--      "browser_shortcuts/browser_shortcut_service.h",
--      "browser_shortcuts/browser_shortcut_service_factory.cc",
--      "browser_shortcuts/browser_shortcut_service_factory.h",
-       "browser.cc",
+@@ -2315,12 +2316,19 @@ static_library("ui") {
        "browser.h",
-       "browser_command_controller.cc",
-@@ -1539,6 +1529,16 @@
-       "browser_manager_service.h",
-       "browser_manager_service_factory.cc",
-       "browser_manager_service_factory.h",
-+      "browser_shortcuts/browser_shortcut_metadata.cc",
-+      "browser_shortcuts/browser_shortcut_metadata.h",
-+      "browser_shortcuts/browser_shortcut_prefs.cc",
-+      "browser_shortcuts/browser_shortcut_prefs.h",
-+      "browser_shortcuts/browser_shortcut_serialization.cc",
-+      "browser_shortcuts/browser_shortcut_serialization.h",
-+      "browser_shortcuts/browser_shortcut_service.cc",
-+      "browser_shortcuts/browser_shortcut_service.h",
-+      "browser_shortcuts/browser_shortcut_service_factory.cc",
-+      "browser_shortcuts/browser_shortcut_service_factory.h",
-       "browser_tab_restorer.cc",
-       "browser_tab_strip_model_delegate.cc",
        "browser_tabstrip.cc",
-@@ -1551,14 +1551,21 @@
-       "scoped_tabbed_browser_displayer.h",
-       "singleton_tabs.cc",
-       "singleton_tabs.h",
+       "browser_tabstrip.h",
 +      "tabs/page_change_monitor.cc",
 +      "tabs/page_change_monitor_diff.h",
 +      "tabs/page_change_monitor_script.h",
-       "unload_controller.cc",
-       "unload_controller.h",
      ]
  
      if (enable_dice_support) {
@@ -181,7 +137,7 @@
        ]
        allow_circular_includes_from += [
          # TODO(crbug.com/364667551): Remove this circular dependency when
-@@ -1703,10 +1710,10 @@
+@@ -2475,10 +2483,10 @@ static_library("ui") {
        "//chrome/browser/ui/tabs",
        "//chrome/browser/ui/tabs:favicon_theming",
        "//chrome/browser/ui/tabs:impl",
@@ -195,7 +151,7 @@
        "//chrome/browser/ui/tabs:tab_strip_model_observer_impl",
 --- a/chrome/browser/ui/tab_helpers.cc
 +++ b/chrome/browser/ui/tab_helpers.cc
-@@ -158,6 +158,10 @@
+@@ -135,6 +135,10 @@
  #include "rlz/buildflags/buildflags.h"
  #include "ui/accessibility/accessibility_features.h"
  
@@ -206,7 +162,7 @@
  #if BUILDFLAG(IS_ANDROID)
  #include "base/android/android_info.h"
  #include "base/functional/bind.h"
-@@ -764,6 +768,7 @@
+@@ -600,6 +604,7 @@ void TabHelpers::AttachTabHelpers(WebCon
  #endif
  
  #if !BUILDFLAG(IS_ANDROID)
@@ -216,7 +172,7 @@
  
 --- a/chrome/browser/ui/tabs/BUILD.gn
 +++ b/chrome/browser/ui/tabs/BUILD.gn
-@@ -86,6 +86,16 @@
+@@ -96,6 +96,16 @@ source_set("page_context_eligibility_hel
  }
  
  if (!is_android) {
@@ -233,7 +189,7 @@
    source_set("pane_settings") {
      sources = [
        "pane_settings.cc",
-@@ -101,6 +111,7 @@
+@@ -111,6 +121,7 @@ if (!is_android) {
        "//chrome/browser/sessions",
        "//components/embedder_support:user_agent",
        "//components/sessions",
@@ -241,7 +197,7 @@
      ]
    }
  
-@@ -274,9 +285,9 @@
+@@ -284,9 +295,9 @@ if (!is_android) {
        "existing_base_sub_menu_model.h",
        "existing_tab_group_sub_menu_model.h",
        "existing_window_sub_menu_model.h",
@@ -252,7 +208,7 @@
        "split_tab_menu_model.h",
        "split_tab_swap_menu_model.h",
        "split_view_layout_menu_model.h",
-@@ -322,6 +333,7 @@
+@@ -332,6 +343,7 @@ if (!is_android) {
      ]
  
      deps = [
@@ -260,23 +216,23 @@
        ":pane_settings",
        ":tab_group",
        ":tab_menu",
-@@ -883,8 +895,8 @@
+@@ -965,8 +977,8 @@ if (!is_android) {
    source_set("unit_tests") {
      testonly = true
      sources = [
-+      "inactive_window_mouse_event_controller_unittest.cc",
-       "pane_settings_unittest.cc",
--      "inactive_window_mouse_event_controller_unittest.cc",
+-      "pane_settings_unittest.cc",
+       "inactive_window_mouse_event_controller_unittest.cc",
++      "pane_settings_unittest.cc",
        "split_view_iph_controller_unittest.cc",
        "tab_collection_storage_unittest.cc",
        "tab_collection_unittest.cc",
-@@ -908,8 +920,8 @@
+@@ -990,8 +1002,8 @@ if (!is_android) {
      ]
  
      deps = [
-+      ":page_context_eligibility_helper_unit_tests",
-       ":pane_settings",
--      ":page_context_eligibility_helper_unit_tests",
+-      ":pane_settings",
+       ":page_context_eligibility_helper_unit_tests",
++      ":pane_settings",
        ":tab_enums",
        ":tab_group",
        ":tab_menu",
@@ -1257,7 +1213,7 @@
  }  // namespace
  
  WEB_CONTENTS_USER_DATA_KEY_IMPL(PaneSettings);
-@@ -35,6 +99,8 @@
+@@ -35,6 +99,8 @@ PaneSettings::PaneSettings(content::WebC
        content::WebContentsUserData<PaneSettings>(*contents) {}
  
  PaneSettings::~PaneSettings() {
@@ -1266,7 +1222,7 @@
    Detach();
  }
  
-@@ -50,13 +116,16 @@
+@@ -50,13 +116,16 @@ void PaneSettings::PopulateExtraData(con
                                ? (settings->mobile_full_height() ? "2" : "1")
                                : "0";
      (*data)[kRefreshKey] = base::NumberToString(settings->refresh_seconds());
@@ -1284,7 +1240,7 @@
      return;
    }
    auto* settings = GetOrCreate(contents);
-@@ -64,6 +133,13 @@
+@@ -64,6 +133,13 @@ void PaneSettings::RestoreFromExtraData(
      settings->SetMobileEnabled(it->second == "1" || it->second == "2",
                                 it->second == "2", /*reload=*/false);
    }
@@ -1298,7 +1254,7 @@
    int seconds = 0;
    if (auto it = data.find(kRefreshKey);
        it != data.end() && base::StringToInt(it->second, &seconds) &&
-@@ -72,7 +148,9 @@
+@@ -72,7 +148,9 @@ void PaneSettings::RestoreFromExtraData(
    }
  }
  
@@ -1309,7 +1265,7 @@
    full_height = enabled && full_height;
    if (mobile_enabled_ == enabled && mobile_full_height_ == full_height) {
      return;
-@@ -107,23 +185,128 @@
+@@ -107,23 +185,128 @@ void PaneSettings::SetRefreshSeconds(int
      return;
    }
    refresh_timer_.Stop();
@@ -1319,13 +1275,12 @@
 -  if (seconds > 0) {
 -    refresh_timer_.Start(FROM_HERE, base::Seconds(seconds), this,
 -                         &PaneSettings::Refresh);
--  }
 +  refresh_failures_ = 0;
 +  ScheduleRefresh();
-   Save();
-   changed_callbacks_.Notify();
- }
- 
++  Save();
++  changed_callbacks_.Notify();
++}
++
 +void PaneSettings::ResetRefreshBudgetForTesting() {
 +  CHECK_EQ(g_active_refreshes, 0);
 +  g_last_refresh = base::TimeTicks();
@@ -1352,11 +1307,11 @@
 +  if (monitor_selector_.empty()) {
 +    monitor_screenshot_ = false;
 +    monitor_pdf_ = false;
-+  }
-+  Save();
-+  changed_callbacks_.Notify();
-+}
-+
+   }
+   Save();
+   changed_callbacks_.Notify();
+ }
+ 
 +void PaneSettings::SetMonitorExports(bool screenshot, bool pdf) {
 +  monitor_screenshot_ = !monitor_selector_.empty() && screenshot;
 +  monitor_pdf_ = !monitor_selector_.empty() && pdf;
@@ -1443,7 +1398,7 @@
    web_contents()->GetController().Reload(content::ReloadType::NORMAL, true);
  }
  
-@@ -140,11 +323,12 @@
+@@ -140,11 +323,12 @@ void PaneSettings::Save() {
    if (!service) {
      return;
    }
@@ -1461,7 +1416,7 @@
  }
  
  base::CallbackListSubscription PaneSettings::RegisterChanged(
-@@ -201,10 +385,10 @@
+@@ -201,10 +385,10 @@ void PaneSettings::ApplyMobileEmulation(
      form_factors.Append("Mobile");
      metadata.Set("formFactors", std::move(form_factors));
      base::DictValue identity;
@@ -1476,7 +1431,7 @@
      identity.Set("platform", "Linux armv81");
      identity.Set("userAgentMetadata", std::move(metadata));
      SendCommand("Emulation.setUserAgentOverride", std::move(identity));
-@@ -284,6 +468,9 @@
+@@ -284,6 +468,9 @@ bool PaneSettings::MayAttachToURL(const
  
  void PaneSettings::WebContentsDestroyed() {
    refresh_timer_.Stop();
@@ -1498,7 +1453,7 @@
  #include "base/timer/timer.h"
  #include "base/values.h"
  #include "chrome/browser/ui/tabs/pane_settings_geometry.h"
-@@ -39,9 +41,22 @@
+@@ -39,9 +41,22 @@ class PaneSettings : public content::Web
    bool mobile_enabled() const { return mobile_enabled_; }
    bool mobile_full_height() const { return mobile_full_height_; }
    int refresh_seconds() const { return refresh_seconds_; }
@@ -1522,7 +1477,7 @@
    void SetPreviewBounds(int width, int height);
    base::CallbackListSubscription RegisterChanged(
        base::RepeatingClosure callback);
-@@ -60,6 +75,10 @@
+@@ -60,6 +75,10 @@ class PaneSettings : public content::Web
    void ApplyMobileEmulation(bool metrics_only = false);
    void SendCommand(const char* method, base::DictValue params);
    void Refresh();
@@ -1533,7 +1488,7 @@
    void Save();
    void Detach();
  
-@@ -70,8 +89,17 @@
+@@ -70,8 +89,17 @@ class PaneSettings : public content::Web
    double preview_scale_ = 1.0;
    int next_command_id_ = 0;
    scoped_refptr<content::DevToolsAgentHost> agent_host_;
@@ -1597,7 +1552,7 @@
  #include "chrome/browser/ui/tabs/pane_settings.h"
  #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_pref_names.h"
  #include "chrome/browser/ui/tabs/saved_tab_groups/saved_tab_group_utils.h"
-@@ -45,18 +46,37 @@
+@@ -45,18 +46,37 @@ PaneSettingsMenuModel::PaneSettingsMenuM
    AddItemWithStringId(kWorkspaceCommandId, IDS_HELIUM_CREATE_PREVIEW_WORKSPACE);
    AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
    refresh_menu_ = std::make_unique<ui::SimpleMenuModel>(this);
@@ -1619,10 +1574,9 @@
                                           base::NumberToString16(seconds));
 -    refresh_menu_->AddRadioItem(
 -        kRefreshFirstCommandId + seconds / kAutoRefreshStepSeconds, label, 1);
--  }
 +    refresh_menu_->AddRadioItem(kRefreshFirstCommandId + static_cast<int>(i),
 +                                label, 1);
-+  }
+   }
 +  refresh_menu_->AddSeparator(ui::MenuSeparatorType::NORMAL_SEPARATOR);
 +  refresh_menu_->AddCheckItem(
 +      kJitterCommandId, l10n_util::GetStringUTF16(IDS_NEO_REFRESH_JITTER));
@@ -1642,7 +1596,7 @@
  }
  
  PaneSettingsMenuModel::~PaneSettingsMenuModel() = default;
-@@ -74,15 +94,46 @@
+@@ -74,16 +94,47 @@ bool PaneSettingsMenuModel::IsCommandIdC
      return settings && settings->mobile_enabled() &&
             settings->mobile_full_height();
    }
@@ -1676,7 +1630,7 @@
  bool PaneSettingsMenuModel::IsCommandIdEnabled(int command_id) const {
    if (!tab_ || model_->GetIndexOfTab(tab_.get()) == TabStripModel::kNoTab) {
      return false;
-+  }
+   }
 +  if (command_id == kJitterCommandId || command_id == kReviewChangesCommandId) {
 +    return true;
 +  }
@@ -1690,10 +1644,11 @@
 +       command_id == kMonitorSelectionCommandId) &&
 +      IsCommandIdChecked(command_id)) {
 +    return true;
-   }
++  }
    if (command_id == kWorkspaceCommandId) {
      auto* browser = model_->delegate()->GetBrowserWindowInterface();
-@@ -111,17 +162,36 @@
+     return tab_->GetContents()->GetVisibleURL().SchemeIsHTTPOrHTTPS() &&
+@@ -111,17 +162,36 @@ void PaneSettingsMenuModel::ExecuteComma
      return;
    }
    auto* settings = PaneSettings::GetOrCreate(tab_->GetContents());
@@ -1736,22 +1691,20 @@
    }
    SaveWorkspaceSettings();
  }
-@@ -191,25 +261,30 @@
+@@ -191,25 +261,30 @@ void PaneSettingsMenuModel::CreateWorksp
  }
  
  void PaneSettingsMenuModel::SaveWorkspaceSettings() {
 -  if (!tab_ || !tab_->GetGroup()) {
--    return;
--  }
--  auto* browser = model_->delegate()->GetBrowserWindowInterface();
 +  SaveWorkspaceSettingsForTab(tab_.get());
 +}
 +
 +void PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
 +    tabs::TabInterface* tab) {
 +  if (!tab || !tab->GetGroup()) {
-+    return;
-+  }
+     return;
+   }
+-  auto* browser = model_->delegate()->GetBrowserWindowInterface();
 +  auto* browser = tab->GetBrowserWindowInterface();
    if (!browser || browser->GetProfile()->IsOffTheRecord()) {
      return;
@@ -1776,7 +1729,7 @@
      settings.Set(key, value);
 --- a/chrome/browser/ui/tabs/pane_settings_menu_model.h
 +++ b/chrome/browser/ui/tabs/pane_settings_menu_model.h
-@@ -25,12 +25,21 @@
+@@ -25,12 +25,21 @@ class PaneSettingsMenuModel : public ui:
    static constexpr int kWorkspaceCommandId = 2002;
    static constexpr int kRefreshParentCommandId = 2003;
    static constexpr int kRefreshFirstCommandId = 2010;
@@ -1800,7 +1753,7 @@
    void CreateWorkspace();
 --- a/chrome/browser/ui/tabs/pane_settings_unittest.cc
 +++ b/chrome/browser/ui/tabs/pane_settings_unittest.cc
-@@ -36,6 +36,7 @@
+@@ -36,6 +36,7 @@ class PaneSettingsTest : public ChromeRe
              base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
    void SetUp() override {
      ChromeRenderViewHostTestHarness::SetUp();
@@ -1808,7 +1761,7 @@
      NavigateAndCommit(GURL("https://example.test/"));
    }
  };
-@@ -48,7 +49,9 @@
+@@ -48,7 +49,9 @@ TEST_F(PaneSettingsTest, RefreshStartsAt
    EXPECT_EQ(counter.count, 0);
    task_environment()->FastForwardBy(base::Seconds(1));
    EXPECT_EQ(counter.count, 1);
@@ -1819,7 +1772,7 @@
    settings->SetRefreshSeconds(0);
    task_environment()->FastForwardBy(base::Minutes(6));
    EXPECT_EQ(counter.count, 1);
-@@ -154,7 +157,7 @@
+@@ -154,7 +157,7 @@ TEST_F(PaneSettingsTest, RestoreRejectsI
                                         {{"helium.auto_refresh_seconds", bad}});
      EXPECT_EQ(settings->refresh_seconds(), 0);
    }
@@ -1828,7 +1781,7 @@
      settings->SetRefreshSeconds(seconds);
      std::map<std::string, std::string> data;
      PaneSettings::PopulateExtraData(web_contents(), &data);
-@@ -183,4 +186,94 @@
+@@ -183,4 +186,94 @@ TEST_F(PaneSettingsTest, MobileModesAndR
    EXPECT_FALSE(settings->mobile_full_height());
  }
  

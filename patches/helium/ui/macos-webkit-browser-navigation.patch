@@ -25,7 +25,7 @@
  namespace content {
  class WebContents;
  class NavigationThrottleRegistry;
-@@ -18,6 +20,24 @@
+@@ -18,6 +20,24 @@ class NavigationThrottleRegistry;
  namespace helium {
  // The WebContents remains a blank Chromium shell. Its user data owns the
  // optional WebKit session; no Chromium security state represents the WK page.
@@ -52,7 +52,7 @@
  COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
 --- a/chrome/browser/helium_webkit_streaming_mac.mm
 +++ b/chrome/browser/helium_webkit_streaming_mac.mm
-@@ -117,6 +117,8 @@
+@@ -117,6 +117,8 @@ bool IsStreamingURL(const GURL& url) {
  - (void)loadURL:(NSURL*)url;
  - (NSView*)streamingView;
  - (NSURL*)pageURL;
@@ -61,7 +61,7 @@
  - (void)shutdown;
  - (void)pauseMedia;
  @end
-@@ -127,6 +129,7 @@
+@@ -127,6 +129,7 @@ bool IsStreamingURL(const GURL& url) {
    NSTextField* _address;
    NSTextField* _status;
    NSString* _windowKey;
@@ -69,7 +69,7 @@
  }
  
  - (instancetype)initWithURL:(NSURL*)url
-@@ -169,11 +172,9 @@
+@@ -169,11 +172,9 @@ bool IsStreamingURL(const GURL& url) {
    NSStackView* toolbar = [[NSStackView alloc] init];
    toolbar.orientation = NSUserInterfaceLayoutOrientationHorizontal;
    toolbar.spacing = 8;
@@ -83,7 +83,7 @@
    for (NSUInteger i = 0; i < titles.count; ++i) {
      [toolbar addArrangedSubview:[NSButton buttonWithTitle:titles[i]
                                                     target:self
-@@ -198,34 +199,74 @@
+@@ -198,34 +199,74 @@ bool IsStreamingURL(const GURL& url) {
    if (window)
      window.contentView = _root;
    NSView* root = _root;
@@ -179,7 +179,7 @@
  - (NSURL*)pageURL {
    return _webView.URL;
  }
-@@ -236,6 +277,7 @@
+@@ -236,6 +277,7 @@ bool IsStreamingURL(const GURL& url) {
    [_webView pauseAllMediaPlaybackWithCompletionHandler:nil];
  }
  - (void)shutdown {
@@ -187,20 +187,20 @@
    [_root setActivateCallback:base::RepeatingClosure()];
    [self pauseMedia];
    [_webView stopLoading];
-@@ -255,12 +297,6 @@
- }
+@@ -256,12 +298,6 @@ bool IsStreamingURL(const GURL& url) {
  - (void)reload:(id)sender {
    [_webView reload];
--}
+ }
 -- (void)openNetflix:(id)sender {
 -  [self loadURL:[NSURL URLWithString:@"https://www.netflix.com/"]];
 -}
 -- (void)openTV2:(id)sender {
 -  [self loadURL:[NSURL URLWithString:@"https://play.tv2.no/"]];
- }
+-}
  - (void)navigate:(id)sender {
    NSString* value = [_address.stringValue
-@@ -357,8 +393,11 @@
+       stringByTrimmingCharactersInSet:NSCharacterSet
+@@ -357,8 +393,11 @@ class StreamingTab : public base::Suppor
        [(HeliumStreamingRootView*)[controller_ streamingView]
            setActivateCallback:base::BindRepeating(&StreamingTab::Activate,
                                                    activation_factory_.GetWeakPtr())];
@@ -214,7 +214,7 @@
        preparing_shell_ = true;
        content::NavigationController::LoadURLParams params(GURL("about:blank"));
        web_contents()->GetController().LoadURLWithParams(params);
-@@ -370,6 +409,47 @@
+@@ -370,6 +409,47 @@ class StreamingTab : public base::Suppor
      }
    }
  
@@ -262,22 +262,21 @@
    gfx::NativeView view() const {
      return gfx::NativeView([controller_ streamingView]);
    }
-@@ -429,9 +509,11 @@
+@@ -429,9 +509,11 @@ class StreamingTab : public base::Suppor
      if (!controller_ || !handle->HasCommitted() ||
          !handle->IsInPrimaryMainFrame())
        return;
 -    if (auto* entry = web_contents()->GetController().GetLastCommittedEntry())
 -      web_contents()->UpdateTitleForEntry(entry, u"Streaming — WebKit (experimental)");
--  }
 +    NavigationChanged();
-+  }
+   }
 +  // The blank shell can finish after WK has already published its title.
 +  // Reapply it once Chromium finishes setting the shell's default title.
 +  void DidStopLoading() override { NavigationChanged(); }
    void WebContentsDestroyed() override { Deactivate(); }
    base::WeakPtr<StreamingTab> GetWeakPtr() { return weak_factory_.GetWeakPtr(); }
  
-@@ -445,6 +527,7 @@
+@@ -445,6 +527,7 @@ class StreamingTab : public base::Suppor
      changed_.Notify();
      [old shutdown];
      preparing_shell_ = false;
@@ -285,7 +284,7 @@
    }
    HeliumStreamingWindow* __strong controller_ = nil;
    bool preparing_shell_ = false;
-@@ -535,6 +618,24 @@
+@@ -535,6 +618,24 @@ class WebKitStreamingThrottle : public c
  };
  }  // namespace
  
@@ -312,7 +311,7 @@
    return tab ? tab->view() : gfx::NativeView();
 --- a/chrome/browser/ui/BUILD.gn
 +++ b/chrome/browser/ui/BUILD.gn
-@@ -2558,6 +2558,7 @@
+@@ -3355,6 +3355,7 @@ static_library("ui") {
    }
  
    if (is_mac) {
@@ -333,7 +332,7 @@
  #include "chrome/app/chrome_command_ids.h"
  #include "chrome/browser/autocomplete/autocomplete_classifier_factory.h"
  #include "chrome/browser/bookmarks/bookmark_model_factory.h"
-@@ -794,6 +798,14 @@
+@@ -804,6 +808,14 @@ void ReloadInternal(BrowserWindowInterfa
        new_tab->Focus();
      }
  
@@ -348,7 +347,7 @@
      DevToolsWindow* const devtools =
          DevToolsWindow::GetInstanceForInspectedWebContents(new_tab);
      constexpr content::ReloadType kBypassingType =
-@@ -1035,6 +1047,11 @@
+@@ -1043,6 +1055,11 @@ bool CanGoBack(const BrowserWindowInterf
  }
  
  bool CanGoBack(content::WebContents* web_contents) {
@@ -360,19 +359,19 @@
    return web_contents &&
           (web_contents->GetController().CanGoBack() ||
            back_to_opener::BackToOpenerController::CanGoBackToOpener(
-@@ -1047,6 +1064,11 @@
-   if (!web_contents) {
+@@ -1056,6 +1073,11 @@ bool ShouldEnableBackButton(const Browse
      return false;
    }
-+
+ 
 +#if BUILDFLAG(IS_MAC)
 +  if (helium::GetWebKitStreamingTabView(web_contents))
 +    return helium::CanGoBackInWebKitStreamingTab(web_contents);
 +#endif
- 
++
    // Check for regular back navigation first.
    if (web_contents->GetController().ShouldEnableBackButton()) {
-@@ -1116,6 +1138,12 @@
+     return true;
+@@ -1124,6 +1146,12 @@ void GoBack(content::WebContents* web_co
      return;
    }
  
@@ -385,7 +384,7 @@
    // Try regular back navigation first.
    if (web_contents->GetController().CanGoBack()) {
      web_contents->GetController().GoBack();
-@@ -1133,17 +1161,25 @@
+@@ -1141,17 +1169,25 @@ void GoBack(content::WebContents* web_co
  }
  
  bool CanGoForward(const BrowserWindowInterface* browser) {
@@ -415,7 +414,7 @@
    return browser->GetTabStripModel()
        ->GetActiveWebContents()
        ->GetController()
-@@ -1156,11 +1192,17 @@
+@@ -1164,11 +1200,17 @@ void GoForward(BrowserWindowInterface* b
    if (CanGoForward(browser)) {
      tabs::TabInterface* tab = GetTabAndRevertIfNecessary(browser, disposition);
      CHECK(tab);
@@ -434,7 +433,7 @@
    base::RecordAction(UserMetricsAction("Forward"));
    if (CanGoForward(web_contents)) {
      web_contents->GetController().GoForward();
-@@ -1314,6 +1356,13 @@
+@@ -1322,6 +1364,13 @@ base::WeakPtr<content::NavigationHandle>
  
  void Stop(BrowserWindowInterface* browser) {
    base::RecordAction(UserMetricsAction("Stop"));
@@ -450,17 +449,17 @@
  
 --- a/chrome/browser/ui/toolbar/BUILD.gn
 +++ b/chrome/browser/ui/toolbar/BUILD.gn
-@@ -39,6 +39,10 @@
-     "//content/public/browser",
+@@ -40,6 +40,10 @@ source_set("toolbar") {
      "//content/public/common",
    ]
-+
+ 
 +  if (is_mac) {
 +    deps += [ "//chrome/browser:helium_webkit_streaming" ]
 +  }
- 
++
    if (enable_offline_pages) {
      deps += [ "//chrome:offline_pages_enum_javagen" ]
+   }
 --- a/chrome/browser/ui/toolbar/chrome_location_bar_model_delegate.cc
 +++ b/chrome/browser/ui/toolbar/chrome_location_bar_model_delegate.cc
 @@ -7,6 +7,10 @@
@@ -474,7 +473,7 @@
  #include "chrome/browser/autocomplete/autocomplete_classifier_factory.h"
  #include "chrome/browser/autocomplete/chrome_autocomplete_scheme_classifier.h"
  #include "chrome/browser/contextual_tasks/contextual_tasks_ui_interface.h"
-@@ -71,6 +75,13 @@
+@@ -71,6 +75,13 @@ ChromeLocationBarModelDelegate::Formatte
  
  bool ChromeLocationBarModelDelegate::GetURL(GURL* url) const {
    DCHECK(url);
@@ -488,7 +487,7 @@
    content::NavigationEntry* entry = GetNavigationEntry();
    if (!entry || entry->IsInitialEntry()) {
      return false;
-@@ -90,6 +101,10 @@
+@@ -90,6 +101,10 @@ bool ChromeLocationBarModelDelegate::Sho
  }
  
  bool ChromeLocationBarModelDelegate::ShouldDisplayURL() const {
@@ -499,7 +498,7 @@
    // Note: The order here is important.
    // - The WebUI test must come before the extension scheme test because there
    //   can be WebUIs that have extension schemes (e.g. the bookmark manager). In
-@@ -145,6 +160,11 @@
+@@ -145,6 +160,11 @@ bool ChromeLocationBarModelDelegate::Sho
  security_state::SecurityLevel ChromeLocationBarModelDelegate::GetSecurityLevel()
      const {
    content::WebContents* web_contents = GetActiveWebContents();
@@ -511,7 +510,7 @@
    // If there is no active WebContents (which can happen during toolbar
    // initialization), assume no security style.
    if (!web_contents) {
-@@ -155,6 +175,11 @@
+@@ -155,6 +175,11 @@ security_state::SecurityLevel ChromeLoca
  
  net::CertStatus ChromeLocationBarModelDelegate::GetCertStatus() const {
    content::WebContents* web_contents = GetActiveWebContents();
@@ -523,7 +522,7 @@
    // If there is no active WebContents (which can happen during toolbar
    // initialization), assume no cert status.
    if (!web_contents) {
-@@ -167,6 +192,11 @@
+@@ -167,6 +192,11 @@ net::CertStatus ChromeLocationBarModelDe
  std::unique_ptr<security_state::VisibleSecurityState>
  ChromeLocationBarModelDelegate::GetVisibleSecurityState() const {
    content::WebContents* web_contents = GetActiveWebContents();
@@ -535,7 +534,7 @@
    // If there is no active WebContents (which can happen during toolbar
    // initialization), assume no security info.
    if (!web_contents) {
-@@ -177,6 +207,10 @@
+@@ -177,6 +207,10 @@ ChromeLocationBarModelDelegate::GetVisib
  
  scoped_refptr<net::X509Certificate>
  ChromeLocationBarModelDelegate::GetCertificate() const {
