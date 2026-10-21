@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -14432,6 +14432,189 @@
+@@ -14450,6 +14450,189 @@ Check your passwords anytime in <ph name
  
        <!-- Desktop Screenshots feature within the share hub; desktop-only. -->
        <if expr="not is_android">
@@ -200,7 +200,7 @@
  
  assert(is_chromeos || is_linux || is_mac || is_win,
         "Image Editor is for desktop plaforms only")
-@@ -23,9 +24,15 @@
+@@ -23,9 +24,15 @@ static_library("image_editor") {
    ]
  
    deps = [
@@ -216,13 +216,13 @@
      "//ui/base/cursor",
      "//ui/snapshot",
      "//ui/views",
-@@ -46,5 +53,58 @@
+@@ -46,5 +53,58 @@ static_library("image_editor") {
    public_deps = [
      "//base",
      "//ui/base/cursor/mojom:cursor_type_shared",
 +    "//url",
-   ]
- }
++  ]
++}
 +
 +source_set("screenshot_source") {
 +  sources = [
@@ -273,11 +273,11 @@
 +    "//skia",
 +    "//testing/gtest",
 +    "//ui/gfx",
-+  ]
-+}
+   ]
+ }
 --- a/chrome/browser/image_editor/event_capture_mac.mm
 +++ b/chrome/browser/image_editor/event_capture_mac.mm
-@@ -61,17 +61,19 @@
+@@ -61,17 +61,19 @@ class EventCaptureMac::MouseCaptureDeleg
      // browser, this window will not be equal to GetWindow().
      NSView* view = [event.window.contentView hitTest:event.locationInWindow];
  
@@ -566,11 +566,10 @@
 +}  // namespace image_editor
 --- a/chrome/browser/image_editor/screenshot_flow.cc
 +++ b/chrome/browser/image_editor/screenshot_flow.cc
-@@ -3,6 +3,18 @@
- // found in the LICENSE file.
+@@ -4,6 +4,18 @@
  
  #include "chrome/browser/image_editor/screenshot_flow.h"
-+
+ 
 +#include <algorithm>
 +#include <cmath>
 +
@@ -582,9 +581,10 @@
 +#include "chrome/grit/generated_resources.h"
 +#include "ui/base/l10n/l10n_util.h"
 +#include "ui/gfx/font_list.h"
- 
++
  #include <memory>
  
+ #include "base/files/file_path.h"
 @@ -11,10 +23,16 @@
  #include "base/logging.h"
  #include "base/memory/raw_ptr.h"
@@ -602,7 +602,7 @@
  #include "third_party/skia/include/core/SkColor.h"
  #include "ui/base/cursor/cursor.h"
  #include "ui/compositor/layer_textured.h"
-@@ -103,6 +121,7 @@
+@@ -103,6 +121,7 @@ ScreenshotFlow::ScreenshotFlow(content::
  }
  
  ScreenshotFlow::~ScreenshotFlow() {
@@ -610,7 +610,7 @@
    RemoveUIOverlay();
  }
  
-@@ -188,6 +207,8 @@
+@@ -188,6 +207,8 @@ void ScreenshotFlow::RemoveUIOverlay() {
  
  void ScreenshotFlow::Start(ScreenshotCaptureCallback flow_callback) {
    flow_callback_ = std::move(flow_callback);
@@ -619,28 +619,25 @@
    CreateAndAddUIOverlay();
    RequestRepaint(gfx::Rect());
  }
-@@ -210,17 +231,256 @@
+@@ -210,17 +231,256 @@ void ScreenshotFlow::StartForRegionSelec
  void ScreenshotFlow::CaptureAndRunScreenshotCompleteCallback(
      ScreenshotCaptureResultCode result_code,
      gfx::Rect region) {
 -  if (region.IsEmpty()) {
 -    RunScreenshotCompleteCallback(result_code, gfx::Rect(), gfx::Image());
--    return;
--  }
--
++  ScreenshotCaptureResult capture;
++  capture.result_code = result_code;
++  if (region.IsEmpty() || !web_contents_) {
++    RunScreenshotCompleteCallback(std::move(capture), gfx::Image());
+     return;
+   }
+ 
 -  gfx::Rect bounds = web_contents_->GetViewBounds();
 -  ui::GrabSnapshotImageCallback screenshot_callback =
 -      base::BindOnce(&ScreenshotFlow::RunScreenshotCompleteCallback, weak_this_,
 -                     result_code, bounds);
 -  ui::GrabViewSnapshot(web_contents_->GetNativeView(), region,
 -                       std::move(screenshot_callback));
-+  ScreenshotCaptureResult capture;
-+  capture.result_code = result_code;
-+  if (region.IsEmpty() || !web_contents_) {
-+    RunScreenshotCompleteCallback(std::move(capture), gfx::Image());
-+    return;
-+  }
-+
 +  auto* view = web_contents_->GetRenderWidgetHostView();
 +  if (!view || !view->IsSurfaceAvailableForCopy()) {
 +    RunScreenshotCompleteCallback(std::move(capture), gfx::Image());
@@ -887,21 +884,21 @@
  }
  
  void ScreenshotFlow::CancelCapture() {
-@@ -229,6 +489,13 @@
- }
+@@ -230,6 +490,13 @@ void ScreenshotFlow::CancelCapture() {
  
  void ScreenshotFlow::OnKeyEvent(ui::KeyEvent* event) {
-+  if (event->type() == ui::EventType::kKeyPressed &&
+   if (event->type() == ui::EventType::kKeyPressed &&
 +      event->key_code() == ui::VKEY_RETURN) {
 +    event->StopPropagation();
 +    CompleteCapture(ScreenshotCaptureResultCode::SUCCESS,
 +                    gfx::Rect(web_contents_->GetSize()));
 +    return;
 +  }
-   if (event->type() == ui::EventType::kKeyPressed &&
++  if (event->type() == ui::EventType::kKeyPressed &&
        event->key_code() == ui::VKEY_ESCAPE) {
      event->StopPropagation();
-@@ -289,20 +556,15 @@
+     CompleteCapture(ScreenshotCaptureResultCode::USER_ESCAPE_EXIT, gfx::Rect());
+@@ -289,20 +556,15 @@ void ScreenshotFlow::OnMouseEvent(ui::Mo
        if ((capture_mode_ == CaptureMode::SELECTION_RECTANGLE ||
             capture_mode_ == CaptureMode::SELECTION_ELEMENT) &&
            is_dragging_) {
@@ -925,7 +922,7 @@
        break;
      default:
        break;
-@@ -310,21 +572,9 @@
+@@ -310,21 +572,9 @@ void ScreenshotFlow::OnMouseEvent(ui::Mo
  }
  
  void ScreenshotFlow::OnScrollEvent(ui::ScrollEvent* event) {
@@ -950,7 +947,7 @@
  }
  
  void ScreenshotFlow::CompleteCapture(ScreenshotCaptureResultCode result_code,
-@@ -340,17 +590,12 @@
+@@ -340,17 +590,12 @@ void ScreenshotFlow::CompleteCapture(Scr
  }
  
  void ScreenshotFlow::RunScreenshotCompleteCallback(
@@ -959,21 +956,20 @@
 +    ScreenshotCaptureResult result,
      gfx::Image image) {
 -  if (flow_callback_.is_null())
--    return;
++  if (flow_callback_.is_null()) {
+     return;
 -
 -  ScreenshotCaptureResult result;
 -  result.result_code = result_code;
 -  result.image = image;
 -  result.screen_bounds = bounds;
 -
-+  if (flow_callback_.is_null()) {
-+    return;
 +  }
 +  result.image = std::move(image);
    std::move(flow_callback_).Run(result);
  }
  
-@@ -387,7 +632,18 @@
+@@ -387,7 +632,18 @@ void ScreenshotFlow::OnPaintLayer(const
    auto selection_rect = gfx::BoundingRect(drag_start_, drag_end_);
    // Draw border exclusively outside selected region.
    selection_rect.Inset(gfx::Insets::TLBR(-1, -1, 0, 0));
@@ -1022,7 +1018,7 @@
  
  #if BUILDFLAG(IS_MAC)
  #include "chrome/browser/image_editor/event_capture_mac.h"
-@@ -71,8 +78,19 @@
+@@ -71,8 +78,19 @@ enum class ScreenshotCaptureResultCode {
  struct ScreenshotCaptureResult {
    // The image obtained from capture. Empty on failure.
    gfx::Image image;
@@ -1042,7 +1038,7 @@
    // The result code of the capture describing why the user exited.
    ScreenshotCaptureResultCode result_code;
  };
-@@ -184,9 +202,18 @@
+@@ -184,10 +202,19 @@ class ScreenshotFlow : public content::W
  
    // Completes the capture process and runs the |flow_callback| with provided
    // |image| data sourced from |bounds|.
@@ -1050,7 +1046,7 @@
 -                                     gfx::Rect bounds,
 +  void RunScreenshotCompleteCallback(ScreenshotCaptureResult result,
                                       gfx::Image image);
-+
+ 
 +  void SourceReady(base::Value value);
 +  void ImageReady(SkBitmap bitmap);
 +  void CopySDRFallback();
@@ -1060,10 +1056,11 @@
 +  void HoveredTimestampReady(size_t index, base::Value value);
 +  void LeaveTimestamp();
 +  bool CaptureDocumentIsCurrent() const;
- 
++
    // Completes the region selection process and runs the
    // |region_selection_callback_|.
-@@ -236,6 +263,19 @@
+   void CompleteRegionSelection(ScreenshotCaptureResultCode result_code,
+@@ -236,6 +263,19 @@ class ScreenshotFlow : public content::W
        this};
  #endif
  
@@ -3042,7 +3039,7 @@
 +}  // namespace image_editor
 --- a/chrome/browser/renderer_context_menu/BUILD.gn
 +++ b/chrome/browser/renderer_context_menu/BUILD.gn
-@@ -157,6 +157,7 @@
+@@ -162,6 +162,7 @@ source_set("impl") {
        "//chrome/browser/ui/profiles",
        "//chrome/browser/ui/qrcode_generator",
        "//chrome/browser/ui/send_tab_to_self",
@@ -3052,7 +3049,7 @@
        "//chrome/browser/ui/toasts/api:toasts",
 --- a/chrome/browser/renderer_context_menu/render_view_context_menu.cc
 +++ b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
-@@ -131,6 +131,7 @@
+@@ -134,6 +134,7 @@
  #include "chrome/browser/ui/read_anything/read_anything_side_panel_controller_utils.h"
  #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_bubble.h"
  #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_context_menu_delegate.h"
@@ -3060,7 +3057,7 @@
  #include "chrome/browser/ui/tab_contents/core_tab_helper.h"
  #include "chrome/browser/ui/tabs/features.h"
  #include "chrome/browser/ui/tabs/page_context_eligibility_helper.h"
-@@ -215,10 +216,10 @@
+@@ -219,10 +220,10 @@
  #include "components/strings/grit/components_strings.h"
  #include "components/supervised_user/core/browser/supervised_user_preferences.h"
  #include "components/supervised_user/core/browser/supervised_user_url_filtering_service.h"
@@ -3072,7 +3069,7 @@
  #include "components/translate/core/common/translate_util.h"
  #include "components/url_formatter/url_formatter.h"
  #include "components/user_prefs/user_prefs.h"
-@@ -1269,6 +1270,13 @@
+@@ -1280,6 +1281,13 @@ void RenderViewContextMenu::InitMenu() {
    const bool use_simplified_menu_for_text_selection =
        ShouldUseSimplifiedTextSelection();
  
@@ -3086,7 +3083,7 @@
    bool took_simplified_page_items_path = false;
    if (content_type_->SupportsGroup(ContextMenuContentType::ITEM_GROUP_PAGE)) {
      took_simplified_page_items_path = features::IsMenuSimplificationEnabled() &&
-@@ -1627,6 +1635,10 @@
+@@ -1638,6 +1646,10 @@ std::u16string RenderViewContextMenu::Ge
  }
  
  void RenderViewContextMenu::RecordUsedItem(int id) {
@@ -3097,7 +3094,7 @@
    // Log general ID.
  
    int enum_id =
-@@ -1742,6 +1754,9 @@
+@@ -1754,6 +1766,9 @@ void RenderViewContextMenu::RecordUsedIt
  }
  
  void RenderViewContextMenu::RecordShownItem(int id, bool is_submenu) {
@@ -3107,7 +3104,7 @@
    // The "RenderViewContextMenu.Shown" histogram is not recorded for submenus.
    if (is_submenu) {
      return;
-@@ -3374,6 +3389,12 @@
+@@ -3408,6 +3423,12 @@ bool RenderViewContextMenu::IsCommandIdE
        enterprise_isolated_mode::IsolatedModeReplacesIncognito(GetProfile());
  
    switch (id) {
@@ -3120,30 +3117,32 @@
      case IDC_BACK:
        return embedder_web_contents_->GetController().CanGoBack();
  
-@@ -3971,6 +3992,14 @@
- 
-     case IDC_FORWARD:
+@@ -4010,6 +4031,14 @@ void RenderViewContextMenu::ExecuteComma
        chrome::GoForward(embedder_web_contents_);
-+      break;
-+
+       break;
+ 
 +    case IDC_SHARING_HUB_SCREENSHOT:
 +      if (IsCommandIdEnabled(id)) {
 +        sharing_hub::ScreenshotCapturedBubbleController::Get(
 +            embedder_web_contents_)
 +            ->Capture(GetBrowser());
 +      }
-       break;
- 
++      break;
++
      case IDC_SAVE_PAGE:
+ #if BUILDFLAG(ENABLE_PDF)
+       // Give the PDF viewer a chance to handle the save, otherwise have the
 --- a/chrome/browser/sharing_hub/sharing_hub_features.cc
 +++ b/chrome/browser/sharing_hub/sharing_hub_features.cc
-@@ -7,4 +7,5 @@
+@@ -4,6 +4,7 @@
+ 
+ #include "chrome/browser/sharing_hub/sharing_hub_features.h"
+ 
 +#include "base/files/file_path.h"
  #include "build/build_config.h"
  #include "chrome/browser/profiles/profile.h"
  #include "chrome/common/pref_names.h"
- #include "components/prefs/pref_registry_simple.h"
-@@ -71,6 +72,13 @@
+@@ -71,6 +72,13 @@ BASE_FEATURE(kDesktopScreenshots, base::
  #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
  void RegisterProfilePrefs(PrefRegistrySimple* registry) {
    registry->RegisterBooleanPref(prefs::kDesktopSharingHubEnabled, true);
@@ -3159,7 +3158,7 @@
  
 --- a/chrome/browser/sharing_hub/sharing_hub_features.h
 +++ b/chrome/browser/sharing_hub/sharing_hub_features.h
-@@ -42,6 +42,17 @@
+@@ -42,6 +42,17 @@ bool SharingIsDisabledByPolicy(content::
  BASE_DECLARE_FEATURE(kDesktopScreenshots);
  
  #if !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_CHROMEOS)
@@ -3179,7 +3178,7 @@
  
 --- a/chrome/browser/ui/accelerator_table.cc
 +++ b/chrome/browser/ui/accelerator_table.cc
-@@ -81,6 +81,8 @@
+@@ -81,6 +81,8 @@ const AcceleratorMapping kAcceleratorMap
      {ui::VKEY_R, ui::EF_SHIFT_DOWN | ui::EF_PLATFORM_ACCELERATOR,
       IDC_RELOAD_BYPASSING_CACHE},
      {ui::VKEY_S, ui::EF_PLATFORM_ACCELERATOR, IDC_CTRL_S_SHORTCUT},
@@ -3190,7 +3189,7 @@
  #if BUILDFLAG(IS_LINUX)
 --- a/chrome/browser/ui/browser_shortcuts/browser_shortcut_metadata.cc
 +++ b/chrome/browser/ui/browser_shortcuts/browser_shortcut_metadata.cc
-@@ -195,7 +195,7 @@
+@@ -195,7 +195,7 @@ std::optional<BrowserShortcutCommandLabe
      case IDC_QRCODE_GENERATOR:
        return Label(IDS_SHARING_HUB_GENERATE_QR_CODE_LABEL);
      case IDC_SHARING_HUB_SCREENSHOT:
@@ -3201,7 +3200,7 @@
      case IDC_OPEN_FILE:
 --- a/chrome/browser/ui/cocoa/accelerators_cocoa.mm
 +++ b/chrome/browser/ui/cocoa/accelerators_cocoa.mm
-@@ -49,6 +49,8 @@
+@@ -49,6 +49,8 @@ const struct AcceleratorMapping {
      {IDC_PRINT, ui::EF_COMMAND_DOWN, ui::VKEY_P},
      {IDC_RESTORE_TAB, ui::EF_COMMAND_DOWN | ui::EF_SHIFT_DOWN, ui::VKEY_T},
      {IDC_CTRL_S_SHORTCUT, ui::EF_COMMAND_DOWN, ui::VKEY_S},
@@ -3212,7 +3211,7 @@
      {IDC_SHOW_BOOKMARK_BAR, ui::EF_COMMAND_DOWN | ui::EF_SHIFT_DOWN,
 --- a/chrome/browser/ui/cocoa/main_menu_builder.mm
 +++ b/chrome/browser/ui/cocoa/main_menu_builder.mm
-@@ -170,6 +170,8 @@
+@@ -154,6 +154,8 @@ NSMenuItem* BuildFileMenu(NSApplication*
                    .remove_if(is_pwa),
                Item(IDS_SAVE_PAGE_MAC)
                    .command_id(IDC_SAVE_PAGE),
@@ -3223,10 +3222,10 @@
                Item(IDS_SHARE_MAC)
 --- a/chrome/browser/ui/sharing_hub/BUILD.gn
 +++ b/chrome/browser/ui/sharing_hub/BUILD.gn
-@@ -46,6 +46,7 @@
-     ":sharing_hub",
-     "//chrome/browser/image_editor",
+@@ -48,6 +48,7 @@ source_set("impl") {
      "//chrome/browser/profiles:profile",
+     "//chrome/browser/ui:browser_commands",
+     "//chrome/browser/ui:browser_window_header",
 +    "//chrome/browser/ui:simple_message_box_headers",
      "//chrome/browser/ui/browser_window",
      "//chrome/browser/ui/tabs:tab_strip",
@@ -3254,7 +3253,7 @@
  
  namespace sharing_hub {
  
-@@ -32,29 +31,38 @@
+@@ -32,29 +31,38 @@ ScreenshotCapturedBubbleController* Scre
  
  void ScreenshotCapturedBubbleController::ShowBubble(
      const image_editor::ScreenshotCaptureResult& image) {
@@ -3303,7 +3302,7 @@
    screenshot_flow_ =
        std::make_unique<image_editor::ScreenshotFlow>(web_contents);
  
-@@ -62,7 +70,17 @@
+@@ -62,7 +70,17 @@ void ScreenshotCapturedBubbleController:
        callback = base::BindOnce(
            [](base::WeakPtr<content::WebContents> web_contents,
               const image_editor::ScreenshotCaptureResult& image) {
@@ -3322,7 +3321,7 @@
                return;
              }
              sharing_hub::ScreenshotCapturedBubbleController* controller =
-@@ -72,11 +90,9 @@
+@@ -72,11 +90,9 @@ void ScreenshotCapturedBubbleController:
            },
            web_contents->GetWeakPtr());
  
@@ -3339,7 +3338,7 @@
  ScreenshotCapturedBubbleController::ScreenshotCapturedBubbleController(
 --- a/chrome/browser/ui/sharing_hub/sharing_hub_window_controller.cc
 +++ b/chrome/browser/ui/sharing_hub/sharing_hub_window_controller.cc
-@@ -61,11 +61,11 @@
+@@ -61,11 +61,11 @@ SharingHubBubbleView* SharingHubWindowCo
  ScreenshotCapturedBubble*
  SharingHubWindowController::ShowScreenshotCapturedBubble(
      content::WebContents* contents,
@@ -3355,7 +3354,7 @@
  
 --- a/chrome/browser/ui/sharing_hub/sharing_hub_window_controller.h
 +++ b/chrome/browser/ui/sharing_hub/sharing_hub_window_controller.h
-@@ -15,8 +15,8 @@
+@@ -15,8 +15,8 @@ namespace content {
  class WebContents;
  }  // namespace content
  
@@ -3366,7 +3365,7 @@
  }
  
  namespace share {
-@@ -52,7 +52,7 @@
+@@ -52,7 +52,7 @@ class SharingHubWindowController {
    // Shows the Screenshot bubble.
    ScreenshotCapturedBubble* ShowScreenshotCapturedBubble(
        content::WebContents* contents,
@@ -3385,7 +3384,7 @@
  
  assert(toolkit_views)
  
-@@ -14,6 +15,8 @@
+@@ -14,10 +15,12 @@ source_set("sharing_hub") {
    ]
    public_deps = [
      "//base",
@@ -3393,8 +3392,12 @@
      "//chrome/browser/share",
      "//chrome/browser/sharing_hub",
      "//chrome/browser/ui/views/location_bar",
+     "//ui/base",
 +    "//ui/shell_dialogs",
-@@ -37,14 +40,21 @@
+     "//ui/views",
+   ]
+ 
+@@ -37,14 +40,21 @@ source_set("impl") {
      "sharing_hub_bubble_util.cc",
    ]
    deps = [
@@ -3416,7 +3419,7 @@
      "//ui/strings:ui_strings",
    ]
    if (!is_chromeos) {
-@@ -84,3 +94,45 @@
+@@ -84,3 +94,45 @@ if (is_win || is_mac || is_linux) {
      configs += [ "//build/config/compiler:no_exit_time_destructors" ]
    }
  }
@@ -3468,12 +3471,11 @@
  // found in the LICENSE file.
  
  #include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_captured_bubble.h"
--
++#include "chrome/browser/image_editor/screenshot_color.h"
+ 
 -#include <memory>
 -#include <utility>
 -#include <vector>
-+#include "chrome/browser/image_editor/screenshot_color.h"
-+
 +#include <algorithm>
  
  #include "base/containers/span.h"
@@ -3541,10 +3543,9 @@
 -#include "ui/views/layout/table_layout_view.h"
 -#include "ui/views/metadata/view_factory.h"
 -#include "ui/views/view.h"
--
 +#include "ui/views/style/typography.h"
 +#include "url/origin.h"
-+
+ 
 +namespace sharing_hub {
  namespace {
  
@@ -3559,7 +3560,8 @@
 +  value.Set("height", rect.height());
 +  return value;
 +}
-+
+ 
+-}  // namespace
 +views::Label* AddLabel(views::View* parent,
 +                       const std::u16string& text,
 +                       int width = 400) {
@@ -3569,7 +3571,8 @@
 +  label->SetMaximumWidth(width);
 +  return label;
 +}
-+
+ 
+-namespace sharing_hub {
 +views::Textfield* AddField(views::View* parent,
 +                           int label_id,
 +                           bool multiline,
@@ -3583,10 +3586,8 @@
 +  field->SetPreferredSize(gfx::Size(width, multiline ? 76 : 32));
 +  return parent->AddChildView(std::move(field));
 +}
- 
- }  // namespace
--
--namespace sharing_hub {
++
++}  // namespace
  
  ScreenshotCapturedBubble::ScreenshotCapturedBubble(
      views::BubbleAnchor anchor,
@@ -3618,7 +3619,10 @@
  
 -void ScreenshotCapturedBubble::OnThemeChanged() {
 -  LocationBarBubbleDelegateView::OnThemeChanged();
--
++views::View* ScreenshotCapturedBubble::GetInitiallyFocusedView() {
++  return permalink_;
++}
+ 
 -  const int border_radius = ChromeLayoutProvider::Get()->GetCornerRadiusMetric(
 -      views::Emphasis::kHigh);
 -  const auto* const color_provider = GetColorProvider();
@@ -3628,106 +3632,13 @@
 -  image_view_->SetBackground(views::CreateRoundedRectBackground(
 -      color_provider->GetColor(kColorScreenshotCapturedImageBackground),
 -      border_radius, 2));
--}
--
++bool ScreenshotCapturedBubble::ShouldShowCloseButton() const {
++  return true;
+ }
+ 
 -void ScreenshotCapturedBubble::Show() {
 -  ShowForReason(USER_GESTURE);
--}
--
- views::View* ScreenshotCapturedBubble::GetInitiallyFocusedView() {
--  return download_button_;
-+  return permalink_;
- }
- 
- bool ScreenshotCapturedBubble::ShouldShowCloseButton() const {
-   return true;
- }
- 
--void ScreenshotCapturedBubble::WindowClosing() {}
--
- void ScreenshotCapturedBubble::Init() {
--  auto* layout_provider = ChromeLayoutProvider::Get();
--
--  // Requesting TEXT for trailing prevents extra padding at bottom of dialog.
--  gfx::Insets insets = layout_provider->GetDialogInsetsForContentType(
--      views::DialogContentType::kControl, views::DialogContentType::kText);
--  const int border_radius =
--      layout_provider->GetCornerRadiusMetric(views::Emphasis::kHigh);
--
--  int width_padding =
--      (kImageWidthPx + border_radius - GetImageSize().width()) / 2;
--
--  using Alignment = views::ImageView::Alignment;
--  auto builder =
--      views::Builder<ScreenshotCapturedBubble>(this)
--          .set_margins(insets)
--          .SetLayoutManager(std::make_unique<views::BoxLayout>(
--              views::BoxLayout::Orientation::kVertical, gfx::Insets(),
--              layout_provider->GetDistanceMetric(
--                  DISTANCE_UNRELATED_CONTROL_VERTICAL_LARGE)))
--          .AddChild(
--              views::Builder<views::TableLayoutView>()
--                  .AddPaddingColumn(views::TableLayout::kFixedSize,
--                                    width_padding)
--                  .AddColumn(views::LayoutAlignment::kCenter,
--                             views::LayoutAlignment::kCenter, 1.0,
--                             views::TableLayout::ColumnSize::kUsePreferred, 0,
--                             0)
--                  .AddPaddingColumn(views::TableLayout::kFixedSize,
--                                    width_padding)
--                  .AddRows(1, views::TableLayout::kFixedSize, 0)
--                  .AddChild(views::Builder<views::ImageView>()
--                                .SetHorizontalAlignment(Alignment::kCenter)
--                                .SetVerticalAlignment(Alignment::kCenter)
--                                .SetImageSize(GetImageSize())
--                                .SetPreferredSize(
--                                    GetImageSize() +
--                                    gfx::Size(border_radius, border_radius))
--                                .SetImage(ui::ImageModel::FromImage(image_))
--                                .SetVisible(true)
--                                .CopyAddressTo(&image_view_)));
--
--  auto download_button =
--      views::Builder<views::MdTextButton>()
--          .SetCallback(base::BindRepeating(
--              &ScreenshotCapturedBubble::DownloadButtonPressed,
--              weak_factory_.GetWeakPtr()))
--          .SetText(l10n_util::GetStringUTF16(
--              IDS_BROWSER_SHARING_SCREENSHOT_DIALOG_DOWNLOAD_BUTTON_LABEL))
--          .SetStyle(ui::ButtonStyle::kProminent)
--          .Build();
--
--  auto download_row = views::Builder<views::TableLayoutView>();
--
--  // Column for download button
--  download_row
--      .AddColumn(views::LayoutAlignment::kEnd, views::LayoutAlignment::kCenter,
--                 1.0, views::TableLayout::ColumnSize::kUsePreferred, 0, 0)
--      .AddRows(1, views::TableLayout::kFixedSize, 0);
--  download_row.AddChild(
--      views::Builder<views::MdTextButton>(std::move(download_button))
--          .CopyAddressTo(&download_button_));
--
--  std::move(builder).AddChild(std::move(download_row)).BuildChildren();
--}
--
--/*static*/
--const std::u16string ScreenshotCapturedBubble::GetFilenameForURL(
--    const GURL& url) {
--  if (!url.has_host() || url.HostIsIPAddress()) {
--    return u"helium_screenshot.png";
--  }
--
--  return base::ASCIIToUTF16(
--      base::StrCat({"helium_screenshot_", url.GetHost(), ".png"}));
--}
--
--void ScreenshotCapturedBubble::DownloadButtonPressed() {
--  // Returns closest scaling to parameter (1.0).
--  const SkBitmap& bitmap =
--      image_view_->GetImage().GetRepresentation(1.0f).GetBitmap();
--  const GURL data_url = GURL(webui::GetBitmapDataUrl(bitmap));
--
++void ScreenshotCapturedBubble::Init() {
 +  set_margins(gfx::Insets(20));
 +  SetLayoutManager(std::make_unique<views::BoxLayout>(
 +      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 12));
@@ -3994,8 +3905,10 @@
 +                          weak_factory_.GetWeakPtr()),
 +      l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_SAVE)));
 +  save_->SetStyle(ui::ButtonStyle::kProminent);
-+}
-+
+ }
+ 
+-views::View* ScreenshotCapturedBubble::GetInitiallyFocusedView() {
+-  return download_button_;
 +void ScreenshotCapturedBubble::UseSuggestedPermalink() {
 +  const auto index = candidates_->GetSelectedIndex().value_or(0);
 +  if (index > 0 && index <= suggested_permalinks_.size()) {
@@ -4004,8 +3917,10 @@
 +    AutofillPostDetails(selected_suggestion_);
 +    SizeToContents();
 +  }
-+}
-+
+ }
+ 
+-bool ScreenshotCapturedBubble::ShouldShowCloseButton() const {
+-  return true;
 +void ScreenshotCapturedBubble::ContentsChanged(
 +    views::Textfield* sender,
 +    const std::u16string& new_contents) {
@@ -4025,8 +3940,9 @@
 +  const auto position = description_preview_->GetText().find(label);
 +  if (position != std::u16string_view::npos)
 +    description_preview_->Scroll({position});
-+}
-+
+ }
+ 
+-void ScreenshotCapturedBubble::WindowClosing() {}
 +void ScreenshotCapturedBubble::AutofillPostDetails(
 +    const std::string& permalink) {
 +  auto sources = base::JSONReader::ReadDict(capture_.source_suggestions_json,
@@ -4069,7 +3985,9 @@
 +  details_status_->SetVisible(suggested);
 +  UpdateMetadataPreview();
 +}
-+
+ 
+-void ScreenshotCapturedBubble::Init() {
+-  auto* layout_provider = ChromeLayoutProvider::Get();
 +void ScreenshotCapturedBubble::CopyImage() {
 +  ui::ScopedClipboardWriter(ui::ClipboardBuffer::kCopyPaste)
 +      .WriteImage(*capture_.image.ToSkBitmap());
@@ -4077,7 +3995,86 @@
 +  status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_COPIED));
 +  SizeToContents();
 +}
-+
+ 
+-  // Requesting TEXT for trailing prevents extra padding at bottom of dialog.
+-  gfx::Insets insets = layout_provider->GetDialogInsetsForContentType(
+-      views::DialogContentType::kControl, views::DialogContentType::kText);
+-  const int border_radius =
+-      layout_provider->GetCornerRadiusMetric(views::Emphasis::kHigh);
+-
+-  int width_padding =
+-      (kImageWidthPx + border_radius - GetImageSize().width()) / 2;
+-
+-  using Alignment = views::ImageView::Alignment;
+-  auto builder =
+-      views::Builder<ScreenshotCapturedBubble>(this)
+-          .set_margins(insets)
+-          .SetLayoutManager(std::make_unique<views::BoxLayout>(
+-              views::BoxLayout::Orientation::kVertical, gfx::Insets(),
+-              layout_provider->GetDistanceMetric(
+-                  DISTANCE_UNRELATED_CONTROL_VERTICAL_LARGE)))
+-          .AddChild(
+-              views::Builder<views::TableLayoutView>()
+-                  .AddPaddingColumn(views::TableLayout::kFixedSize,
+-                                    width_padding)
+-                  .AddColumn(views::LayoutAlignment::kCenter,
+-                             views::LayoutAlignment::kCenter, 1.0,
+-                             views::TableLayout::ColumnSize::kUsePreferred, 0,
+-                             0)
+-                  .AddPaddingColumn(views::TableLayout::kFixedSize,
+-                                    width_padding)
+-                  .AddRows(1, views::TableLayout::kFixedSize, 0)
+-                  .AddChild(views::Builder<views::ImageView>()
+-                                .SetHorizontalAlignment(Alignment::kCenter)
+-                                .SetVerticalAlignment(Alignment::kCenter)
+-                                .SetImageSize(GetImageSize())
+-                                .SetPreferredSize(
+-                                    GetImageSize() +
+-                                    gfx::Size(border_radius, border_radius))
+-                                .SetImage(ui::ImageModel::FromImage(image_))
+-                                .SetVisible(true)
+-                                .CopyAddressTo(&image_view_)));
+-
+-  auto download_button =
+-      views::Builder<views::MdTextButton>()
+-          .SetCallback(base::BindRepeating(
+-              &ScreenshotCapturedBubble::DownloadButtonPressed,
+-              weak_factory_.GetWeakPtr()))
+-          .SetText(l10n_util::GetStringUTF16(
+-              IDS_BROWSER_SHARING_SCREENSHOT_DIALOG_DOWNLOAD_BUTTON_LABEL))
+-          .SetStyle(ui::ButtonStyle::kProminent)
+-          .Build();
+-
+-  auto download_row = views::Builder<views::TableLayoutView>();
+-
+-  // Column for download button
+-  download_row
+-      .AddColumn(views::LayoutAlignment::kEnd, views::LayoutAlignment::kCenter,
+-                 1.0, views::TableLayout::ColumnSize::kUsePreferred, 0, 0)
+-      .AddRows(1, views::TableLayout::kFixedSize, 0);
+-  download_row.AddChild(
+-      views::Builder<views::MdTextButton>(std::move(download_button))
+-          .CopyAddressTo(&download_button_));
+-
+-  std::move(builder).AddChild(std::move(download_row)).BuildChildren();
+-}
+-
+-/*static*/
+-const std::u16string ScreenshotCapturedBubble::GetFilenameForURL(
+-    const GURL& url) {
+-  if (!url.has_host() || url.HostIsIPAddress()) {
+-    return u"helium_screenshot.png";
+-  }
+-
+-  return base::ASCIIToUTF16(
+-      base::StrCat({"helium_screenshot_", url.GetHost(), ".png"}));
+-}
+-
+-void ScreenshotCapturedBubble::DownloadButtonPressed() {
+-  // Returns closest scaling to parameter (1.0).
+-  const SkBitmap& bitmap =
+-      image_view_->GetImage().GetRepresentation(1.0f).GetBitmap();
+-  const GURL data_url = GURL(webui::GetBitmapDataUrl(bitmap));
 +void ScreenshotCapturedBubble::PreserveHDRChanged() {
 +  if (web_contents_)
 +    Profile::FromBrowserContext(web_contents_->GetBrowserContext())
@@ -4154,7 +4151,7 @@
 +        relevant ? ui::kColorSysPrimary : ui::kColorLabelForeground);
 +  }
 +}
-+
+ 
 +void ScreenshotCapturedBubble::OnViewBlurred(views::View* view) {
 +  for (const auto& heading : metadata_headings_) {
 +    if (heading)
@@ -4314,17 +4311,8 @@
 +    status_->SetVisible(true);
 +    status_->SetText(l10n_util::GetStringUTF16(IDS_NEO_CAPTURE_SOURCE_GONE));
 +    SizeToContents();
-     return;
-   }
--
--  BrowserWindowInterface* browser =
--      GlobalBrowserCollection::GetInstance()->FindBrowserWithTab(
--          web_contents_.get());
--  content::DownloadManager* download_manager =
--      browser->GetProfile()->GetDownloadManager();
--  // TODO(crbug.com/40753957): Update the annotation's |setting| and
--  // |chrome_policy| fields once the Sharing Hub is landed.
--  net::NetworkTrafficAnnotationTag traffic_annotation =
++    return;
++  }
 +  auto automatic = AutomaticFields();
 +  auto user = UserFields();
 +  auto format =
@@ -4341,8 +4329,8 @@
 +      prefs->GetFilePath(kScreenshotDirectoryPref).empty()) {
 +    save_after_folder_selection_ = true;
 +    ChooseScreenshotFolder();
-+    return;
-+  }
+     return;
+   }
 +  const bool preserve_hdr = preserve_hdr_->GetChecked();
 +  prefs->SetBoolean(kScreenshotPreserveHDRPref, preserve_hdr);
 +  const auto language = static_cast<ScreenshotTextLanguage>(
@@ -4367,7 +4355,15 @@
 +      base::BindOnce(&ScreenshotCapturedBubble::ExportReady,
 +                     weak_factory_.GetWeakPtr()));
 +}
-+
+ 
+-  BrowserWindowInterface* browser =
+-      GlobalBrowserCollection::GetInstance()->FindBrowserWithTab(
+-          web_contents_.get());
+-  content::DownloadManager* download_manager =
+-      browser->GetProfile()->GetDownloadManager();
+-  // TODO(crbug.com/40753957): Update the annotation's |setting| and
+-  // |chrome_policy| fields once the Sharing Hub is landed.
+-  net::NetworkTrafficAnnotationTag traffic_annotation =
 +void ScreenshotCapturedBubble::ExportReady(ScreenshotExport result) {
 +  if (result.bytes.empty() || !web_contents_) {
 +    save_->SetEnabled(true);
@@ -4554,10 +4550,29 @@
    ~ScreenshotCapturedBubble() override;
  
 -  void OnThemeChanged() override;
-+ private:
+-
+-  void Show();
+-
+  private:
+-  // LocationBarBubbleDelegateView:
+-  View* GetInitiallyFocusedView() override;
 +  views::View* GetInitiallyFocusedView() override;
-+  bool ShouldShowCloseButton() const override;
-+  void Init() override;
+   bool ShouldShowCloseButton() const override;
+-  void WindowClosing() override;
+-
+-  static const std::u16string GetFilenameForURL(const GURL& url);
+-
+-  // views::BubbleDialogDelegateView:
+   void Init() override;
+-
+-  void DownloadButtonPressed();
+-
+-  gfx::Size GetImageSize();
+-
+-  // Makes a copy of the image to use in button callbacks without worry of
+-  // dereferencing
+-  const gfx::Image image_;
+-
 +  void CopyImage();
 +  void UseSuggestedPermalink();
 +  void AutofillPostDetails(const std::string& permalink);
@@ -4582,28 +4597,7 @@
 +  void BlobReady(std::unique_ptr<std::string> archive,
 +                 std::string extension,
 +                 std::unique_ptr<content::BlobHandle> blob);
- 
--  void Show();
--
-- private:
--  // LocationBarBubbleDelegateView:
--  View* GetInitiallyFocusedView() override;
--  bool ShouldShowCloseButton() const override;
--  void WindowClosing() override;
--
--  static const std::u16string GetFilenameForURL(const GURL& url);
--
--  // views::BubbleDialogDelegateView:
--  void Init() override;
--
--  void DownloadButtonPressed();
--
--  gfx::Size GetImageSize();
--
--  // Makes a copy of the image to use in button callbacks without worry of
--  // dereferencing
--  const gfx::Image image_;
--
++
 +  // Source details are frozen with the snapshot, never read from a later page.
 +  const image_editor::ScreenshotCaptureResult capture_;
 +  const image_editor::ScreenshotColorInfo color_info_;
@@ -6147,7 +6141,7 @@
 +}  // namespace sharing_hub
 --- a/components/viz/common/frame_sinks/copy_output_result.cc
 +++ b/components/viz/common/frame_sinks/copy_output_result.cc
-@@ -206,8 +206,10 @@
+@@ -206,8 +206,10 @@ const SkBitmap& CopyOutputSkBitmapResult
    if (rect().IsEmpty())
      return *bitmap;  // Return "null" bitmap for empty result.
  
@@ -6162,7 +6156,7 @@
  
 --- a/components/viz/common/frame_sinks/copy_output_result.h
 +++ b/components/viz/common/frame_sinks/copy_output_result.h
-@@ -52,8 +52,8 @@
+@@ -52,8 +52,8 @@ class VIZ_COMMON_EXPORT CopyOutputResult
      // can only be delivered on the same task runner sequence that runs the
      // DirectRenderer implementation.
      NV12,
@@ -6175,7 +6169,7 @@
  
 --- a/components/viz/service/display/direct_renderer.cc
 +++ b/components/viz/service/display/direct_renderer.cc
-@@ -642,7 +642,8 @@
+@@ -642,7 +642,8 @@ void DirectRenderer::DrawRenderPassAndEx
      // CopyOutputRequest - we need to adjust them to something that will be
      // compatible. Formats other than RGBA have this restriction.
      geometry.result_selection =
@@ -6187,7 +6181,7 @@
      if (request->has_result_selection())
 --- a/components/viz/service/display_embedder/skia_output_surface_impl_on_gpu.cc
 +++ b/components/viz/service/display_embedder/skia_output_surface_impl_on_gpu.cc
-@@ -844,14 +844,26 @@
+@@ -843,14 +843,26 @@ void SkiaOutputSurfaceImplOnGpu::CopyOut
      SkSurface::RescaleMode rescale_mode,
      bool is_downscale_or_identity_in_both_dimensions,
      std::unique_ptr<CopyOutputRequest> request) {
@@ -6215,7 +6209,7 @@
    }
  
    // TODO(https://bugs.chromium.org/p/skia/issues/detail?id=14389):
-@@ -867,7 +879,8 @@
+@@ -866,7 +878,8 @@ void SkiaOutputSurfaceImplOnGpu::CopyOut
  
    SkImageInfo dst_info = SkImageInfo::Make(
        geometry.result_selection.width(), geometry.result_selection.height(),
@@ -6227,7 +6221,7 @@
            std::move(request), geometry.result_selection, dest_color_space,
 --- a/components/viz/service/display_embedder/skia_render_copy_results.cc
 +++ b/components/viz/service/display_embedder/skia_render_copy_results.cc
-@@ -78,8 +78,9 @@
+@@ -78,8 +78,9 @@ CopyOutputResultSkiaRGBA::CopyOutputResu
      SkiaOutputSurfaceImplOnGpu* impl,
      const gfx::Rect& rect,
      std::unique_ptr<const SkSurface::AsyncReadResult> result,
@@ -6239,7 +6233,7 @@
                         Destination::kSystemMemory,
                         rect,
                         /*needs_lock_for_bitmap=*/true),
-@@ -111,7 +112,7 @@
+@@ -111,7 +112,7 @@ void CopyOutputResultSkiaRGBA::OnReadbac
  
    auto result = std::make_unique<CopyOutputResultSkiaRGBA>(
        impl_on_gpu, context->result_rect, std::move(async_result),
@@ -6248,7 +6242,7 @@
    result->SetTrackedElementRects(std::move(context->tracked_element_rects));
    context->request->SendResult(std::move(result));
  }
-@@ -138,6 +139,8 @@
+@@ -138,6 +139,8 @@ const SkBitmap& CopyOutputResultSkiaRGBA
                                     color_space_);
  #endif  // BUILDFLAG(IS_IOS)
  
@@ -6259,7 +6253,7 @@
  
 --- a/components/viz/service/display_embedder/skia_render_copy_results.h
 +++ b/components/viz/service/display_embedder/skia_render_copy_results.h
-@@ -85,7 +85,8 @@
+@@ -85,7 +85,8 @@ class CopyOutputResultSkiaRGBA : public
        SkiaOutputSurfaceImplOnGpu* impl,
        const gfx::Rect& rect,
        std::unique_ptr<const SkSurface::AsyncReadResult> result,
@@ -6271,7 +6265,7 @@
  
 --- a/content/browser/renderer_host/delegated_frame_host.cc
 +++ b/content/browser/renderer_host/delegated_frame_host.cc
-@@ -152,6 +152,25 @@
+@@ -153,6 +153,25 @@ void DelegatedFrameHost::CopyFromComposi
      const gfx::Size& output_size,
      base::TimeDelta timeout,
      base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback) {
@@ -6297,7 +6291,7 @@
    const viz::SurfaceId surface_id(frame_sink_id_, local_surface_id_);
  
    ui::Compositor::ScopedKeepSurfaceAliveCallback keep_surface_alive;
-@@ -163,7 +182,8 @@
+@@ -164,7 +183,8 @@ void DelegatedFrameHost::CopyFromComposi
  
    CopyFromCompositingSurfaceInternal(
        src_subrect, output_size, surface_id,
@@ -6309,7 +6303,7 @@
            [](base::OnceCallback<void(const content::CopyFromSurfaceResult&)>
 --- a/content/browser/renderer_host/delegated_frame_host.h
 +++ b/content/browser/renderer_host/delegated_frame_host.h
-@@ -152,6 +152,11 @@
+@@ -152,6 +152,11 @@ class CONTENT_EXPORT DelegatedFrameHost
        const gfx::Size& output_size,
        base::TimeDelta timeout,
        base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback);
@@ -6321,7 +6315,7 @@
    void CopyFromCompositingSurfaceAsTexture(
        const gfx::Rect& src_subrect,
        const gfx::Size& output_size,
-@@ -254,6 +259,12 @@
+@@ -254,6 +259,12 @@ class CONTENT_EXPORT DelegatedFrameHost
  
    SkColor GetGutterColor() const;
  
@@ -6336,7 +6330,7 @@
        const gfx::Size& output_size,
 --- a/content/browser/renderer_host/render_widget_host_view_aura.cc
 +++ b/content/browser/renderer_host/render_widget_host_view_aura.cc
-@@ -756,34 +756,33 @@
+@@ -756,34 +756,33 @@ void RenderWidgetHostViewAura::HideImpl(
    if (!host()->IsHidden()) {
      host()->WasHidden();
      aura::WindowTreeHost* host = window_->GetHost();
@@ -6357,6 +6351,8 @@
 -        cause = DelegatedFrameHost::HiddenCause::kOccluded;
 -      } else {
 -        cause = DelegatedFrameHost::HiddenCause::kOther;
+-      }
+-      delegated_frame_host_->WasHidden(cause);
 +    aura::Window::OcclusionState native_win_occlusion_state =
 +        host ? host->GetNativeWindowOcclusionState()
 +             : aura::Window::OcclusionState::UNKNOWN;
@@ -6368,19 +6364,7 @@
 +      cause = DelegatedFrameHost::HiddenCause::kOther;
 +    }
 +    delegated_frame_host_->WasHidden(cause);
-+#if BUILDFLAG(IS_WIN)
-+    if (host && legacy_render_widget_host_HWND_) {
-+      // We reparent the legacy Chrome_RenderWidgetHostHWND window to the
-+      // global hidden window on the same lines as Windowed plugin windows.
-+      // This can spin a nested event loop that could potentially delete this.
-+      base::WeakPtr<RenderWidgetHostViewAura> weak_this(
-+          weak_ptr_factory_.GetWeakPtr());
-+      legacy_render_widget_host_HWND_->UpdateParent(ui::GetHiddenWindow());
-+      if (!weak_this) {
-+        return;
-       }
--      delegated_frame_host_->WasHidden(cause);
--#if BUILDFLAG(IS_WIN)
+ #if BUILDFLAG(IS_WIN)
 -      if (host && legacy_render_widget_host_HWND_) {
 -        // We reparent the legacy Chrome_RenderWidgetHostHWND window to the
 -        // global hidden window on the same lines as Windowed plugin windows.
@@ -6391,17 +6375,24 @@
 -        if (!weak_this) {
 -          return;
 -        }
--      }
++    if (host && legacy_render_widget_host_HWND_) {
++      // We reparent the legacy Chrome_RenderWidgetHostHWND window to the
++      // global hidden window on the same lines as Windowed plugin windows.
++      // This can spin a nested event loop that could potentially delete this.
++      base::WeakPtr<RenderWidgetHostViewAura> weak_this(
++          weak_ptr_factory_.GetWeakPtr());
++      legacy_render_widget_host_HWND_->UpdateParent(ui::GetHiddenWindow());
++      if (!weak_this) {
++        return;
+       }
 +    }
  #endif
    }
  
-@@ -1197,6 +1196,15 @@
-       host()->GetWeakPtr(), delegated_frame_host_->GetWeakPtr(), popup_host,
-       popup_frame_host, src_subrect, dst_size, device_scale_factor_, timeout,
+@@ -1224,6 +1223,15 @@ void RenderWidgetHostViewAura::CopyFromS
        std::move(callback));
-+}
-+
+ }
+ 
 +void RenderWidgetHostViewAura::CopyFromSurfaceWithHDR(
 +    const gfx::Rect& src_rect,
 +    const gfx::Size& output_size,
@@ -6409,12 +6400,14 @@
 +    base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback) {
 +  delegated_frame_host_->CopyFromCompositingSurfaceWithHDR(
 +      src_rect, output_size, timeout, std::move(callback));
- }
- 
++}
++
  ui::FilteredGestureProvider*
+ RenderWidgetHostViewAura::GetFilteredGestureProviderForTesting() {
+   if (!window_ || !window_->provider()) {
 --- a/content/browser/renderer_host/render_widget_host_view_aura.h
 +++ b/content/browser/renderer_host/render_widget_host_view_aura.h
-@@ -65,7 +65,7 @@
+@@ -65,7 +65,7 @@ class Display;
  namespace gfx {
  class Point;
  class Rect;
@@ -6423,7 +6416,7 @@
  
  namespace input {
  class CursorManager;
-@@ -75,7 +75,7 @@
+@@ -75,7 +75,7 @@ namespace ui {
  enum class DomCode : uint32_t;
  class InputMethod;
  class LocatedEvent;
@@ -6432,22 +6425,22 @@
  
  namespace wm {
  class ScopedTooltipDisabler;
-@@ -170,6 +170,12 @@
-   void ClearKeyboardTriggeredTooltip() override;
-   bool IsSurfaceAvailableForCopy() override;
-   void CopyFromSurface(
-+      const gfx::Rect& src_rect,
-+      const gfx::Size& output_size,
-+      base::TimeDelta timeout,
-+      base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback)
-+      override;
-+  void CopyFromSurfaceWithHDR(
+@@ -173,6 +173,12 @@ class CONTENT_EXPORT RenderWidgetHostVie
        const gfx::Rect& src_rect,
        const gfx::Size& output_size,
        base::TimeDelta timeout,
++      base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback)
++      override;
++  void CopyFromSurfaceWithHDR(
++      const gfx::Rect& src_rect,
++      const gfx::Size& output_size,
++      base::TimeDelta timeout,
+       base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback)
+       override;
+   ui::FilteredGestureProvider* GetFilteredGestureProviderForTesting() override;
 --- a/content/browser/renderer_host/render_widget_host_view_mac.h
 +++ b/content/browser/renderer_host/render_widget_host_view_mac.h
-@@ -50,7 +50,7 @@
+@@ -50,7 +50,7 @@ class Compositor;
  enum class DomCode : uint32_t;
  class Layer;
  class ScopedPasswordInputEnabler;
@@ -6456,22 +6449,22 @@
  
  namespace input {
  class CursorManager;
-@@ -175,6 +175,12 @@
-   gfx::Size GetRequestedRendererSize() override;
-   bool IsSurfaceAvailableForCopy() override;
-   void CopyFromSurface(
-+      const gfx::Rect& src_rect,
-+      const gfx::Size& output_size,
-+      base::TimeDelta timeout,
-+      base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback)
-+      override;
-+  void CopyFromSurfaceWithHDR(
+@@ -178,6 +178,12 @@ class CONTENT_EXPORT RenderWidgetHostVie
        const gfx::Rect& src_rect,
        const gfx::Size& output_size,
        base::TimeDelta timeout,
++      base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback)
++      override;
++  void CopyFromSurfaceWithHDR(
++      const gfx::Rect& src_rect,
++      const gfx::Size& output_size,
++      base::TimeDelta timeout,
+       base::OnceCallback<void(const content::CopyFromSurfaceResult&)> callback)
+       override;
+   ui::FilteredGestureProvider* GetFilteredGestureProviderForTesting() override;
 --- a/content/browser/renderer_host/render_widget_host_view_mac.mm
 +++ b/content/browser/renderer_host/render_widget_host_view_mac.mm
-@@ -1198,6 +1198,15 @@
+@@ -1212,6 +1212,15 @@ void RenderWidgetHostViewMac::CopyFromSu
        std::move(callback));
  }
  
@@ -6497,7 +6490,7 @@
  
  #include "base/containers/flat_map.h"
  #include "base/containers/flat_set.h"
-@@ -252,6 +253,17 @@
+@@ -252,6 +253,17 @@ class CONTENT_EXPORT RenderWidgetHostVie
        base::TimeDelta timeout,
        base::OnceCallback<void(const CopyFromSurfaceResult&)> callback) = 0;
  
@@ -6517,7 +6510,7 @@
    // of media::VideoFrames captured from this view. The capturer is configured
 --- a/services/viz/public/cpp/compositing/copy_output_result_mojom_traits.cc
 +++ b/services/viz/public/cpp/compositing/copy_output_result_mojom_traits.cc
-@@ -59,6 +59,7 @@
+@@ -59,6 +59,7 @@ EnumTraits<viz::mojom::CopyOutputResultF
      case viz::CopyOutputResult::Format::RGBA:
        return viz::mojom::CopyOutputResultFormat::RGBA;
      case viz::CopyOutputResult::Format::RGBAF16:
@@ -6525,7 +6518,7 @@
      case viz::CopyOutputResult::Format::I420_PLANES:
      case viz::CopyOutputResult::Format::NV12:
        break;  // Not intended for transport across service boundaries.
-@@ -73,6 +74,8 @@
+@@ -73,6 +74,8 @@ EnumTraits<viz::mojom::CopyOutputResultF
    switch (input) {
      case viz::mojom::CopyOutputResultFormat::RGBA:
        return viz::CopyOutputResult::Format::RGBA;
@@ -6534,7 +6527,7 @@
    }
    NOTREACHED();
  }
-@@ -198,8 +201,8 @@
+@@ -198,8 +201,8 @@ StructTraits<viz::mojom::CopyOutputResul
      return nullptr;
    }
  
@@ -6545,7 +6538,7 @@
    return mojo::OptionalAsPointer(&result->GetSharedImage()->mailbox());
  }
  
-@@ -226,9 +229,9 @@
+@@ -226,9 +229,9 @@ StructTraits<viz::mojom::CopyOutputResul
      return mojo::NullRemote();
    }
  
@@ -6558,7 +6551,7 @@
    viz::ReleaseCallback release_callback = result->TakeSharedImageOwnership();
    if (release_callback.is_null()) {
      return mojo::NullRemote();
-@@ -279,6 +282,7 @@
+@@ -279,6 +282,7 @@ bool StructTraits<viz::mojom::CopyOutput
  
    switch (format) {
      case viz::CopyOutputResult::Format::RGBA:
@@ -6566,7 +6559,7 @@
        switch (destination) {
          case viz::CopyOutputResult::Destination::kSystemMemory: {
            std::optional<SkBitmap> bitmap_opt;
-@@ -294,6 +298,10 @@
+@@ -294,6 +298,10 @@ bool StructTraits<viz::mojom::CopyOutput
                  format, destination, error);
              return true;
            }
@@ -6577,7 +6570,7 @@
            if (!bitmap_opt->readyToDraw()) {
              return false;
            }
-@@ -304,7 +312,7 @@
+@@ -304,7 +312,7 @@ bool StructTraits<viz::mojom::CopyOutput
            }
  
            *out_p = std::make_unique<viz::CopyOutputSkBitmapResult>(
@@ -6586,7 +6579,7 @@
            (*out_p)->SetTrackedElementRects(std::move(tracked_element_rects));
            return true;
          }
-@@ -338,13 +346,12 @@
+@@ -338,13 +346,12 @@ bool StructTraits<viz::mojom::CopyOutput
            }
  
            *out_p = std::make_unique<viz::CopyOutputSharedImageResult>(
@@ -6604,7 +6597,7 @@
        break;  // Not intended for transport across service boundaries.
 --- a/services/viz/public/mojom/compositing/copy_output_result.mojom
 +++ b/services/viz/public/mojom/compositing/copy_output_result.mojom
-@@ -12,10 +12,11 @@
+@@ -12,10 +12,11 @@ import "ui/gfx/geometry/mojom/geometry.m
  import "ui/gfx/mojom/color_space.mojom";
  
  // See components/viz/common/frame_sinks/copy_output_result.h.
@@ -6619,7 +6612,7 @@
  // See components/viz/common/frame_sinks/copy_output_result.h.
 --- a/skia/public/mojom/image_info.mojom
 +++ b/skia/public/mojom/image_info.mojom
-@@ -17,6 +17,7 @@
+@@ -17,6 +17,7 @@ enum ColorType {
    // Note: this will fail traits deserialization.
    DEPRECATED_INDEX_8,
    GRAY_8,
@@ -6629,7 +6622,7 @@
  // Mirror of SkAlphaType. Unsupported values and `UNKNOWN` will raise
 --- a/skia/public/mojom/image_info_mojom_traits.cc
 +++ b/skia/public/mojom/image_info_mojom_traits.cc
-@@ -108,6 +108,8 @@
+@@ -108,6 +108,8 @@ skia::mojom::ColorType EnumTraits<skia::
        return skia::mojom::ColorType::BGRA_8888;
      case kGray_8_SkColorType:
        return skia::mojom::ColorType::GRAY_8;
@@ -6638,7 +6631,7 @@
      case kUnknown_SkColorType:
        // Fall through as unknown values should not be sent over the wire.
      default:
-@@ -134,6 +136,8 @@
+@@ -134,6 +136,8 @@ EnumTraits<skia::mojom::ColorType, SkCol
        return kBGRA_8888_SkColorType;
      case skia::mojom::ColorType::GRAY_8:
        return kGray_8_SkColorType;
