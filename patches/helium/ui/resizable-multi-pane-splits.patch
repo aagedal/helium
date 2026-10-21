@@ -8,7 +8,7 @@
  #include "components/tabs/public/tab_interface.h"
  #include "content/public/browser/child_process_security_policy.h"
  #include "content/public/browser/dom_storage_context.h"
-@@ -1190,13 +1191,13 @@
+@@ -1205,13 +1206,13 @@ class SessionRestoreImpl : public Browse
          continue;
        }
  
@@ -31,7 +31,7 @@
  
 --- a/chrome/browser/sessions/session_restore_browsertest.cc
 +++ b/chrome/browser/sessions/session_restore_browsertest.cc
-@@ -1480,6 +1480,29 @@
+@@ -1483,6 +1483,29 @@ IN_PROC_BROWSER_TEST_F(SessionRestoreTes
              2u);
  }
  
@@ -63,7 +63,7 @@
  
 --- a/chrome/browser/sessions/session_service_unittest.cc
 +++ b/chrome/browser/sessions/session_service_unittest.cc
-@@ -1316,6 +1316,7 @@
+@@ -1316,6 +1316,7 @@ TEST_F(SessionServiceTest, SplitPaneArra
      split_tabs::SplitTabVisualData data(split_tabs::SplitTabLayout::kStacked,
                                          0.65);
      data.set_arrangement(arrangement);
@@ -73,7 +73,7 @@
      ReadWindows(&windows, nullptr, nullptr, nullptr);
 --- a/chrome/browser/ui/tabs/tab_strip_model.cc
 +++ b/chrome/browser/ui/tabs/tab_strip_model.cc
-@@ -2096,6 +2096,22 @@
+@@ -2003,6 +2003,22 @@ void TabStripModel::UpdateSplitRatio(spl
        SplitTabChange::SplitVisualChangeReason::kRatioUpdated, is_intermediate);
  }
  
@@ -106,7 +106,7 @@
  #include <iterator>
  #include <map>
  #include <memory>
-@@ -651,6 +652,10 @@
+@@ -653,6 +654,10 @@ class TabStripModel {
                          double start_content_ratio,
                          bool is_intermediate = false);
  
@@ -119,7 +119,7 @@
    // active tab in the tab strip.
 --- a/chrome/browser/ui/tabs/tab_strip_model_unittest.cc
 +++ b/chrome/browser/ui/tabs/tab_strip_model_unittest.cc
-@@ -3237,6 +3237,20 @@
+@@ -3376,6 +3376,20 @@ TEST_F(TabStripModelTest, AddToNewSplit_
    EXPECT_EQ("0 1 2s 3s 4", GetTabStripStateString(tabstrip()));
  }
  
@@ -142,7 +142,7 @@
    tabstrip()->ActivateTabAt(2);
 --- a/chrome/browser/ui/views/frame/multi_contents_resize_area.cc
 +++ b/chrome/browser/ui/views/frame/multi_contents_resize_area.cc
-@@ -82,8 +82,10 @@
+@@ -82,8 +82,10 @@ END_METADATA
  
  MultiContentsResizeArea::MultiContentsResizeArea(
      MultiContentsView* multi_contents_view,
@@ -155,7 +155,7 @@
        multi_contents_view_(multi_contents_view),
        split_tab_menu_(std::make_unique<SplitTabMenuModel>(
            tab_strip_model,
-@@ -106,6 +108,15 @@
+@@ -106,6 +108,15 @@ MultiContentsResizeArea::~MultiContentsR
    TabStripModelObserver::StopObservingAll(this);
  }
  
@@ -171,7 +171,7 @@
  void MultiContentsResizeArea::OnTabStripModelChanged(
      TabStripModel*,
      const TabStripModelChange&,
-@@ -160,12 +171,14 @@
+@@ -160,12 +171,14 @@ bool MultiContentsResizeArea::OnKeyPress
      return false;
    }
  
@@ -206,7 +206,7 @@
  #include "ui/views/focus/focus_manager.h"
  #include "ui/views/view.h"
  
-@@ -55,6 +57,7 @@
+@@ -55,6 +57,7 @@ class MultiContentsResizeHandle : public
  // ResizeArea meant to draw in between WebContents within a MultiContentsView,
  // and responsiveness to key events via a focusable MultiContentsResizeHandle.
  class MultiContentsResizeArea : public views::ResizeArea,
@@ -214,7 +214,7 @@
                                  public views::ContextMenuController,
                                  public TabStripModelObserver {
    METADATA_HEADER(MultiContentsResizeArea, ResizeArea)
-@@ -66,10 +69,13 @@
+@@ -66,11 +69,14 @@ class MultiContentsResizeArea : public v
    DECLARE_CLASS_ELEMENT_IDENTIFIER_VALUE(kMultiContentsResizeAreaElementId);
  
    MultiContentsResizeArea(MultiContentsView* multi_contents_view,
@@ -224,12 +224,13 @@
    ~MultiContentsResizeArea() override;
  
    void SetLayout(split_tabs::SplitTabLayout layout);
-+
-+  void OnResize(int resize_amount, bool done_resizing) override;
  
++  void OnResize(int resize_amount, bool done_resizing) override;
++
    // TabStripModelObserver:
    void OnTabStripModelChanged(
-@@ -104,6 +110,7 @@
+       TabStripModel* tab_strip_model,
+@@ -104,6 +110,7 @@ class MultiContentsResizeArea : public v
  
    std::pair<int, int> GetAccessibleAlertStringIds();
  
@@ -239,7 +240,7 @@
  
 --- a/chrome/browser/ui/views/frame/multi_contents_view.cc
 +++ b/chrome/browser/ui/views/frame/multi_contents_view.cc
-@@ -113,6 +113,13 @@
+@@ -113,6 +113,13 @@ MultiContentsView::MultiContentsView(
      contents_container_views_.push_back(pane);
    }
  
@@ -253,7 +254,7 @@
    drop_target_view_ =
        AddChildView(std::make_unique<MultiContentsDropTargetView>());
    drop_target_controller_ =
-@@ -214,6 +221,7 @@
+@@ -214,6 +221,7 @@ MultiContentsView::~MultiContentsView()
    drop_target_view_ = nullptr;
    lens_overlay_view_ = nullptr;
    resize_area_ = nullptr;
@@ -261,7 +262,7 @@
    contents_separators_.Reset();
    background_view_ = nullptr;
    RemoveAllChildViews();
-@@ -312,6 +320,7 @@
+@@ -312,6 +320,7 @@ void MultiContentsView::ShowSplitView(
    CHECK_GE(pane_count, 2u);
    CHECK_LE(pane_count, contents_container_views_.size());
    pane_count_ = pane_count;
@@ -269,7 +270,7 @@
    for (size_t i = 0; i < contents_container_views_.size(); ++i) {
      contents_container_views_[i]->SetVisible(i < pane_count_);
      if (i >= pane_count_) {
-@@ -321,6 +330,7 @@
+@@ -321,6 +330,7 @@ void MultiContentsView::ShowSplitView(
    visual_data_ = visual_data;
    resize_area_->SetVisible(true);
    resize_area_->SetLayout(visual_data.split_layout());
@@ -277,7 +278,7 @@
    UpdateContentsBorderAndOverlay();
    InvalidateLayout();
  }
-@@ -340,6 +350,8 @@
+@@ -340,6 +350,8 @@ void MultiContentsView::CloseSplitView()
          ->set_is_primary_web_contents_for_window(false);
    }
    pane_count_ = 2;
@@ -286,7 +287,7 @@
    resize_area_->SetVisible(false);
    UpdateContentsBorderAndOverlay();
  
-@@ -389,6 +401,7 @@
+@@ -389,6 +401,7 @@ void MultiContentsView::UpdateSplitVisua
  
    visual_data_ = visual_data;
    resize_area_->SetLayout(visual_data.split_layout());
@@ -294,7 +295,7 @@
    UpdateContentsBorderAndOverlay();
    InvalidateLayout();
  }
-@@ -411,7 +424,9 @@
+@@ -411,7 +424,9 @@ void MultiContentsView::ExecuteOnEachVis
  
  void MultiContentsView::OnSwap() {
    CHECK(IsInSplitView());
@@ -305,12 +306,10 @@
  }
  
  void MultiContentsView::SetTargetContentBounds(
-@@ -444,6 +459,57 @@
-                             contents_accessible_panes.end());
-   }
+@@ -447,6 +462,57 @@ std::vector<views::View*> MultiContentsV
    return accessible_panes;
-+}
-+
+ }
+ 
 +size_t MultiContentsView::FirstPaneAtBoundary(size_t boundary) const {
 +  const size_t first_count = split_tabs::FirstSplitPaneCount(
 +      pane_count_, visual_data_.arrangement());
@@ -360,10 +359,12 @@
 +  if (done_resizing) {
 +    state.reset();
 +  }
- }
- 
++}
++
  void MultiContentsView::OnResize(int resize_amount, bool done_resizing) {
-@@ -649,7 +715,10 @@
+   gfx::Rect available_space = GetLocalBounds();
+   std::vector<views::ChildLayout> ignored_layouts;
+@@ -650,7 +716,10 @@ views::ProposedLayout MultiContentsView:
    const auto pane_bounds = split_tabs::CalculateSplitPaneBounds(
        to_grid_bounds(start_rect), to_grid_bounds(end_rect),
        IsInSplitView() ? pane_count_ : 2, GetSplitLayout(),
@@ -375,7 +376,7 @@
    for (size_t i = 0; i < contents_container_views_.size(); ++i) {
      layouts.child_layouts.emplace_back(contents_container_views_[i].get(),
                                         contents_container_views_[i]->GetVisible(),
-@@ -660,6 +729,23 @@
+@@ -661,6 +730,23 @@ views::ProposedLayout MultiContentsView:
    }
    layouts.child_layouts.emplace_back(resize_area_.get(),
                                       resize_area_->GetVisible(), resize_rect);
@@ -399,7 +400,7 @@
    layouts.child_layouts.emplace_back(lens_overlay_view_.get(),
                                       lens_overlay_view_->GetVisible(),
                                       gfx::Rect(width, height));
-@@ -891,13 +977,28 @@
+@@ -892,13 +978,28 @@ MultiContentsView::ViewSizes MultiConten
      return sizes;
    }
  
@@ -435,7 +436,7 @@
    }
 --- a/chrome/browser/ui/views/frame/multi_contents_view.h
 +++ b/chrome/browser/ui/views/frame/multi_contents_view.h
-@@ -172,6 +172,8 @@
+@@ -172,6 +172,8 @@ class MultiContentsView
  
    // views::ResizeAreaDelegate:
    void OnResize(int resize_amount, bool done_resizing) override;
@@ -444,7 +445,7 @@
  
    // views::View:
    void OnThemeChanged() override;
-@@ -327,6 +329,16 @@
+@@ -327,6 +329,16 @@ class MultiContentsView
    // each other.
    raw_ptr<MultiContentsResizeArea> resize_area_ = nullptr;
  
@@ -463,7 +464,7 @@
    raw_ptr<MultiContentsDropTargetView> drop_target_view_ = nullptr;
 --- a/chrome/browser/ui/views/frame/multi_contents_view_delegate.cc
 +++ b/chrome/browser/ui/views/frame/multi_contents_view_delegate.cc
-@@ -88,6 +88,33 @@
+@@ -88,6 +88,33 @@ void MultiContentsViewDelegateImpl::Resi
    }
  }
  
@@ -499,16 +500,16 @@
      const ui::DropTargetEvent& event) {
 --- a/chrome/browser/ui/views/frame/multi_contents_view_delegate.h
 +++ b/chrome/browser/ui/views/frame/multi_contents_view_delegate.h
-@@ -4,6 +4,8 @@
- 
+@@ -5,6 +5,8 @@
  #ifndef CHROME_BROWSER_UI_VIEWS_FRAME_MULTI_CONTENTS_VIEW_DELEGATE_H_
  #define CHROME_BROWSER_UI_VIEWS_FRAME_MULTI_CONTENTS_VIEW_DELEGATE_H_
-+
-+#include <array>
  
++#include <array>
++
  #include "chrome/browser/ui/views/frame/multi_contents_view_drop_target_controller.h"
  
-@@ -21,6 +23,8 @@
+ class TabStripModel;
+@@ -21,6 +23,8 @@ class MultiContentsViewDelegate
  
    virtual void WebContentsFocused(content::WebContents* contents) = 0;
    virtual void ResizeWebContents(double ratio, bool done_resizing) = 0;
@@ -517,19 +518,19 @@
    virtual void ReverseWebContents() = 0;
  };
  
-@@ -41,6 +45,9 @@
-   // Updates the split sizing ratio.
+@@ -42,6 +46,9 @@ class MultiContentsViewDelegateImpl : pu
    // Must already be in a split.
    void ResizeWebContents(double ratio, bool done_resizing) override;
-+
+ 
 +  void ResizePaneContents(const std::array<double, 4>& weights,
 +                          bool done_resizing) override;
- 
++
    // Reverses the order of split tabs.
    // Must already be in a split.
+   void ReverseWebContents() override;
 --- a/components/sessions/core/session_service_commands.cc
 +++ b/components/sessions/core/session_service_commands.cc
-@@ -850,6 +850,18 @@
+@@ -854,6 +854,18 @@ bool CreateTabsAndWindows(
          if (iter.ReadInt(&arrangement) && arrangement >= 0 && arrangement <= 3) {
            split->split_visual_data_.set_arrangement(
                static_cast<split_tabs::SplitTabArrangement>(arrangement));
@@ -548,7 +549,7 @@
          }
          break;
        }
-@@ -1218,6 +1230,9 @@
+@@ -1223,6 +1235,9 @@ std::unique_ptr<SessionCommand> CreateSp
    pickle.WriteString(
        SplitTabLayoutToString(split_tab_visual_data->split_layout()));
    pickle.WriteInt(static_cast<int>(split_tab_visual_data->arrangement()));
@@ -560,11 +561,7 @@
  }
 --- a/components/split_tabs/split_tab_visual_data.h
 +++ b/components/split_tabs/split_tab_visual_data.h
-@@ -1,164 +1,220 @@
- // Copyright 2025 The Chromium Authors
- // Use of this source code is governed by a BSD-style license that can be
- // found in the LICENSE file.
- 
+@@ -5,7 +5,9 @@
  #ifndef COMPONENTS_SPLIT_TABS_SPLIT_TAB_VISUAL_DATA_H_
  #define COMPONENTS_SPLIT_TABS_SPLIT_TAB_VISUAL_DATA_H_
  
@@ -574,83 +571,7 @@
  #include <cstddef>
  
  namespace split_tabs {
- 
- // Orientation of a split view. Needs to be kept in sync with
- // tab_search::mojom::SplitTabLayout in
- // chrome/browser/ui/webui/tab_search/tab_search.mojom.
- // LINT.IfChange(SplitTabLayout)
- enum class SplitTabLayout {
-   // Two tabs will display next to each other, side-by-side.
-   kSideBySide,
-   // Two tabs will appear stacked, one above the other.
-   kStacked,
-   kMaxValue = kStacked
- };
- // LINT.ThenChange(//tools/metrics/histograms/metadata/tab/enums.xml:SplitTabLayout)
- 
- // Bounds for one leaf in the experimental four-pane grid. This helper has no
- // Views dependency, so the partitioning can be tested without a browser build.
- struct GridPaneBounds {
-   int x = 0;
-   int y = 0;
-   int width = 0;
-   int height = 0;
- };
- 
- inline std::array<GridPaneBounds, 4> CalculateGridPaneBounds(
-     GridPaneBounds start,
-     GridPaneBounds end,
-     size_t pane_count,
-     SplitTabLayout layout) {
-   std::array<GridPaneBounds, 4> panes{};
-   if (pane_count < 2 || pane_count > panes.size()) {
-     return panes;
-   }
-   const size_t first_half_count = (pane_count + 1) / 2;
-   const auto subdivide = [&](GridPaneBounds bounds, size_t first, size_t count) {
-     for (size_t i = 0; i < count; ++i) {
-       auto pane = bounds;
-       const bool vertical = layout == SplitTabLayout::kSideBySide;
-       const int extent = vertical ? bounds.height : bounds.width;
-       const int begin = extent * static_cast<int>(i) / static_cast<int>(count);
-       const int limit =
-           extent * static_cast<int>(i + 1) / static_cast<int>(count);
-       if (vertical) {
-         pane.y += begin;
-         pane.height = limit - begin;
-       } else {
-         pane.x += begin;
-         pane.width = limit - begin;
-       }
-       panes[first + i] = pane;
-     }
-   };
-   subdivide(start, 0, first_half_count);
-   subdivide(end, first_half_count, pane_count - first_half_count);
-   return panes;
- }
- 
- // Partitioning within each side of the main, resizable divider.
- // Values are stored in session commands; do not renumber.
- enum class SplitTabArrangement {
-   kGrid = 0,
-   kLinear = 1,
-   kLeadingSingle = 2,
-   kTrailingSingle = 3,
- };
- 
- inline size_t FirstSplitPaneCount(size_t count, SplitTabArrangement arrangement) {
-   if (arrangement == SplitTabArrangement::kLeadingSingle) {
-     return 1;
-   }
-   if (arrangement == SplitTabArrangement::kTrailingSingle) {
-     return count - 1;
-   }
-   return (count + 1) / 2;
- }
- 
- inline std::array<GridPaneBounds, 4> CalculateSplitPaneBounds(
-     GridPaneBounds start,
+@@ -89,7 +91,9 @@ inline std::array<GridPaneBounds, 4> Cal
      GridPaneBounds end,
      size_t count,
      SplitTabLayout layout,
@@ -661,9 +582,7 @@
    std::array<GridPaneBounds, 4> panes{};
    if (count < 2 || count > panes.size()) {
      return panes;
-   }
-   const size_t first_count = FirstSplitPaneCount(count, arrangement);
-   const bool vertical = (layout == SplitTabLayout::kSideBySide) !=
+@@ -99,15 +103,31 @@ inline std::array<GridPaneBounds, 4> Cal
                          (arrangement == SplitTabArrangement::kLinear);
    const auto subdivide = [&](GridPaneBounds bounds, size_t first, size_t size) {
      const int extent = vertical ? bounds.height : bounds.width;
@@ -699,13 +618,10 @@
          pane.width = limit - begin;
        }
        panes[first + i] = pane;
-     }
-   };
-   subdivide(start, 0, first_count);
-   subdivide(end, first_count, count - first_count);
+@@ -118,6 +138,30 @@ inline std::array<GridPaneBounds, 4> Cal
    return panes;
-+}
-+
+ }
+ 
 +// Resize adjacent leaves without moving the other leaves in their group.
 +inline std::array<double, 4> ResizeSplitPaneWeights(
 +    std::array<double, 4> weights,
@@ -728,39 +644,19 @@
 +  weights[first] = total_weight * ratio;
 +  weights[first + 1] = total_weight * (1 - ratio);
 +  return weights;
- }
- 
++}
++
  // Represents the visual state of a split tab, including its layout type and the
  // proportional size of the webcontents.
  class SplitTabVisualData {
-  public:
-   SplitTabVisualData();
-   explicit SplitTabVisualData(SplitTabLayout split_layout);
-   SplitTabVisualData(SplitTabLayout split_layout, double split_ratio);
-   ~SplitTabVisualData();
- 
-   SplitTabVisualData(const SplitTabVisualData& other) = default;
-   SplitTabVisualData(SplitTabVisualData&& other) = default;
- 
-   SplitTabVisualData& operator=(const SplitTabVisualData& other) = default;
-   SplitTabVisualData& operator=(SplitTabVisualData&& other) = default;
- 
-   void set_split_layout(SplitTabLayout split_layout) {
-     split_layout_ = split_layout;
-   }
- 
-   void set_split_ratio(double split_ratio) { split_ratio_ = split_ratio; }
- 
-   SplitTabLayout split_layout() const { return split_layout_; }
- 
-   double split_ratio() const { return split_ratio_; }
+@@ -145,14 +189,26 @@ class SplitTabVisualData {
  
    void set_arrangement(SplitTabArrangement arrangement) {
      arrangement_ = arrangement;
 +    pane_weights_ = {1, 1, 1, 1};
    }
    SplitTabArrangement arrangement() const { return arrangement_; }
-+
+ 
 +  const std::array<double, 4>& pane_weights() const { return pane_weights_; }
 +  void set_pane_weights(const std::array<double, 4>& weights) {
 +    for (double weight : weights) {
@@ -770,7 +666,7 @@
 +    }
 +    pane_weights_ = weights;
 +  }
- 
++
    // Checks whether two instances are visually equivalent.
    friend bool operator==(const SplitTabVisualData&,
                           const SplitTabVisualData&) = default;
@@ -780,9 +676,3 @@
    SplitTabArrangement arrangement_ = SplitTabArrangement::kGrid;
    SplitTabLayout split_layout_;
    // ratio of the first split tab's width to the available width.
-   double split_ratio_ = 0.5;
- };
- 
- }  // namespace split_tabs
- 
- #endif  // COMPONENTS_SPLIT_TABS_SPLIT_TAB_VISUAL_DATA_H_

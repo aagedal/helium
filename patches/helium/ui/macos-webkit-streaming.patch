@@ -1,6 +1,6 @@
 --- a/chrome/browser/BUILD.gn
 +++ b/chrome/browser/BUILD.gn
-@@ -1521,6 +1521,8 @@
+@@ -1539,6 +1539,8 @@ source_set("core") {
        "file_select_helper_mac.mm",
        "fullscreen_mac.mm",
        "global_keyboard_shortcuts_mac.mm",
@@ -9,7 +9,7 @@
        "icon_loader_mac.mm",
        "memory_details_mac.cc",
        "platform_util_mac.mm",
-@@ -1589,6 +1591,7 @@
+@@ -1607,6 +1609,7 @@ source_set("core") {
        "UserNotifications.framework",
        "UniformTypeIdentifiers.framework",
        "VideoToolbox.framework",
@@ -19,7 +19,7 @@
  
 --- a/chrome/browser/chrome_content_browser_client.cc
 +++ b/chrome/browser/chrome_content_browser_client.cc
-@@ -839,6 +839,10 @@
+@@ -848,6 +848,10 @@ using plugins::ChromeContentBrowserClien
  using web_app::ChromeContentBrowserClientIsolatedWebAppsPart;
  #endif
  
@@ -30,7 +30,7 @@
  namespace {
  
  const char kAIManagerUserDataKey[] = "ai_manager";
-@@ -5579,6 +5583,9 @@
+@@ -5675,6 +5679,9 @@ void ChromeContentBrowserClient::RemoveP
  void ChromeContentBrowserClient::CreateThrottlesForNavigation(
      content::NavigationThrottleRegistry& registry) {
    CreateAndAddChromeThrottlesForNavigation(registry);
