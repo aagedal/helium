@@ -363,7 +363,7 @@
 +
  void MultiContentsView::OnResize(int resize_amount, bool done_resizing) {
    gfx::Rect available_space = GetLocalBounds();
-   std::vector<views::ChildLayout> ignored_layouts;
+   views::ProposedLayout::ChildLayoutList ignored_layouts;
 @@ -650,7 +716,10 @@ views::ProposedLayout MultiContentsView:
    const auto pane_bounds = split_tabs::CalculateSplitPaneBounds(
        to_grid_bounds(start_rect), to_grid_bounds(end_rect),
