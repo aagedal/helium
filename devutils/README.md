@@ -16,11 +16,37 @@ settles, without a MutationObserver, interval scan, hidden-tab wakeup, or pixel 
 The scan stops at 4,000 nodes, 65,536 UTF-16 text units or 12 ms, with a two-second
 browser-side reply timeout. These are best-effort work limits, not a hard bound on
 one expensive browser DOM/style operation. Empty, missing and incomplete results
-never replace a valid baseline. Changed-span extraction runs only on review.
+never replace a valid baseline. The line diff runs only when reviewing changes.
+
+**Monitor a section of the page…** opens an overlay in the page, in the same
+isolated world and inside a closed shadow root with constructed stylesheets, so
+page CSP and Trusted Types do not block it. A click picks the block under the
+pointer; a drag picks the blocks the rectangle touches, or their shared block if
+it covers all of them. The choice is checked with the production scan before it
+is accepted, and stored as a comma-separated list of ID or positional selectors.
+If any listed block is missing on a later check, the check fails closed. The
+browser polls the overlay every 250 ms because isolated-world execution cannot
+wait for a promise; polling stops on choice, Escape, navigation or after three
+minutes, and automatic refresh is held while the overlay is open.
+
+**Review page changes…** shows the page title and address, the watched scope,
+local check and change times, then each detected change, newest first, under
+its own local timestamp. Changes appear as tinted removed and added lines with
+two lines of context, and longer unchanged runs are summarized. The text being
+watched now follows (the first 40 lines), so a new selection can be verified
+before anything changes. **Show on page** activates the tab, scrolls to the
+watched blocks and outlines them for three seconds without taking pointer input.
+The last 20 detections are kept in memory only, each limited to 80 rows of up
+to 1,000 bytes; the export record still holds both full text versions. The
+whole-line LCS table is limited to one million cells; larger edits fall back
+to showing the changed block as removed and added.
 
 Run `python3 devutils/test_tab_preview.py` for sanitizer-backed viewport, interval
-and jitter checks. Run `python3 devutils/test_page_change_diff.py` for changed-line
-context, insertion/deletion and UTF-8 excerpt checks. Native `PaneSettingsTest.*`
+and jitter checks. Run `python3 devutils/test_page_change_diff.py` for line diff,
+context, gap, fallback and UTF-8 checks. Run
+`python3 devutils/test_page_change_picker.py --chromedriver <chromedriver> --binary <browser>`
+to drive the shipped picker with real pointer and keyboard input on a page with a
+strict CSP. Native `PaneSettingsTest.*`
 covers timer deadlines, blocking, restoration and tab lifecycle; it requires an unpruned Chromium test build.
 Run `python3 devutils/page_change_monitor_server.py`, open
 `http://127.0.0.1:8240/`, and choose **Run production-script checks** for DOM fixtures.
