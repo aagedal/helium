@@ -30,11 +30,16 @@ wait for a promise; polling stops on choice, Escape, navigation or after three
 minutes, and automatic refresh is held while the overlay is open.
 
 **Review page changes…** shows the page title and address, the watched scope,
-local check and change times, and the latest difference as tinted removed/added
-lines with two lines of context. Longer unchanged runs are summarized. The
+local check and change times, then each detected change, newest first, under
+its own local timestamp. Changes appear as tinted removed and added lines with
+two lines of context, and longer unchanged runs are summarized. The text being
+watched now follows (the first 40 lines), so a new selection can be verified
+before anything changes. **Show on page** activates the tab, scrolls to the
+watched blocks and outlines them for three seconds without taking pointer input.
+The last 20 detections are kept in memory only, each limited to 80 rows of up
+to 1,000 bytes; the export record still holds both full text versions. The
 whole-line LCS table is limited to one million cells; larger edits fall back
-to showing the changed block as removed and added. Output stops at 300 rows,
-with lines limited to 2,000 bytes.
+to showing the changed block as removed and added.
 
 Run `python3 devutils/test_tab_preview.py` for sanitizer-backed viewport, interval
 and jitter checks. Run `python3 devutils/test_page_change_diff.py` for line diff,

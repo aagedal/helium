@@ -2,7 +2,7 @@
 # Copyright 2026 The Helium Authors
 # You can use, redistribute, and/or modify this source code under
 # the terms of the GPL-3.0 license that can be found in the LICENSE file.
-"""Drive the shipped section picker with real pointer input through chromedriver.
+"""Drive the shipped section picker and highlight with real input through chromedriver.
 
 The page is served with a strict CSP and Trusted Types so the overlay is
 checked under the restrictions popular sites use. The scripts run in the main
@@ -256,11 +256,25 @@ class PickerChecks:
         self.check('Restarting replaces the existing overlay',
                    self.driver.run('return document.body.children.length') == self.base + 1)
 
+    def highlight(self):
+        """Show on page outlines watched blocks and cleans up after itself."""
+        self.driver.command('POST', '/url', {'url': self.url})
+        self.base = self.driver.run('return document.body.children.length')
+        script = '(' + self.scripts['kPageChangeMonitorHighlightScript'] + ')'
+        self.check('Outlines a list of watched blocks',
+                   self.driver.run('return ' + script + '("#p1,#p2", "Watched")') is True)
+        self.capture('picker-highlight.png')
+        self.check('Missing blocks are not outlined',
+                   self.driver.run('return ' + script + '("#gone", "Watched")') is False)
+        time.sleep(3.4)
+        self.check('The outline removes itself', self.overlay_gone())
+
     def run(self):
         """Run every scenario and return the number of failures."""
         self.two_paragraphs()
         self.blocks()
         self.empty_and_cancel()
+        self.highlight()
         return self.failures
 
 

@@ -1798,7 +1798,7 @@
     "name": "IDS_NEO_MONITOR_CHANGED",
     "source": "chrome/app/generated_resources.grd",
     "context": "Helium Neo page change monitoring: monitor_changed.",
-    "message": "Text changed. The latest difference is shown below."
+    "message": "Text changed. Detected changes are listed below, newest first."
   },
   {
     "name": "IDS_NEO_MONITOR_UNCHANGED",
@@ -1816,7 +1816,7 @@
     "name": "IDS_NEO_MONITOR_HELP",
     "source": "chrome/app/generated_resources.grd",
     "context": "Helium Neo page change monitoring: monitor_help.",
-    "message": "The watched text is compared each time the page finishes loading. Turn on auto-refresh for regular checks. Only the latest two versions are kept. Missing sections and failed checks never count as changes. Automatic exports turn off when the browser restarts."
+    "message": "The watched text is compared each time the page finishes loading. Turn on auto-refresh for regular checks. The current text and the last 20 changes are kept in memory only, until the tab closes. Missing sections and failed checks never count as changes. Automatic exports turn off when the browser restarts."
   },
   {
     "name": "IDS_NEO_MONITOR_FOLDER_READY",
@@ -1979,6 +1979,36 @@
     "source": "chrome/app/generated_resources.grd",
     "context": "Accessible name for an added line in the diff.",
     "message": "Added: <ph name=\"TEXT\">$1<ex>The meeting has moved to Thursday.</ex></ph>"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_DETECTED_AT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Heading above one detected page change, with the local date and time it was detected.",
+    "message": "Detected <ph name=\"TIME\">$1<ex>10/24/26, 12:28:21 AM</ex></ph>"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_CURRENT_TEXT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Heading above the text that is currently being watched for changes.",
+    "message": "Watched text now"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_MORE_LINES",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Summary row for further lines of watched text that are not shown.",
+    "message": "{COUNT, plural,\n        =1 {1 more line}\n        other {# more lines}}"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_SHOW",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Button that scrolls to and outlines the watched part of the page.",
+    "message": "Show on page"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_HIGHLIGHT_LABEL",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label briefly shown on the page next to the outlined watched section.",
+    "message": "Watched for changes"
   },
   {
     "name": "IDS_NEO_MONITOR_EXPORT_TIMEOUT",

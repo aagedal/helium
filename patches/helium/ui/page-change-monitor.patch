@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -21060,6 +21060,158 @@ Please help our engineers fix this probl
+@@ -21060,6 +21060,175 @@ Please help our engineers fix this probl
      <message name="IDS_OSCRYPTASYNC_AVAILABILITY_INFOBAR_BUTTON" desc="The text of the button to proceed with relaunching the entire browser to resolve keychain permission issues.">
        Relaunch
      </message>
@@ -59,7 +59,7 @@
 +      Baseline saved. Changes will be checked after page loads. Enable auto-refresh for regular checks.
 +    </message>
 +    <message name="IDS_NEO_MONITOR_CHANGED" desc="Helium Neo page change monitoring: monitor_changed.">
-+      Text changed. The latest difference is shown below.
++      Text changed. Detected changes are listed below, newest first.
 +    </message>
 +    <message name="IDS_NEO_MONITOR_UNCHANGED" desc="Helium Neo page change monitoring: monitor_unchanged.">
 +      No text changes in the last successful check.
@@ -68,7 +68,7 @@
 +      Close
 +    </message>
 +    <message name="IDS_NEO_MONITOR_HELP" desc="Helium Neo page change monitoring: monitor_help.">
-+      The watched text is compared each time the page finishes loading. Turn on auto-refresh for regular checks. Only the latest two versions are kept. Missing sections and failed checks never count as changes. Automatic exports turn off when the browser restarts.
++      The watched text is compared each time the page finishes loading. Turn on auto-refresh for regular checks. The current text and the last 20 changes are kept in memory only, until the tab closes. Missing sections and failed checks never count as changes. Automatic exports turn off when the browser restarts.
 +    </message>
 +    <message name="IDS_NEO_MONITOR_FOLDER_READY" desc="Helium Neo page change monitoring: monitor_folder_ready.">
 +      Export folder selected. Automatic export choices apply to future changes.
@@ -152,6 +152,23 @@
 +    </message>
 +    <message name="IDS_NEO_MONITOR_LINE_ADDED" desc="Accessible name for an added line in the diff.">
 +      Added: <ph name="TEXT">$1<ex>The meeting has moved to Thursday.</ex></ph>
++    </message>
++    <message name="IDS_NEO_MONITOR_DETECTED_AT" desc="Heading above one detected page change, with the local date and time it was detected.">
++      Detected <ph name="TIME">$1<ex>10/24/26, 12:28:21 AM</ex></ph>
++    </message>
++    <message name="IDS_NEO_MONITOR_CURRENT_TEXT" desc="Heading above the text that is currently being watched for changes.">
++      Watched text now
++    </message>
++    <message name="IDS_NEO_MONITOR_MORE_LINES" desc="Summary row for further lines of watched text that are not shown.">
++      {COUNT, plural,
++        =1 {1 more line}
++        other {# more lines}}
++    </message>
++    <message name="IDS_NEO_MONITOR_SHOW" desc="Button that scrolls to and outlines the watched part of the page.">
++      Show on page
++    </message>
++    <message name="IDS_NEO_MONITOR_HIGHLIGHT_LABEL" desc="Label briefly shown on the page next to the outlined watched section.">
++      Watched for changes
 +    </message>
 +    <message name="IDS_NEO_MONITOR_EXPORT_TIMEOUT" desc="An automatic change export exceeded its timeout.">
 +      Automatic export timed out and has been turned off. Text monitoring continues.
@@ -301,7 +318,7 @@
        ":tab_menu",
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor.cc
-@@ -0,0 +1,899 @@
+@@ -0,0 +1,985 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -327,12 +344,14 @@
 +#include "build/build_config.h"
 +#include "chrome/browser/profiles/profile.h"
 +#include "chrome/browser/sharing_hub/sharing_hub_features.h"
++#include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
 +#include "chrome/browser/ui/select_file_policy/chrome_select_file_policy.h"
 +#include "chrome/browser/ui/tab_ui_helper.h"
 +#include "chrome/browser/ui/tabs/page_change_monitor_diff.h"
 +#include "chrome/browser/ui/tabs/page_change_monitor_script.h"
 +#include "chrome/browser/ui/tabs/pane_settings.h"
 +#include "chrome/browser/ui/tabs/pane_settings_menu_model.h"
++#include "chrome/browser/ui/tabs/tab_strip_model.h"
 +#include "chrome/browser/ui/views/sharing_hub/screenshot/screenshot_documentation.h"
 +#include "chrome/common/chrome_isolated_world_ids.h"
 +#include "chrome/common/pref_names.h"
@@ -417,7 +436,10 @@
 +  METADATA_HEADER(ChangeRow, views::View)
 +
 + public:
-+  ChangeRow(PageChangeLine::Kind kind, std::u16string text, int width)
++  ChangeRow(PageChangeLine::Kind kind,
++            std::u16string text,
++            int width,
++            bool plain = false)
 +      : kind_(kind) {
 +    using Kind = PageChangeLine::Kind;
 +    const bool note = kind == Kind::kGap || kind == Kind::kTruncated;
@@ -435,8 +457,9 @@
 +    marker_->SetPreferredSize(gfx::Size(14, marker_->GetLineHeight()));
 +    auto* label = AddChildView(std::make_unique<views::Label>(
 +        text, views::style::CONTEXT_DIALOG_BODY_TEXT,
-+        note || kind == Kind::kContext ? views::style::STYLE_SECONDARY
-+                                       : views::style::STYLE_PRIMARY));
++        note || (kind == Kind::kContext && !plain)
++            ? views::style::STYLE_SECONDARY
++            : views::style::STYLE_PRIMARY));
 +    label->SetMultiLine(true);
 +    label->SetAllowCharacterBreak(true);
 +    label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
@@ -532,6 +555,7 @@
 +  baseline_.clear();
 +  before_.clear();
 +  after_.clear();
++  changes_.clear();
 +  last_check_.clear();
 +  change_time_.clear();
 +  last_check_value_ = base::Time();
@@ -726,6 +750,28 @@
 +      TabInterface::MaybeGetFromContents(web_contents()));
 +}
 +
++void PageChangeMonitor::HighlightWatched() {
++  if (selector_.empty() || !CanReadPage()) {
++    return;
++  }
++  if (auto* tab = TabInterface::MaybeGetFromContents(web_contents())) {
++    auto* browser = tab->GetBrowserWindowInterface();
++    auto* model = browser ? browser->GetTabStripModel() : nullptr;
++    const int index = model ? model->GetIndexOfTab(tab) : TabStripModel::kNoTab;
++    if (index != TabStripModel::kNoTab && index != model->active_index()) {
++      model->ActivateTabAt(index);
++    }
++  }
++  std::string scope, label;
++  base::JSONWriter::Write(base::Value(selector_), &scope);
++  base::JSONWriter::Write(base::Value(Text(IDS_NEO_MONITOR_HIGHLIGHT_LABEL)),
++                          &label);
++  web_contents()->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
++      base::UTF8ToUTF16(std::string(kPageChangeMonitorHighlightScript) + "(" +
++                        scope + "," + label + ")"),
++      {}, ISOLATED_WORLD_ID_CHROME_INTERNAL);
++}
++
 +void PageChangeMonitor::Scan() {
 +  if (selector_.empty() || scanning_ || exports_pending_ || picking_ ||
 +      !CanReadPage()) {
@@ -787,6 +833,12 @@
 +    baseline_ = *text;
 +    change_time_ = last_check_;
 +    change_time_value_ = last_check_value_;
++    // Trimmed further than the latest export record so 20 entries stay small.
++    changes_.push_back({last_check_value_,
++                        BuildPageChangeLines(before_, after_, 2, 80, 1000)});
++    if (changes_.size() > 20) {
++      changes_.pop_front();
++    }
 +    has_change_ = true;
 +    status_ = Text(IDS_NEO_MONITOR_CHANGED);
 +    SetAttention(true);
@@ -887,35 +939,75 @@
 +    fact(IDS_NEO_MONITOR_EXPORT_TO, export_folder_.LossyDisplayName());
 +  }
 +
-+  // The latest difference, as coloured removed/added lines.
++  // Detected changes, newest first, then the text being watched now.
 +  auto list = std::make_unique<views::View>();
 +  list->SetLayoutManager(std::make_unique<views::BoxLayout>(
 +      views::BoxLayout::Orientation::kVertical, gfx::Insets(4), 2));
-+  const auto rows = BuildPageChangeLines(before_, after_);
-+  for (const auto& row : rows) {
-+    std::u16string text = base::UTF8ToUTF16(row.text);
-+    if (row.kind == PageChangeLine::Kind::kGap) {
-+      text = l10n_util::GetPluralStringFUTF16(IDS_NEO_MONITOR_UNCHANGED_LINES,
-+                                              static_cast<int>(row.hidden));
-+    } else if (row.kind == PageChangeLine::Kind::kTruncated) {
-+      text = Text(IDS_NEO_MONITOR_MORE_CHANGES);
++  const auto heading = [&](std::u16string text, bool first) {
++    auto* label = list->AddChildView(std::make_unique<views::Label>(
++        std::move(text), views::style::CONTEXT_DIALOG_BODY_TEXT,
++        views::style::STYLE_EMPHASIZED));
++    label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++    label->SetBorder(
++        views::CreateEmptyBorder(gfx::Insets::TLBR(first ? 6 : 14, 8, 4, 8)));
++  };
++  const auto add_rows = [&](const std::vector<PageChangeLine>& rows,
++                            bool plain) {
++    for (const auto& row : rows) {
++      std::u16string text = base::UTF8ToUTF16(row.text);
++      if (row.kind == PageChangeLine::Kind::kGap) {
++        text = l10n_util::GetPluralStringFUTF16(
++            plain ? IDS_NEO_MONITOR_MORE_LINES
++                  : IDS_NEO_MONITOR_UNCHANGED_LINES,
++            static_cast<int>(row.hidden));
++      } else if (row.kind == PageChangeLine::Kind::kTruncated) {
++        text = Text(IDS_NEO_MONITOR_MORE_CHANGES);
++      }
++      list->AddChildView(std::make_unique<ChangeRow>(row.kind, std::move(text),
++                                                     kWidth - 10, plain));
 +    }
-+    list->AddChildView(
-+        std::make_unique<ChangeRow>(row.kind, std::move(text), kWidth - 10));
-+  }
-+  if (rows.empty()) {
++  };
++  if (changes_.empty()) {
 +    auto* empty = list->AddChildView(std::make_unique<views::Label>(
 +        Text(has_history() ? IDS_NEO_MONITOR_NO_CHANGES
 +                           : IDS_NEO_MONITOR_NO_BASELINE),
 +        views::style::CONTEXT_DIALOG_BODY_TEXT, views::style::STYLE_SECONDARY));
 +    empty->SetMultiLine(true);
 +    empty->SetMaximumWidth(kWidth - 40);
-+    empty->SetBorder(views::CreateEmptyBorder(gfx::Insets::VH(24, 16)));
++    empty->SetBorder(views::CreateEmptyBorder(gfx::Insets::VH(16, 8)));
++  }
++  for (auto it = changes_.rbegin(); it != changes_.rend(); ++it) {
++    heading(
++        l10n_util::GetStringFUTF16(IDS_NEO_MONITOR_DETECTED_AT,
++                                   base::TimeFormatShortDateAndTime(it->time)),
++        it == changes_.rbegin());
++    add_rows(it->rows, false);
++  }
++  if (!baseline_.empty()) {
++    heading(Text(IDS_NEO_MONITOR_CURRENT_TEXT), false);
++    std::vector<PageChangeLine> current;
++    size_t start = 0, count = 0;
++    while (start <= baseline_.size()) {
++      const size_t end =
++          std::min(baseline_.find('\n', start), baseline_.size());
++      if (count < 40) {
++        std::string line =
++            baseline_.substr(start, std::min<size_t>(end - start, 1000));
++        current.push_back({PageChangeLine::Kind::kContext, std::move(line)});
++      }
++      ++count;
++      start = end + 1;
++    }
++    if (count > 40) {
++      current.push_back(
++          {PageChangeLine::Kind::kGap, std::string(), count - 40});
++    }
++    add_rows(current, true);
 +  }
 +  auto* scroll = body->AddChildView(std::make_unique<views::ScrollView>());
 +  scroll->SetHorizontalScrollBarMode(
 +      views::ScrollView::ScrollBarMode::kDisabled);
-+  scroll->ClipHeightTo(0, 340);
++  scroll->ClipHeightTo(0, 380);
 +  scroll->SetBorder(views::CreateRoundedRectBorder(1, 8, ui::kColorSeparator));
 +  scroll->SetContents(std::move(list));
 +  scroll->GetViewAccessibility().SetName(Text(IDS_NEO_MONITOR_TITLE));
@@ -928,17 +1020,28 @@
 +  help->SetMaximumWidth(kWidth);
 +
 +  if (!selector_.empty()) {
-+    auto stop = std::make_unique<views::MdTextButton>(
-+        views::Button::PressedCallback(), Text(IDS_NEO_MONITOR_STOP));
-+    stop->SetCallback(base::BindRepeating(
-+        [](base::WeakPtr<PageChangeMonitor> self, views::Button* button) {
-+          if (self) {
-+            self->StopMonitoring();
-+          }
-+          button->GetWidget()->Close();
-+        },
-+        weak_factory_.GetWeakPtr(), stop.get()));
-+    dialog->SetExtraView(std::move(stop));
++    auto buttons = std::make_unique<views::View>();
++    buttons->SetLayoutManager(std::make_unique<views::BoxLayout>(
++        views::BoxLayout::Orientation::kHorizontal, gfx::Insets(), 8));
++    const auto add_button = [&](int label,
++                                void (PageChangeMonitor::*action)()) {
++      auto* button =
++          buttons->AddChildView(std::make_unique<views::MdTextButton>(
++              views::Button::PressedCallback(), Text(label)));
++      button->SetCallback(base::BindRepeating(
++          [](base::WeakPtr<PageChangeMonitor> self,
++             void (PageChangeMonitor::*action)(), views::Button* button) {
++            // Close first so the page is visible behind the dialog.
++            button->GetWidget()->Close();
++            if (self) {
++              (self.get()->*action)();
++            }
++          },
++          weak_factory_.GetWeakPtr(), action, button));
++    };
++    add_button(IDS_NEO_MONITOR_SHOW, &PageChangeMonitor::HighlightWatched);
++    add_button(IDS_NEO_MONITOR_STOP, &PageChangeMonitor::StopMonitoring);
++    dialog->SetExtraView(std::move(buttons));
 +  }
 +  dialog->SetContentsView(std::move(body));
 +  views::DialogDelegate::CreateDialogWidget(
@@ -1203,14 +1306,16 @@
 +}  // namespace tabs
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor.h
-@@ -0,0 +1,108 @@
+@@ -0,0 +1,119 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
 +#ifndef CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_H_
 +#define CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_H_
 +
++#include <deque>
 +#include <string>
++#include <vector>
 +
 +#include "base/callback_list.h"
 +#include "base/files/file_path.h"
@@ -1219,6 +1324,7 @@
 +#include "base/time/time.h"
 +#include "base/timer/timer.h"
 +#include "base/values.h"
++#include "chrome/browser/ui/tabs/page_change_monitor_diff.h"
 +#include "content/public/browser/render_widget_host_view.h"
 +#include "content/public/browser/web_contents_observer.h"
 +#include "content/public/browser/web_contents_user_data.h"
@@ -1239,12 +1345,14 @@
 +  // Starts after the invoking menu has closed so focus can return to the page.
 +  void StartPicker();
 +  void StopMonitoring();
++  // Scrolls to the watched blocks and outlines them briefly.
++  void HighlightWatched();
 +  void ShowChanges();
 +  void ChooseExportFolder();
 +  void ToggleScreenshot();
 +  void TogglePdf();
 +  bool has_change() const { return has_change_; }
-+  bool has_history() const { return !baseline_.empty() || !after_.empty(); }
++  bool has_history() const { return !baseline_.empty() || !changes_.empty(); }
 +  const std::u16string& status() const { return status_; }
 +  void DidStopLoading() override;
 +  void DidStartNavigation(content::NavigationHandle* handle) override;
@@ -1289,6 +1397,12 @@
 +  std::string baseline_;
 +  std::string before_;
 +  std::string after_;
++  // Recent detections, oldest first, kept in memory only.
++  struct DetectedChange {
++    base::Time time;
++    std::vector<PageChangeLine> rows;
++  };
++  std::deque<DetectedChange> changes_;
 +  std::string change_time_;
 +  std::string last_check_;
 +  base::Time change_time_value_;
@@ -1484,7 +1598,7 @@
 +#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_DIFF_H_
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor_script.h
-@@ -0,0 +1,320 @@
+@@ -0,0 +1,381 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1784,6 +1898,67 @@
 +  (document.body || document.documentElement).append(host);
 +  globalThis.heliumNeoPicker = picker;
 +  return {state: 'picking'};
++})
++)JS";
++
++// Briefly outlines the watched blocks, called as highlight(scope, label).
++// Purely visual: it ignores pointer input and removes itself.
++inline constexpr char kPageChangeMonitorHighlightScript[] = R"JS(
++((scope, label) => {
++  let roots = [];
++  try {
++    roots = scope === '@main'
++        ? [document.querySelector('article') || document.querySelector('main') || document.body]
++        : [...document.querySelectorAll(scope)];
++  } catch (_) {}
++  roots = roots.filter(Boolean);
++  if (!roots.length) return false;
++  globalThis.heliumNeoHighlight?.remove();
++  roots[0].scrollIntoView({block: 'center', inline: 'nearest'});
++  const host = document.createElement('div');
++  host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none;';
++  const shadow = host.attachShadow({mode: 'closed'});
++  const sheet = new CSSStyleSheet();
++  sheet.replaceSync(`
++    .box { position: fixed; border: 2px solid #1a73e8; border-radius: 4px;
++           background: rgb(26 115 232 / .10); box-shadow: 0 0 0 4px rgb(26 115 232 / .25);
++           transition: opacity .4s; }
++    .tag { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; white-space: nowrap;
++           padding: 3px 8px; border-radius: 4px; background: #1a73e8; color: white;
++           font: 12px/1.4 system-ui, sans-serif; }
++    .below .tag { bottom: auto; top: 100%; margin: 4px 0 0; }
++    .fade { opacity: 0; }
++  `);
++  shadow.adoptedStyleSheets = [sheet];
++  const boxes = roots.map(() => {
++    const box = document.createElement('div');
++    box.className = 'box';
++    shadow.append(box);
++    return box;
++  });
++  const tag = document.createElement('div');
++  tag.className = 'tag';
++  tag.textContent = label;
++  boxes[0].append(tag);
++  const place = () => roots.forEach((root, i) => {
++    const r = root.getBoundingClientRect();
++    Object.assign(boxes[i].style, {left: r.left - 3 + 'px', top: r.top - 3 + 'px',
++                                   width: r.width + 6 + 'px', height: r.height + 6 + 'px'});
++    if (!i) boxes[i].classList.toggle('below', r.top < 40);
++  });
++  const started = performance.now();
++  const frame = () => {
++    if (!host.isConnected) return;
++    place();
++    const age = performance.now() - started;
++    if (age > 2600) boxes.forEach(box => box.classList.add('fade'));
++    if (age > 3100) { host.remove(); return; }
++    requestAnimationFrame(frame);
++  };
++  (document.body || document.documentElement).append(host);
++  globalThis.heliumNeoHighlight = host;
++  frame();
++  return true;
 +})
 +)JS";
 +
