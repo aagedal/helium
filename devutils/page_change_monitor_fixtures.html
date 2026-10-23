@@ -49,26 +49,25 @@ window.runFixtures = () => {
   });
   test('Character budget fails closed', '<p>' + 'x'.repeat(65537) + '</p>', () => assert(!!scan().error));
   test('Node budget fails closed', '<i></i>'.repeat(5000) + '<p>Beyond budget.</p>', () => assert(!!scan().error));
-  test('Selected paragraph survives a document replacement', '<p id="chosen">Selected paragraph.</p><p>Other paragraph.</p>', () => {
-    const range = document.createRange(); range.selectNodeContents(document.querySelector('#chosen'));
-    const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
-    const selected = window.monitorText('@selection');
-    assert(selected.text === 'Selected paragraph.', JSON.stringify(selected));
-    fixture.innerHTML = '<p id="chosen">Updated selected paragraph.</p><p>Unrelated changes.</p>';
-    assert(window.monitorText(selected.selector).text === 'Updated selected paragraph.');
-    selection.removeAllRanges();
+  test('Picked block survives a document replacement', '<p id="chosen">Picked paragraph.</p><p>Other paragraph.</p>', () => {
+    assert(window.monitorText('#chosen').text === 'Picked paragraph.');
+    fixture.innerHTML = '<p id="chosen">Updated picked paragraph.</p><p>Unrelated changes.</p>';
+    assert(window.monitorText('#chosen').text === 'Updated picked paragraph.');
   });
-  test('Selected paragraph without ID has a stable positional path', '<div><p>First.</p><p>Second.</p></div>', () => {
-    const range = document.createRange(); range.selectNodeContents(fixture.querySelectorAll('p')[1]);
-    const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
-    const selected = window.monitorText('@selection');
-    assert(selected.text === 'Second.', JSON.stringify(selected));
+  test('Positional path without IDs is stable', '<div><p>First.</p><p>Second.</p></div>', () => {
+    const path = '#fixture > div:nth-of-type(1) > p:nth-of-type(2)';
+    assert(window.monitorText(path).text === 'Second.', JSON.stringify(window.monitorText(path)));
     fixture.innerHTML = '<div><p>First.</p><p>Changed second.</p></div>';
-    assert(window.monitorText(selected.selector).text === 'Changed second.');
-    selection.removeAllRanges();
+    assert(window.monitorText(path).text === 'Changed second.');
   });
-  test('No selection is an explicit error', '<p>Text.</p>', () => {
-    getSelection().removeAllRanges(); assert(!!window.monitorText('@selection').error);
+  test('Picked sibling blocks watch only those blocks', '<p id="a">First.</p><p id="b">Second.</p><p>Third.</p>', () => {
+    assert(window.monitorText('#a,#b').text === 'First.\nSecond.', JSON.stringify(window.monitorText('#a,#b')));
+  });
+  test('A missing picked block fails closed', '<p id="a">First.</p>', () => {
+    assert(!!window.monitorText('#a,#gone').error);
+  });
+  test('An escaped comma is part of one selector', '<p id="a,b">Comma ID.</p>', () => {
+    assert(window.monitorText('#' + CSS.escape('a,b')).text === 'Comma ID.');
   });
   test('UTF-8 source text retained', '<p>Rødgrønn 日本語 Україна.</p>', () => assert(scan().text === 'Rødgrønn 日本語 Україна.'));
   fixture.innerHTML = '<h2>Public statement</h2><p id="statement">The meeting will be on Wednesday.</p>';

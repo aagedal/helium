@@ -1,6 +1,6 @@
 --- a/chrome/app/generated_resources.grd
 +++ b/chrome/app/generated_resources.grd
-@@ -21060,6 +21060,96 @@ Please help our engineers fix this probl
+@@ -21060,6 +21060,158 @@ Please help our engineers fix this probl
      <message name="IDS_OSCRYPTASYNC_AVAILABILITY_INFOBAR_BUTTON" desc="The text of the button to proceed with relaunching the entire browser to resolve keychain permission issues.">
        Relaunch
      </message>
@@ -24,9 +24,6 @@
 +    </message>
 +    <message name="IDS_NEO_MONITOR_MAIN" desc="Helium Neo page change monitoring: monitor_main.">
 +      Monitor article text for changes
-+    </message>
-+    <message name="IDS_NEO_MONITOR_SELECTION" desc="Helium Neo page change monitoring: monitor_selection.">
-+      Monitor selected section for changes
 +    </message>
 +    <message name="IDS_NEO_MONITOR_REVIEW" desc="Helium Neo page change monitoring: monitor_review.">
 +      Review page changes…
@@ -70,14 +67,8 @@
 +    <message name="IDS_NEO_MONITOR_CLOSE" desc="Helium Neo page change monitoring: monitor_close.">
 +      Close
 +    </message>
-+    <message name="IDS_NEO_MONITOR_REMOVED" desc="Helium Neo page change monitoring: monitor_removed.">
-+      Removed / previous text (up to 16,000 characters):
-+    </message>
-+    <message name="IDS_NEO_MONITOR_ADDED" desc="Helium Neo page change monitoring: monitor_added.">
-+      Added / current text (up to 16,000 characters):
-+    </message>
 +    <message name="IDS_NEO_MONITOR_HELP" desc="Helium Neo page change monitoring: monitor_help.">
-+      Checks run after page loads, not continuously. Only the latest two versions are kept in memory. Missing sections and scan failures do not count as changes. Review section selection after a site redesign. Automatic exports are off after restarting the browser.
++      The watched text is compared each time the page finishes loading. Turn on auto-refresh for regular checks. Only the latest two versions are kept. Missing sections and failed checks never count as changes. Automatic exports turn off when the browser restarts.
 +    </message>
 +    <message name="IDS_NEO_MONITOR_FOLDER_READY" desc="Helium Neo page change monitoring: monitor_folder_ready.">
 +      Export folder selected. Automatic export choices apply to future changes.
@@ -91,12 +82,84 @@
 +    <message name="IDS_NEO_MONITOR_EXPORTED" desc="Helium Neo page change monitoring: monitor_exported.">
 +      Change detected and exported with a source record and SHA-256 checksum.
 +    </message>
++    <message name="IDS_NEO_MONITOR_PICK_MENU" desc="Tab menu item that lets the user choose a part of the page to watch for text changes.">
++      Monitor a section of the page…
++    </message>
++    <message name="IDS_NEO_MONITOR_PICK_HINT" desc="Instructions shown over the page while choosing the section to watch.">
++      Drag across the part of the page to watch, or click a block of text. Press Esc to cancel.
++    </message>
++    <message name="IDS_NEO_MONITOR_PICK_CANCEL" desc="Button that closes the section picker without watching anything.">
++      Cancel
++    </message>
++    <message name="IDS_NEO_MONITOR_PICK_EMPTY" desc="Shown in the section picker when the chosen area has no readable text.">
++      There is no readable text there. Try a larger area.
++    </message>
++    <message name="IDS_NEO_MONITOR_PICK_DONE" desc="Shown briefly over the page after a section was chosen.">
++      Watching this section for changes
++    </message>
++    <message name="IDS_NEO_MONITOR_PICKING" desc="Status while the user is choosing a section on the page.">
++      Choose the section to watch on the page.
++    </message>
++    <message name="IDS_NEO_MONITOR_PICK_CANCELLED" desc="Status after the section picker closed without a choice.">
++      No section was chosen. Change monitoring is off.
++    </message>
++    <message name="IDS_NEO_MONITOR_TITLE" desc="Title of the dialog that shows page text changes.">
++      Page changes
++    </message>
++    <message name="IDS_NEO_MONITOR_WATCHING" desc="Label for what part of the page is being watched.">
++      Watching
++    </message>
++    <message name="IDS_NEO_MONITOR_SCOPE_OFF" desc="Value when change monitoring is off.">
++      Nothing (monitoring is off)
++    </message>
++    <message name="IDS_NEO_MONITOR_SCOPE_MAIN" desc="Value when the main article text is watched.">
++      Article text
++    </message>
++    <message name="IDS_NEO_MONITOR_SCOPE_SECTION" desc="Value when a user-chosen section is watched.">
++      Selected section
++    </message>
++    <message name="IDS_NEO_MONITOR_LAST_CHECK" desc="Label for the time of the latest successful check.">
++      Last checked
++    </message>
++    <message name="IDS_NEO_MONITOR_LAST_CHANGE" desc="Label for the time the latest change was seen.">
++      Latest change
++    </message>
++    <message name="IDS_NEO_MONITOR_EXPORT_TO" desc="Label for the folder that automatic exports are saved to.">
++      Saving exports to
++    </message>
++    <message name="IDS_NEO_MONITOR_NOT_YET" desc="Value for a time that has not happened yet.">
++      Not yet
++    </message>
++    <message name="IDS_NEO_MONITOR_NO_CHANGES" desc="Shown instead of a diff when nothing changed since monitoring started.">
++      No changes since monitoring started.
++    </message>
++    <message name="IDS_NEO_MONITOR_NO_BASELINE" desc="Shown instead of a diff before the first successful check.">
++      Changes will appear here after the first successful check.
++    </message>
++    <message name="IDS_NEO_MONITOR_MORE_CHANGES" desc="Shown when the diff has more lines than the dialog displays.">
++      More changes are not shown.
++    </message>
++    <message name="IDS_NEO_MONITOR_STOP" desc="Button that turns off change monitoring for this tab.">
++      Stop monitoring
++    </message>
++    <message name="IDS_NEO_MONITOR_UNCHANGED_LINES" desc="Summary row for unchanged lines hidden from the diff.">
++      {COUNT, plural,
++        =1 {1 unchanged line}
++        other {# unchanged lines}}
++    </message>
++    <message name="IDS_NEO_MONITOR_LINE_REMOVED" desc="Accessible name for a removed line in the diff.">
++      Removed: <ph name="TEXT">$1<ex>The meeting will be on Wednesday.</ex></ph>
++    </message>
++    <message name="IDS_NEO_MONITOR_LINE_ADDED" desc="Accessible name for an added line in the diff.">
++      Added: <ph name="TEXT">$1<ex>The meeting has moved to Thursday.</ex></ph>
++    </message>
 +    <message name="IDS_NEO_MONITOR_EXPORT_TIMEOUT" desc="An automatic change export exceeded its timeout.">
 +      Automatic export timed out and has been turned off. Text monitoring continues.
 +    </message>
    </messages>
  </release>
  </grit>
+\ No newline at end of file
 --- a/chrome/browser/ui/BUILD.gn
 +++ b/chrome/browser/ui/BUILD.gn
 @@ -478,6 +478,7 @@ if (!is_android) {
@@ -238,7 +301,7 @@
        ":tab_menu",
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor.cc
-@@ -0,0 +1,621 @@
+@@ -0,0 +1,899 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -247,6 +310,7 @@
 +
 +#include <algorithm>
 +#include <cmath>
++#include <string_view>
 +#include <variant>
 +
 +#include "base/files/file_util.h"
@@ -257,6 +321,7 @@
 +#include "base/strings/string_number_conversions.h"
 +#include "base/strings/utf_string_conversions.h"
 +#include "base/task/bind_post_task.h"
++#include "base/task/sequenced_task_runner.h"
 +#include "base/task/thread_pool.h"
 +#include "base/uuid.h"
 +#include "build/build_config.h"
@@ -283,13 +348,24 @@
 +#include "content/public/browser/web_contents.h"
 +#include "crypto/sha2.h"
 +#include "printing/buildflags/buildflags.h"
++#include "ui/accessibility/ax_enums.mojom.h"
 +#include "ui/base/l10n/l10n_util.h"
++#include "ui/base/metadata/metadata_header_macros.h"
++#include "ui/base/metadata/metadata_impl_macros.h"
 +#include "ui/base/mojom/dialog_button.mojom.h"
++#include "ui/color/color_id.h"
++#include "ui/color/color_provider.h"
++#include "ui/gfx/color_utils.h"
 +#include "ui/shell_dialogs/selected_file_info.h"
 +#include "ui/views/accessibility/view_accessibility.h"
++#include "ui/views/background.h"
++#include "ui/views/border.h"
++#include "ui/views/controls/button/md_text_button.h"
 +#include "ui/views/controls/label.h"
-+#include "ui/views/controls/textarea/textarea.h"
++#include "ui/views/controls/scroll_view.h"
 +#include "ui/views/layout/box_layout.h"
++#include "ui/views/layout/table_layout.h"
++#include "ui/views/style/typography.h"
 +#include "ui/views/window/dialog_delegate.h"
 +
 +#if BUILDFLAG(ENABLE_PRINTING)
@@ -335,6 +411,70 @@
 +  }
 +  return true;
 +}
++
++// One line of the review diff, tinted by whether it was removed or added.
++class ChangeRow : public views::View {
++  METADATA_HEADER(ChangeRow, views::View)
++
++ public:
++  ChangeRow(PageChangeLine::Kind kind, std::u16string text, int width)
++      : kind_(kind) {
++    using Kind = PageChangeLine::Kind;
++    const bool note = kind == Kind::kGap || kind == Kind::kTruncated;
++    auto* layout = SetLayoutManager(std::make_unique<views::BoxLayout>(
++        views::BoxLayout::Orientation::kHorizontal, gfx::Insets::VH(4, 8), 8));
++    layout->set_cross_axis_alignment(
++        views::BoxLayout::CrossAxisAlignment::kStart);
++    marker_ = AddChildView(
++        std::make_unique<views::Label>(kind == Kind::kRemoved ? u"\u2212"
++                                       : kind == Kind::kAdded ? u"+"
++                                       : note                 ? u"\u22ef"
++                                                              : u"",
++                                       views::style::CONTEXT_DIALOG_BODY_TEXT,
++                                       views::style::STYLE_EMPHASIZED));
++    marker_->SetPreferredSize(gfx::Size(14, marker_->GetLineHeight()));
++    auto* label = AddChildView(std::make_unique<views::Label>(
++        text, views::style::CONTEXT_DIALOG_BODY_TEXT,
++        note || kind == Kind::kContext ? views::style::STYLE_SECONDARY
++                                       : views::style::STYLE_PRIMARY));
++    label->SetMultiLine(true);
++    label->SetAllowCharacterBreak(true);
++    label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++    label->SetMaximumWidth(width - 14 - 8 - 16);
++    layout->SetFlexForView(label, 1);
++    GetViewAccessibility().SetRole(ax::mojom::Role::kListItem);
++    GetViewAccessibility().SetName(
++        kind == Kind::kRemoved
++            ? l10n_util::GetStringFUTF16(IDS_NEO_MONITOR_LINE_REMOVED, text)
++        : kind == Kind::kAdded
++            ? l10n_util::GetStringFUTF16(IDS_NEO_MONITOR_LINE_ADDED, text)
++            : text);
++  }
++
++  void OnThemeChanged() override {
++    views::View::OnThemeChanged();
++    using Kind = PageChangeLine::Kind;
++    if (kind_ != Kind::kRemoved && kind_ != Kind::kAdded) {
++      return;
++    }
++    const auto* colors = GetColorProvider();
++    const SkColor accent =
++        colors->GetColor(kind_ == Kind::kRemoved ? ui::kColorAlertHighSeverity
++                                                 : ui::kColorAlertLowSeverity);
++    SetBackground(views::CreateRoundedRectBackground(
++        color_utils::AlphaBlend(
++            accent, colors->GetColor(ui::kColorDialogBackground), 0.16f),
++        4));
++    marker_->SetEnabledColor(accent);
++  }
++
++ private:
++  const PageChangeLine::Kind kind_;
++  raw_ptr<views::Label> marker_ = nullptr;
++};
++
++BEGIN_METADATA(ChangeRow)
++END_METADATA
 +}  // namespace
 +
 +WEB_CONTENTS_USER_DATA_KEY_IMPL(PageChangeMonitor);
@@ -367,8 +507,8 @@
 +void PageChangeMonitor::UpdateBlocked() {
 +  if (web_contents()) {
 +    PaneSettings::GetOrCreate(web_contents())
-+        ->SetRefreshBlocked(scanning_ || settle_timer_.IsRunning() ||
-+                            exports_pending_ > 0);
++        ->SetRefreshBlocked(scanning_ || picking_ ||
++                            settle_timer_.IsRunning() || exports_pending_ > 0);
 +  }
 +}
 +
@@ -385,12 +525,17 @@
 +  if (selector_ == settings->monitor_selector()) {
 +    return;
 +  }
++  CancelPicker(true);
 +  CancelPending();
 +  selector_ = settings->monitor_selector();
 +  watched_url_ = web_contents()->GetLastCommittedURL().GetWithoutRef();
 +  baseline_.clear();
 +  before_.clear();
 +  after_.clear();
++  last_check_.clear();
++  change_time_.clear();
++  last_check_value_ = base::Time();
++  change_time_value_ = base::Time();
 +  has_change_ = false;
 +  SetAttention(false);
 +  status_ =
@@ -401,13 +546,13 @@
 +}
 +
 +void PageChangeMonitor::ScheduleScan() {
-+  if (selector_.empty() || scanning_ || exports_pending_ ||
++  if (selector_.empty() || scanning_ || exports_pending_ || picking_ ||
 +      web_contents()->IsLoading()) {
 +    return;
 +  }
-+  settle_timer_.Start(FROM_HERE, base::Milliseconds(750),
-+                      base::BindOnce(&PageChangeMonitor::Scan,
-+                                     weak_factory_.GetWeakPtr(), false));
++  settle_timer_.Start(
++      FROM_HERE, base::Milliseconds(750),
++      base::BindOnce(&PageChangeMonitor::Scan, weak_factory_.GetWeakPtr()));
 +  UpdateBlocked();
 +}
 +
@@ -419,6 +564,7 @@
 +
 +void PageChangeMonitor::DidStartNavigation(content::NavigationHandle* handle) {
 +  if (handle->IsInPrimaryMainFrame() && !handle->IsSameDocument()) {
++    CancelPicker(false);
 +    CancelPending();
 +  }
 +}
@@ -438,6 +584,8 @@
 +}
 +
 +void PageChangeMonitor::WebContentsDestroyed() {
++  picking_ = false;
++  picker_timer_.Stop();
 +  CancelPending();
 +  settings_subscription_ = {};
 +  weak_factory_.InvalidateWeakPtrs();
@@ -447,34 +595,147 @@
 +  }
 +}
 +
-+void PageChangeMonitor::WatchSelection() {
-+  CancelPending();
-+  Scan(true);
-+}
-+
-+void PageChangeMonitor::Scan(bool selection) {
++bool PageChangeMonitor::CanReadPage() {
 +#if BUILDFLAG(IS_MAC)
 +  if (helium::GetWebKitStreamingTabView(web_contents())) {
-+    status_ = Text(IDS_NEO_MONITOR_PAUSED);
-+    UpdateBlocked();
-+    return;
++    return false;
 +  }
 +#endif
 +  auto* frame = web_contents()->GetPrimaryMainFrame();
 +  const auto* entry = web_contents()->GetController().GetLastCommittedEntry();
-+  if ((!selection && selector_.empty()) || scanning_ || exports_pending_ ||
-+      web_contents()->IsLoading() || !entry ||
-+      entry->GetPageType() != content::PAGE_TYPE_NORMAL ||
-+      !web_contents()->GetLastCommittedURL().SchemeIsHTTPOrHTTPS() ||
-+      web_contents()->GetController().NeedsReload() || !frame ||
-+      !frame->IsRenderFrameLive()) {
++  return !web_contents()->IsLoading() && entry &&
++         entry->GetPageType() == content::PAGE_TYPE_NORMAL &&
++         web_contents()->GetLastCommittedURL().SchemeIsHTTPOrHTTPS() &&
++         !web_contents()->GetController().NeedsReload() && frame &&
++         frame->IsRenderFrameLive();
++}
++
++void PageChangeMonitor::StartPicker() {
++  base::SequencedTaskRunner::GetCurrentDefault()->PostTask(
++      FROM_HERE, base::BindOnce(&PageChangeMonitor::ShowPicker,
++                                weak_factory_.GetWeakPtr()));
++}
++
++void PageChangeMonitor::ShowPicker() {
++  CancelPicker(true);
++  if (!CanReadPage()) {
++    status_ = Text(IDS_NEO_MONITOR_PAUSED);
++    return;
++  }
++  base::DictValue strings;
++  strings.Set("hint", Text(IDS_NEO_MONITOR_PICK_HINT));
++  strings.Set("cancel", Text(IDS_NEO_MONITOR_PICK_CANCEL));
++  strings.Set("empty", Text(IDS_NEO_MONITOR_PICK_EMPTY));
++  strings.Set("done", Text(IDS_NEO_MONITOR_PICK_DONE));
++  std::string argument;
++  base::JSONWriter::Write(strings, &argument);
++  picking_ = true;
++  picker_poll_pending_ = true;
++  status_ = Text(IDS_NEO_MONITOR_PICKING);
++  UpdateBlocked();
++  // A user may take a while to choose, but never leave the overlay forever.
++  picker_deadline_ = base::TimeTicks::Now() + base::Minutes(3);
++  picker_timer_.Start(FROM_HERE, base::Milliseconds(250),
++                      base::BindRepeating(&PageChangeMonitor::PollPicker,
++                                          base::Unretained(this)));
++  web_contents()->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
++      base::UTF8ToUTF16(std::string(kPageChangeMonitorPickerScript) + "(" +
++                        kPageChangeMonitorScript + "," + argument + ")"),
++      base::BindOnce(&PageChangeMonitor::PickerPolled,
++                     weak_factory_.GetWeakPtr(), picker_generation_),
++      ISOLATED_WORLD_ID_CHROME_INTERNAL);
++  // Escape must reach the page rather than the tab strip.
++  web_contents()->Focus();
++}
++
++void PageChangeMonitor::PollPicker() {
++  if (!picking_) {
++    return;
++  }
++  if (base::TimeTicks::Now() >= picker_deadline_) {
++    CancelPicker(true);
++    return;
++  }
++  auto* frame = web_contents()->GetPrimaryMainFrame();
++  if (!frame || !frame->IsRenderFrameLive()) {
++    CancelPicker(false);
++    return;
++  }
++  if (picker_poll_pending_) {
++    return;
++  }
++  picker_poll_pending_ = true;
++  frame->ExecuteJavaScriptInIsolatedWorld(
++      base::UTF8ToUTF16(std::string_view(kPageChangeMonitorPollScript)),
++      base::BindOnce(&PageChangeMonitor::PickerPolled,
++                     weak_factory_.GetWeakPtr(), picker_generation_),
++      ISOLATED_WORLD_ID_CHROME_INTERNAL);
++}
++
++void PageChangeMonitor::PickerPolled(int generation, base::Value result) {
++  if (!picking_ || generation != picker_generation_) {
++    return;
++  }
++  picker_poll_pending_ = false;
++  const auto* data = result.GetIfDict();
++  const auto* state = data ? data->FindString("state") : nullptr;
++  if (state && *state == "picking") {
++    return;
++  }
++  const auto* selector = data ? data->FindString("selector") : nullptr;
++  CancelPicker(false);
++  if (state && *state == "done" && selector && !selector->empty() &&
++      selector->size() <= 2048 && *selector != selector_) {
++    // SettingsChanged resets the history and takes a fresh baseline.
++    PaneSettings::GetOrCreate(web_contents())->SetMonitorSelector(*selector);
++    PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
++        TabInterface::MaybeGetFromContents(web_contents()));
++  }
++}
++
++void PageChangeMonitor::CancelPicker(bool remove_overlay) {
++  if (!picking_) {
++    return;
++  }
++  picking_ = false;
++  picker_poll_pending_ = false;
++  ++picker_generation_;
++  picker_timer_.Stop();
++  // Keep describing the section that is still watched, if any.
++  status_ = Text(selector_.empty()   ? IDS_NEO_MONITOR_PICK_CANCELLED
++                 : has_change_       ? IDS_NEO_MONITOR_CHANGED
++                 : baseline_.empty() ? IDS_NEO_MONITOR_WAITING
++                                     : IDS_NEO_MONITOR_UNCHANGED);
++  auto* frame = web_contents()->GetPrimaryMainFrame();
++  if (remove_overlay && frame && frame->IsRenderFrameLive()) {
++    frame->ExecuteJavaScriptInIsolatedWorld(
++        base::UTF8ToUTF16(std::string_view(kPageChangeMonitorCancelScript)), {},
++        ISOLATED_WORLD_ID_CHROME_INTERNAL);
++  }
++  UpdateBlocked();
++  // Loads finished while the picker was open were not checked.
++  if (!selector_.empty() && baseline_.empty()) {
++    ScheduleScan();
++  }
++}
++
++void PageChangeMonitor::StopMonitoring() {
++  CancelPicker(true);
++  PaneSettings::GetOrCreate(web_contents())->SetMonitorSelector("");
++  PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
++      TabInterface::MaybeGetFromContents(web_contents()));
++}
++
++void PageChangeMonitor::Scan() {
++  if (selector_.empty() || scanning_ || exports_pending_ || picking_ ||
++      !CanReadPage()) {
 +    status_ = Text(IDS_NEO_MONITOR_PAUSED);
 +    UpdateBlocked();
 +    return;
 +  }
++  auto* frame = web_contents()->GetPrimaryMainFrame();
 +  std::string argument;
-+  base::JSONWriter::Write(base::Value(selection ? "@selection" : selector_),
-+                          &argument);
++  base::JSONWriter::Write(base::Value(selector_), &argument);
 +  scanning_ = true;
 +  UpdateBlocked();
 +  scan_timeout_.Start(FROM_HERE, base::Seconds(2),
@@ -484,7 +745,7 @@
 +      base::UTF8ToUTF16(std::string(kPageChangeMonitorScript) + "(" + argument +
 +                        ")"),
 +      base::BindOnce(&PageChangeMonitor::ScanComplete,
-+                     weak_factory_.GetWeakPtr(), generation_, selection),
++                     weak_factory_.GetWeakPtr(), generation_),
 +      ISOLATED_WORLD_ID_CHROME_INTERNAL);
 +}
 +
@@ -498,9 +759,7 @@
 +  UpdateBlocked();
 +}
 +
-+void PageChangeMonitor::ScanComplete(int generation,
-+                                     bool selection,
-+                                     base::Value result) {
++void PageChangeMonitor::ScanComplete(int generation, base::Value result) {
 +  if (generation != generation_) {
 +    return;
 +  }
@@ -512,27 +771,13 @@
 +  if (!text || text->empty() || text->size() > 262144) {
 +    const auto* error = data ? data->FindString("error") : nullptr;
 +    status_ = error ? base::UTF8ToUTF16(*error) : Text(IDS_NEO_MONITOR_FAILED);
-+    if (selection) {
-+      ShowChanges();
-+    }
 +    return;
-+  }
-+  if (selection) {
-+    const auto* selector = data->FindString("selector");
-+    if (!selector || selector->empty() || selector->size() > 2048) {
-+      return;
-+    }
-+    PaneSettings::GetOrCreate(web_contents())->SetMonitorSelector(*selector);
-+    PaneSettingsMenuModel::SaveWorkspaceSettingsForTab(
-+        TabInterface::MaybeGetFromContents(web_contents()));
-+    // SettingsChanged established the new region; this read is its baseline.
-+    settle_timer_.Stop();
-+    UpdateBlocked();
 +  }
 +  if (watched_url_.is_empty()) {
 +    watched_url_ = web_contents()->GetLastCommittedURL().GetWithoutRef();
 +  }
-+  last_check_ = base::TimeFormatAsIso8601(base::Time::Now());
++  last_check_value_ = base::Time::Now();
++  last_check_ = base::TimeFormatAsIso8601(last_check_value_);
 +  if (baseline_.empty()) {
 +    baseline_ = *text;
 +    status_ = Text(IDS_NEO_MONITOR_BASELINE);
@@ -541,6 +786,7 @@
 +    after_ = *text;
 +    baseline_ = *text;
 +    change_time_ = last_check_;
++    change_time_value_ = last_check_value_;
 +    has_change_ = true;
 +    status_ = Text(IDS_NEO_MONITOR_CHANGED);
 +    SetAttention(true);
@@ -560,45 +806,140 @@
 +}
 +
 +void PageChangeMonitor::ShowChanges() {
++  constexpr int kWidth = 600;
 +  auto dialog = std::make_unique<views::DialogDelegate>();
-+  auto body = std::make_unique<views::View>();
-+  dialog->SetTitle(Text(IDS_NEO_MONITOR_REVIEW));
++  dialog->SetTitle(Text(IDS_NEO_MONITOR_TITLE));
 +  dialog->SetButtons(static_cast<int>(ui::mojom::DialogButton::kOk));
 +  dialog->SetButtonLabel(ui::mojom::DialogButton::kOk,
 +                         Text(IDS_NEO_MONITOR_CLOSE));
++  dialog->set_fixed_width(kWidth + 2 * 20);
++  dialog->SetShowCloseButton(true);
++  auto body = std::make_unique<views::View>();
 +  body->SetLayoutManager(std::make_unique<views::BoxLayout>(
-+      views::BoxLayout::Orientation::kVertical, gfx::Insets(16), 10));
-+  auto label = std::make_unique<views::Label>(status_);
-+  label->SetMultiLine(true);
-+  label->SetMaximumWidth(640);
-+  body->AddChildView(std::move(label));
-+  std::string report = watched_url_.spec();
-+  if (!last_check_.empty()) {
-+    report += "\nLast successful check (UTC): " + last_check_;
-+  }
-+  if (!change_time_.empty()) {
-+    report += "\nLatest change observed (UTC): " + change_time_;
-+  }
++      views::BoxLayout::Orientation::kVertical, gfx::Insets::VH(4, 20), 12));
++
++  // Page identity.
++  auto* page = body->AddChildView(std::make_unique<views::View>());
++  page->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(), 2));
++  auto* title = page->AddChildView(std::make_unique<views::Label>(
++      web_contents()->GetTitle(), views::style::CONTEXT_DIALOG_BODY_TEXT,
++      views::style::STYLE_EMPHASIZED));
++  title->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++  title->SetElideBehavior(gfx::ELIDE_TAIL);
++  title->SetMaximumWidthSingleLine(kWidth);
++  const GURL& url = watched_url_.is_empty()
++                        ? web_contents()->GetLastCommittedURL()
++                        : watched_url_;
++  auto* address = page->AddChildView(std::make_unique<views::Label>(
++      base::UTF8ToUTF16(url.spec()), views::style::CONTEXT_DIALOG_BODY_TEXT,
++      views::style::STYLE_SECONDARY));
++  address->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++  address->SetElideBehavior(gfx::ELIDE_MIDDLE);
++  address->SetMaximumWidthSingleLine(kWidth);
++  address->SetTooltipText(base::UTF8ToUTF16(url.spec()));
++
++  // Current state, then the facts behind it.
++  auto* status = body->AddChildView(std::make_unique<views::Label>(
++      status_, views::style::CONTEXT_DIALOG_BODY_TEXT));
++  status->SetMultiLine(true);
++  status->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++  status->SetMaximumWidth(kWidth - 24);
++  status->SetBorder(views::CreateEmptyBorder(gfx::Insets::VH(8, 12)));
++  status->SetBackground(views::CreateRoundedRectBackground(
++      ui::kColorSubtleEmphasisBackground, 8));
++  status->GetViewAccessibility().SetRole(ax::mojom::Role::kStatus);
++
++  auto* facts = body->AddChildView(std::make_unique<views::View>());
++  auto* table = facts->SetLayoutManager(std::make_unique<views::TableLayout>());
++  table
++      ->AddColumn(views::LayoutAlignment::kStart,
++                  views::LayoutAlignment::kStart,
++                  views::TableLayout::kFixedSize,
++                  views::TableLayout::ColumnSize::kUsePreferred, 0, 0)
++      .AddPaddingColumn(views::TableLayout::kFixedSize, 16)
++      .AddColumn(views::LayoutAlignment::kStretch,
++                 views::LayoutAlignment::kStart, 1.0f,
++                 views::TableLayout::ColumnSize::kUsePreferred, 0, 0);
++  const auto fact = [&](int name, std::u16string value) {
++    table->AddRows(1, views::TableLayout::kFixedSize);
++    facts->AddChildView(std::make_unique<views::Label>(
++        Text(name), views::style::CONTEXT_DIALOG_BODY_TEXT,
++        views::style::STYLE_SECONDARY));
++    auto* label = facts->AddChildView(std::make_unique<views::Label>(
++        std::move(value), views::style::CONTEXT_DIALOG_BODY_TEXT));
++    label->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++    label->SetElideBehavior(gfx::ELIDE_MIDDLE);
++  };
++  fact(IDS_NEO_MONITOR_WATCHING,
++       Text(selector_.empty()      ? IDS_NEO_MONITOR_SCOPE_OFF
++            : selector_ == "@main" ? IDS_NEO_MONITOR_SCOPE_MAIN
++                                   : IDS_NEO_MONITOR_SCOPE_SECTION));
++  fact(IDS_NEO_MONITOR_LAST_CHECK,
++       last_check_value_.is_null()
++           ? Text(IDS_NEO_MONITOR_NOT_YET)
++           : base::TimeFormatShortDateAndTime(last_check_value_));
++  fact(IDS_NEO_MONITOR_LAST_CHANGE,
++       change_time_value_.is_null()
++           ? Text(IDS_NEO_MONITOR_NOT_YET)
++           : base::TimeFormatShortDateAndTime(change_time_value_));
 +  if (!export_folder_.empty()) {
-+    report += "\nExport folder: " + export_folder_.AsUTF8Unsafe();
++    fact(IDS_NEO_MONITOR_EXPORT_TO, export_folder_.LossyDisplayName());
 +  }
-+  if (!before_.empty() || !after_.empty()) {
-+    const auto [removed, added] = BuildPageChangeDiff(before_, after_);
-+    report += "\n\n" + base::UTF16ToUTF8(Text(IDS_NEO_MONITOR_REMOVED)) + "\n" +
-+              removed;
-+    report +=
-+        "\n\n" + base::UTF16ToUTF8(Text(IDS_NEO_MONITOR_ADDED)) + "\n" + added;
++
++  // The latest difference, as coloured removed/added lines.
++  auto list = std::make_unique<views::View>();
++  list->SetLayoutManager(std::make_unique<views::BoxLayout>(
++      views::BoxLayout::Orientation::kVertical, gfx::Insets(4), 2));
++  const auto rows = BuildPageChangeLines(before_, after_);
++  for (const auto& row : rows) {
++    std::u16string text = base::UTF8ToUTF16(row.text);
++    if (row.kind == PageChangeLine::Kind::kGap) {
++      text = l10n_util::GetPluralStringFUTF16(IDS_NEO_MONITOR_UNCHANGED_LINES,
++                                              static_cast<int>(row.hidden));
++    } else if (row.kind == PageChangeLine::Kind::kTruncated) {
++      text = Text(IDS_NEO_MONITOR_MORE_CHANGES);
++    }
++    list->AddChildView(
++        std::make_unique<ChangeRow>(row.kind, std::move(text), kWidth - 10));
 +  }
-+  auto area = std::make_unique<views::Textarea>();
-+  area->SetReadOnly(true);
-+  area->SetText(base::UTF8ToUTF16(report));
-+  area->SetPreferredSize(gfx::Size(640, 400));
-+  area->GetViewAccessibility().SetName(Text(IDS_NEO_MONITOR_REVIEW));
-+  body->AddChildView(std::move(area));
-+  auto help = std::make_unique<views::Label>(Text(IDS_NEO_MONITOR_HELP));
++  if (rows.empty()) {
++    auto* empty = list->AddChildView(std::make_unique<views::Label>(
++        Text(has_history() ? IDS_NEO_MONITOR_NO_CHANGES
++                           : IDS_NEO_MONITOR_NO_BASELINE),
++        views::style::CONTEXT_DIALOG_BODY_TEXT, views::style::STYLE_SECONDARY));
++    empty->SetMultiLine(true);
++    empty->SetMaximumWidth(kWidth - 40);
++    empty->SetBorder(views::CreateEmptyBorder(gfx::Insets::VH(24, 16)));
++  }
++  auto* scroll = body->AddChildView(std::make_unique<views::ScrollView>());
++  scroll->SetHorizontalScrollBarMode(
++      views::ScrollView::ScrollBarMode::kDisabled);
++  scroll->ClipHeightTo(0, 340);
++  scroll->SetBorder(views::CreateRoundedRectBorder(1, 8, ui::kColorSeparator));
++  scroll->SetContents(std::move(list));
++  scroll->GetViewAccessibility().SetName(Text(IDS_NEO_MONITOR_TITLE));
++
++  auto* help = body->AddChildView(std::make_unique<views::Label>(
++      Text(IDS_NEO_MONITOR_HELP), views::style::CONTEXT_DIALOG_BODY_TEXT,
++      views::style::STYLE_SECONDARY));
 +  help->SetMultiLine(true);
-+  help->SetMaximumWidth(640);
-+  body->AddChildView(std::move(help));
++  help->SetHorizontalAlignment(gfx::ALIGN_LEFT);
++  help->SetMaximumWidth(kWidth);
++
++  if (!selector_.empty()) {
++    auto stop = std::make_unique<views::MdTextButton>(
++        views::Button::PressedCallback(), Text(IDS_NEO_MONITOR_STOP));
++    stop->SetCallback(base::BindRepeating(
++        [](base::WeakPtr<PageChangeMonitor> self, views::Button* button) {
++          if (self) {
++            self->StopMonitoring();
++          }
++          button->GetWidget()->Close();
++        },
++        weak_factory_.GetWeakPtr(), stop.get()));
++    dialog->SetExtraView(std::move(stop));
++  }
 +  dialog->SetContentsView(std::move(body));
 +  views::DialogDelegate::CreateDialogWidget(
 +      std::move(dialog), web_contents()->GetTopLevelNativeWindow(),
@@ -862,7 +1203,7 @@
 +}  // namespace tabs
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor.h
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,108 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -875,6 +1216,7 @@
 +#include "base/files/file_path.h"
 +#include "base/memory/ref_counted_memory.h"
 +#include "base/memory/weak_ptr.h"
++#include "base/time/time.h"
 +#include "base/timer/timer.h"
 +#include "base/values.h"
 +#include "content/public/browser/render_widget_host_view.h"
@@ -893,12 +1235,16 @@
 + public:
 +  ~PageChangeMonitor() override;
 +  static PageChangeMonitor* GetOrCreate(content::WebContents* contents);
-+  void WatchSelection();
++  // Lets the user drag or click to choose the watched section in the page.
++  // Starts after the invoking menu has closed so focus can return to the page.
++  void StartPicker();
++  void StopMonitoring();
 +  void ShowChanges();
 +  void ChooseExportFolder();
 +  void ToggleScreenshot();
 +  void TogglePdf();
 +  bool has_change() const { return has_change_; }
++  bool has_history() const { return !baseline_.empty() || !after_.empty(); }
 +  const std::u16string& status() const { return status_; }
 +  void DidStopLoading() override;
 +  void DidStartNavigation(content::NavigationHandle* handle) override;
@@ -912,8 +1258,13 @@
 +  friend class content::WebContentsUserData<PageChangeMonitor>;
 +  void SettingsChanged();
 +  void ScheduleScan();
-+  void Scan(bool selection);
-+  void ScanComplete(int generation, bool selection, base::Value result);
++  bool CanReadPage();
++  void Scan();
++  void ScanComplete(int generation, base::Value result);
++  void ShowPicker();
++  void PollPicker();
++  void PickerPolled(int generation, base::Value result);
++  void CancelPicker(bool remove_overlay);
 +  void ScanTimedOut(int generation);
 +  void SetAttention(bool attention);
 +  void UpdateBlocked();
@@ -929,6 +1280,8 @@
 +  base::OneShotTimer settle_timer_;
 +  base::OneShotTimer scan_timeout_;
 +  base::OneShotTimer export_timeout_;
++  base::RepeatingTimer picker_timer_;
++  base::TimeTicks picker_deadline_;
 +  scoped_refptr<ui::SelectFileDialog> folder_dialog_;
 +  std::string selector_;
 +  GURL watched_url_;
@@ -938,11 +1291,16 @@
 +  std::string after_;
 +  std::string change_time_;
 +  std::string last_check_;
++  base::Time change_time_value_;
++  base::Time last_check_value_;
 +  std::string screenshot_started_at_;
 +  std::u16string export_title_;
 +  std::u16string status_;
 +  bool has_change_ = false;
 +  bool scanning_ = false;
++  bool picking_ = false;
++  bool picker_poll_pending_ = false;
++  int picker_generation_ = 0;
 +  int generation_ = 0;
 +  int exports_pending_ = 0;
 +  int export_generation_ = 0;
@@ -956,7 +1314,7 @@
 +#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_H_
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor_diff.h
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,167 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -964,19 +1322,33 @@
 +#define CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_DIFF_H_
 +
 +#include <algorithm>
++#include <cstdint>
 +#include <string>
 +#include <string_view>
-+#include <utility>
 +#include <vector>
 +
 +namespace tabs {
-+// Linear, bounded review-only diff. Expand the changed span to complete text
-+// lines so shared word endings cannot turn Wednesday/Thursday into Wedne/Thur.
-+inline std::pair<std::string, std::string> BuildPageChangeDiff(
++struct PageChangeLine {
++  enum class Kind { kContext, kRemoved, kAdded, kGap, kTruncated };
++  Kind kind;
++  std::string text;
++  // Number of unchanged lines summarized by a kGap row.
++  size_t hidden = 0;
++};
++
++// Review-only line diff. Whole lines are compared so shared word endings
++// cannot turn Wednesday/Thursday into Wedne/Thur. The LCS table is bounded;
++// larger edits fall back to showing the changed block as removed + added.
++inline std::vector<PageChangeLine> BuildPageChangeLines(
 +    std::string_view before,
-+    std::string_view after) {
++    std::string_view after,
++    size_t context = 2,
++    size_t max_rows = 300,
++    size_t max_line_bytes = 2000) {
++  using Kind = PageChangeLine::Kind;
++  std::vector<PageChangeLine> rows;
 +  if (before == after) {
-+    return {};
++    return rows;
 +  }
 +  const auto lines = [](std::string_view text) {
 +    std::vector<std::string_view> result;
@@ -984,15 +1356,14 @@
 +      return result;
 +    }
 +    size_t start = 0;
-+    while (start <= text.size()) {
++    while (true) {
 +      const auto newline = text.find('\n', start);
-+      const auto end =
-+          newline == std::string_view::npos ? text.size() : newline;
-+      result.push_back(text.substr(start, end - start));
 +      if (newline == std::string_view::npos) {
++        result.push_back(text.substr(start));
 +        break;
 +      }
-+      start = end + 1;
++      result.push_back(text.substr(start, newline - start));
++      start = newline + 1;
 +    }
 +    return result;
 +  };
@@ -1009,30 +1380,111 @@
 +             new_lines[new_lines.size() - 1 - suffix]) {
 +    ++suffix;
 +  }
-+  const auto excerpt = [prefix, suffix](std::string_view text,
-+                                        const auto& parts) {
-+    if (parts.size() == prefix + suffix) {
-+      return std::string();
++
++  // Edit script over the whole text.
++  struct Op {
++    Kind kind;
++    std::string_view text;
++  };
++  std::vector<Op> ops;
++  for (size_t i = 0; i < prefix; ++i) {
++    ops.push_back({Kind::kContext, old_lines[i]});
++  }
++  const size_t m = old_lines.size() - prefix - suffix;
++  const size_t n = new_lines.size() - prefix - suffix;
++  const auto old_at = [&](size_t i) { return old_lines[prefix + i]; };
++  const auto new_at = [&](size_t j) { return new_lines[prefix + j]; };
++  // Show each run of edits as its removals followed by its additions.
++  std::vector<Op> removed, added;
++  const auto flush = [&] {
++    ops.insert(ops.end(), removed.begin(), removed.end());
++    ops.insert(ops.end(), added.begin(), added.end());
++    removed.clear();
++    added.clear();
++  };
++  if (m && n && (m + 1) * (n + 1) <= 1000000) {
++    // table[i][j] = LCS length of old[i..] and new[j..]; min(m, n) < 1000.
++    const size_t width = n + 1;
++    std::vector<uint16_t> table((m + 1) * width, 0);
++    for (size_t i = m; i-- > 0;) {
++      for (size_t j = n; j-- > 0;) {
++        table[i * width + j] = old_at(i) == new_at(j)
++                                   ? table[(i + 1) * width + j + 1] + 1
++                                   : std::max(table[(i + 1) * width + j],
++                                              table[i * width + j + 1]);
++      }
 +    }
-+    const size_t start = parts[prefix].data() - text.data();
-+    const auto last = parts[parts.size() - 1 - suffix];
-+    size_t end =
-+        std::min(static_cast<size_t>(last.data() - text.data()) + last.size(),
-+                 start + 16000);
-+    // Do not cut the UTF-8 sequence at the byte budget.
-+    while (end > start && end < text.size() &&
-+           (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) {
++    size_t i = 0, j = 0;
++    while (i < m || j < n) {
++      if (i < m && j < n && old_at(i) == new_at(j)) {
++        flush();
++        ops.push_back({Kind::kContext, old_at(i)});
++        ++i;
++        ++j;
++      } else if (j < n && (i == m || table[i * width + j + 1] >=
++                                         table[(i + 1) * width + j])) {
++        added.push_back({Kind::kAdded, new_at(j++)});
++      } else {
++        removed.push_back({Kind::kRemoved, old_at(i++)});
++      }
++    }
++  } else {
++    for (size_t i = 0; i < m; ++i) {
++      removed.push_back({Kind::kRemoved, old_at(i)});
++    }
++    for (size_t j = 0; j < n; ++j) {
++      added.push_back({Kind::kAdded, new_at(j)});
++    }
++  }
++  flush();
++  for (size_t i = old_lines.size() - suffix; i < old_lines.size(); ++i) {
++    ops.push_back({Kind::kContext, old_lines[i]});
++  }
++
++  const auto clip = [max_line_bytes](std::string_view text) {
++    if (text.size() <= max_line_bytes) {
++      return std::string(text);
++    }
++    size_t end = max_line_bytes;
++    // Do not cut a UTF-8 sequence at the byte budget.
++    while (end > 0 && (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) {
 +      --end;
 +    }
-+    return std::string(text.substr(start, end - start));
++    return std::string(text.substr(0, end)) + "…";
 +  };
-+  return {excerpt(before, old_lines), excerpt(after, new_lines)};
++  // Keep unchanged lines only near an edit; summarize the rest as gaps.
++  std::vector<bool> keep(ops.size(), false);
++  for (size_t k = 0; k < ops.size(); ++k) {
++    if (ops[k].kind != Kind::kContext) {
++      const size_t from = k > context ? k - context : 0;
++      const size_t to = std::min(ops.size(), k + context + 1);
++      std::fill(keep.begin() + from, keep.begin() + to, true);
++    }
++  }
++  for (size_t k = 0; k < ops.size();) {
++    if (rows.size() >= max_rows) {
++      rows.push_back({Kind::kTruncated, std::string()});
++      break;
++    }
++    if (!keep[k]) {
++      size_t end = k;
++      while (end < ops.size() && !keep[end]) {
++        ++end;
++      }
++      rows.push_back({Kind::kGap, std::string(), end - k});
++      k = end;
++      continue;
++    }
++    rows.push_back({ops[k].kind, clip(ops[k].text)});
++    ++k;
++  }
++  return rows;
 +}
 +}  // namespace tabs
 +#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_DIFF_H_
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/page_change_monitor_script.h
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,320 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -1047,76 +1499,309 @@
 +  const started = performance.now();
 +  const MAX_NODES = 4000, MAX_TEXT = 65536, MAX_MS = 12;
 +  const excluded = 'script,style,noscript,template,nav,header,footer,aside,[hidden],[aria-hidden="true"],input,textarea,select,[contenteditable]:not([contenteditable="false"])';
-+  let root, selector = scope;
-+  if (scope === '@selection') {
-+    const selection = window.getSelection();
-+    if (!selection || selection.isCollapsed || !selection.rangeCount)
-+      return {error: 'Select text in the section you want to watch first.'};
-+    const range = selection.getRangeAt(0);
-+    root = range.commonAncestorContainer;
-+    if (root.nodeType !== Node.ELEMENT_NODE) root = root.parentElement;
-+    root = root.closest('p,li,section,article,main,div,td,blockquote') || root;
-+    const parts = [];
-+    for (let element = root; element && element !== document.documentElement;
-+         element = element.parentElement) {
-+      if (parts.length >= 24) return {error: 'This section cannot be reliably located after a refresh.'};
-+      if (element.id && element.id.length <= 256 && document.querySelectorAll('#' + CSS.escape(element.id)).length === 1) {
-+        parts.unshift('#' + CSS.escape(element.id)); break;
-+      }
-+      let index = 1;
-+      for (let sibling = element.previousElementSibling; sibling; sibling = sibling.previousElementSibling) {
-+        if (sibling.localName === element.localName) ++index;
-+        if (performance.now() - started > MAX_MS) return {error: 'Section selection exceeded the time limit.'};
-+      }
-+      parts.unshift(element.localName + ':nth-of-type(' + index + ')');
-+    }
-+    selector = parts.join(' > ');
-+    if (!selector || selector.length > 2048) return {error: 'This section cannot be reliably located.'};
-+  } else if (scope === '@main') {
++  let roots;
++  if (scope === '@main') {
 +    // Prefer article text; ordinary documents can fall back to their body.
-+    root = document.querySelector('article') || document.querySelector('main') || document.body;
++    roots = [document.querySelector('article') || document.querySelector('main') || document.body];
 +  } else {
-+    try { root = document.querySelector(scope); }
++    // A picked section may be a list of sibling blocks; all must still exist.
++    try { roots = [...document.querySelectorAll(scope)]; }
 +    catch (_) { return {error: 'The watched section selector is invalid.'}; }
++    if (roots.length !== scope.split(/(?<!\\),/).length) roots = [];
 +  }
-+  if (!root || root.closest(excluded)) return {error: 'The watched section is missing. Keeping the previous version.'};
++  if (!roots.length || roots.some(root => !root || root.closest(excluded)))
++    return {error: 'The watched section is missing. Keeping the previous version.'};
 +  let visited = 0, size = 0;
 +  const lines = [];
-+  for (let ancestor = root; ancestor; ancestor = ancestor.parentElement) {
-+    if (++visited > MAX_NODES || performance.now() - started > MAX_MS)
-+      return {error: 'Scan limit reached. Select a smaller section to watch.'};
-+    const style = getComputedStyle(ancestor);
-+    if (style.display === 'none' || style.visibility !== 'visible' ||
-+        style.contentVisibility === 'hidden' || style.opacity === '0')
-+      return {error: 'The watched section is hidden. Keeping the previous version.'};
-+  }
-+  // Manual traversal can stop immediately; TreeWalker filters can otherwise
-+  // keep visiting rejected siblings after a budget is exhausted.
-+  let node = root.firstChild;
-+  while (node) {
-+    if (++visited > MAX_NODES || performance.now() - started > MAX_MS)
-+      return {error: 'Scan limit reached. Select a smaller section to watch.'};
-+    let descend = true;
-+    if (node.nodeType === Node.ELEMENT_NODE) {
-+      const style = getComputedStyle(node);
-+      descend = !node.matches(excluded) && style.display !== 'none' &&
-+        style.visibility === 'visible' && style.contentVisibility !== 'hidden' && style.opacity !== '0';
-+    } else if (node.nodeType === Node.TEXT_NODE) {
-+      if (node.length > MAX_TEXT || size + node.length + 1 > MAX_TEXT)
-+        return {error: 'Too much text. Select a smaller section to watch.'};
-+      const text = node.data.replace(/\s+/g, ' ').trim();
-+      size += node.length + 1;
-+      if (text) lines.push(text);
++  for (const root of roots) {
++    for (let ancestor = root; ancestor; ancestor = ancestor.parentElement) {
++      if (++visited > MAX_NODES || performance.now() - started > MAX_MS)
++        return {error: 'Scan limit reached. Select a smaller section to watch.'};
++      const style = getComputedStyle(ancestor);
++      if (style.display === 'none' || style.visibility !== 'visible' ||
++          style.contentVisibility === 'hidden' || style.opacity === '0')
++        return {error: 'The watched section is hidden. Keeping the previous version.'};
 +    }
-+    if (descend && node.firstChild) { node = node.firstChild; continue; }
-+    while (node && node !== root && !node.nextSibling) node = node.parentNode;
-+    if (!node || node === root) break;
-+    node = node.nextSibling;
++    // Manual traversal can stop immediately; TreeWalker filters can otherwise
++    // keep visiting rejected siblings after a budget is exhausted.
++    let node = root.firstChild;
++    while (node) {
++      if (++visited > MAX_NODES || performance.now() - started > MAX_MS)
++        return {error: 'Scan limit reached. Select a smaller section to watch.'};
++      let descend = true;
++      if (node.nodeType === Node.ELEMENT_NODE) {
++        const style = getComputedStyle(node);
++        descend = !node.matches(excluded) && style.display !== 'none' &&
++          style.visibility === 'visible' && style.contentVisibility !== 'hidden' && style.opacity !== '0';
++      } else if (node.nodeType === Node.TEXT_NODE) {
++        if (node.length > MAX_TEXT || size + node.length + 1 > MAX_TEXT)
++          return {error: 'Too much text. Select a smaller section to watch.'};
++        const text = node.data.replace(/\s+/g, ' ').trim();
++        size += node.length + 1;
++        if (text) lines.push(text);
++      }
++      if (descend && node.firstChild) { node = node.firstChild; continue; }
++      while (node && node !== root && !node.nextSibling) node = node.parentNode;
++      if (!node || node === root) break;
++      node = node.nextSibling;
++    }
 +  }
 +  const text = lines.join('\n');
 +  if (!text) return {error: 'No readable text found. Keeping the previous version.'};
-+  return {text, selector, nodes: visited};
++  return {text, nodes: visited};
 +})
++)JS";
++
++// Interactive section picker, called as picker(scan, strings) with the scan
++// function above. Dragging outlines the blocks of text inside the rectangle;
++// a click picks the block under the pointer. Results
++// are left in the isolated world for kPageChangeMonitorPollScript, because
++// isolated-world execution cannot wait for a promise.
++inline constexpr char kPageChangeMonitorPickerScript[] = R"JS(
++((scan, strings) => {
++  globalThis.heliumNeoPicker?.cancel();
++  const blocks = 'p,li,dd,dt,td,th,pre,blockquote,figure,h1,h2,h3,h4,h5,h6,' +
++    'table,ul,ol,dl,section,article,main,div,body';
++  const host = document.createElement('div');
++  host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;';
++  const shadow = host.attachShadow({mode: 'closed'});
++  const sheet = new CSSStyleSheet();
++  sheet.replaceSync(`
++    * { box-sizing: border-box; }
++    .layer { position: fixed; inset: 0; cursor: crosshair; background: rgb(0 0 0 / .08); }
++    .box { position: fixed; pointer-events: none; display: none; border-radius: 4px; }
++    .target { border: 2px solid #1a73e8; background: rgb(26 115 232 / .12);
++              box-shadow: 0 0 0 9999px rgb(0 0 0 / .18); }
++    .target.done { border-color: #188038; background: rgb(24 128 56 / .14); }
++    .drag { border: 1.5px dashed #1a73e8; }
++    .tag { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px;
++           max-width: min(420px, 90vw); overflow: hidden; white-space: nowrap;
++           text-overflow: ellipsis; padding: 3px 8px; border-radius: 4px;
++           background: #1a73e8; color: white; font: 12px/1.4 system-ui, sans-serif; }
++    .target.below .tag { bottom: auto; top: 100%; margin: 4px 0 0; }
++    .target.done .tag { background: #188038; }
++    .bar { position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
++           display: flex; align-items: center; gap: 12px; max-width: calc(100vw - 24px);
++           padding: 8px 8px 8px 14px; border-radius: 10px; background: rgb(32 33 36 / .94);
++           color: white; font: 13px/1.4 system-ui, sans-serif;
++           box-shadow: 0 4px 16px rgb(0 0 0 / .3); }
++    .bar.error { background: rgb(165 14 14 / .95); }
++    button { font: inherit; color: inherit; background: rgb(255 255 255 / .16);
++             border: 0; border-radius: 6px; padding: 4px 12px; cursor: pointer; }
++    button:hover { background: rgb(255 255 255 / .26); }
++  `);
++  shadow.adoptedStyleSheets = [sheet];
++  const make = (tag, className, parent = shadow) => {
++    const element = document.createElement(tag);
++    element.className = className;
++    parent.append(element);
++    return element;
++  };
++  const layer = make('div', 'layer');
++  const drag = make('div', 'box drag');
++  const target = make('div', 'box target');
++  const tag = make('div', 'tag', target);
++  const bar = make('div', 'bar');
++  bar.setAttribute('role', 'status');
++  const message = make('span', 'message', bar);
++  const cancelButton = make('button', 'cancel', bar);
++  message.textContent = strings.hint;
++  cancelButton.textContent = strings.cancel;
++
++  const picker = {result: null};
++  let start = null, current = [], frame = 0, finished = false;
++  const under = (x, y) => document.elementsFromPoint(x, y).find(e => e !== host);
++  const hasText = element => !!element && /\S/.test(element.textContent || '');
++  const blockOf = element => {
++    if (element === document.documentElement) element = document.body;
++    return hasText(element) ? element.closest(blocks) || element : null;
++  };
++  // A click on the page margin or an empty box must not pick the whole page.
++  const pickAt = (x, y) => {
++    const element = under(x, y);
++    const block = element === document.body ||
++        element === document.documentElement ? null : blockOf(element);
++    return block ? [block] : [];
++  };
++  const common = (a, b) => {
++    const ancestors = new Set();
++    for (let e = a; e; e = e.parentElement) ancestors.add(e);
++    for (let e = b; e; e = e.parentElement) if (ancestors.has(e)) return e;
++    return null;
++  };
++  const overlaps = (r, rect) => r.width && r.height &&
++      r.right > rect.left && r.left < rect.left + rect.width &&
++      r.bottom > rect.top && r.top < rect.top + rect.height;
++  // Sample the rectangle instead of walking the DOM so huge pages stay cheap.
++  const pickInRect = rect => {
++    let found = null;
++    const steps = 6;
++    for (let i = 0; i <= steps; ++i) {
++      for (let j = 0; j <= steps; ++j) {
++        const element = under(rect.left + rect.width * i / steps,
++                              rect.top + rect.height * j / steps);
++        if (!hasText(element)) continue;
++        found = found ? common(found, element) : element;
++      }
++    }
++    const block = blockOf(found);
++    if (!block) return [];
++    // Two paragraphs of a long article should not watch the whole article:
++    // keep only the child blocks the rectangle touches.
++    if ([...block.childNodes].some(n => n.nodeType === Node.TEXT_NODE && /\S/.test(n.data)))
++      return [block];
++    const children = [...block.children].slice(0, 500).filter(hasText);
++    const inside = children.filter(child => overlaps(child.getBoundingClientRect(), rect));
++    return inside.length && inside.length < children.length ? inside : [block];
++  };
++  const selectorOf = element => {
++    if (element === document.body) return 'body';
++    const parts = [];
++    for (let e = element; e && e !== document.documentElement; e = e.parentElement) {
++      if (parts.length >= 24) return '';
++      if (e.id && e.id.length <= 256 &&
++          document.querySelectorAll('#' + CSS.escape(e.id)).length === 1) {
++        parts.unshift('#' + CSS.escape(e.id));
++        break;
++      }
++      let index = 1;
++      for (let s = e.previousElementSibling; s; s = s.previousElementSibling)
++        if (s.localName === e.localName) ++index;
++      parts.unshift(e.localName + ':nth-of-type(' + index + ')');
++    }
++    const selector = parts.join(' > ');
++    return selector && selector.length <= 2048 &&
++        document.querySelector(selector) === element
++        ? selector : '';
++  };
++  const place = (box, rect) => {
++    box.style.display = 'block';
++    box.style.left = rect.left + 'px';
++    box.style.top = rect.top + 'px';
++    box.style.width = rect.width + 'px';
++    box.style.height = rect.height + 'px';
++  };
++  const show = elements => {
++    current = elements;
++    if (!elements.length) { target.style.display = 'none'; return; }
++    const rects = elements.map(element => element.getBoundingClientRect());
++    const left = Math.min(...rects.map(r => r.left));
++    const top = Math.min(...rects.map(r => r.top));
++    place(target, {left, top, width: Math.max(...rects.map(r => r.right)) - left,
++                   height: Math.max(...rects.map(r => r.bottom)) - top});
++    target.classList.toggle('below', top < 40);
++    tag.textContent = elements.map(e => e.innerText || e.textContent || '').join(' ')
++        .replace(/\s+/g, ' ').trim().slice(0, 120);
++  };
++  const say = (text, error = false) => {
++    message.textContent = text;
++    bar.classList.toggle('error', error);
++  };
++  const close = () => {
++    finished = true;
++    cancelAnimationFrame(frame);
++    removeEventListener('keydown', onKey, true);
++    removeEventListener('scroll', onScroll, true);
++    removeEventListener('resize', onScroll, true);
++    host.remove();
++    if (globalThis.heliumNeoPicker === picker && !picker.result)
++      delete globalThis.heliumNeoPicker;
++  };
++  picker.cancel = () => {
++    if (finished) return;
++    picker.result = {state: 'cancelled'};
++    close();
++  };
++  const choose = elements => {
++    const parts = elements.map(selectorOf);
++    const selector = parts.length && !parts.includes('') ? parts.join(',') : '';
++    const read = selector && selector.length <= 2048 ? scan(selector)
++                                                     : {error: strings.empty};
++    if (!read.text) {
++      say(read.error || strings.empty, true);
++      return;
++    }
++    picker.result = {state: 'done', selector};
++    finished = true;
++    show(elements);
++    target.classList.add('done');
++    tag.textContent = strings.done;
++    say(strings.done);
++    setTimeout(close, 900);
++  };
++  const rectFrom = event => {
++    const left = Math.min(start.x, event.clientX), top = Math.min(start.y, event.clientY);
++    return {left, top, width: Math.abs(event.clientX - start.x),
++            height: Math.abs(event.clientY - start.y)};
++  };
++  let lastMove = null;
++  const update = () => {
++    frame = 0;
++    if (finished || !lastMove) return;
++    if (start && start.dragging) {
++      const rect = rectFrom(lastMove);
++      place(drag, rect);
++      show(pickInRect(rect));
++    } else if (!start) {
++      show(pickAt(lastMove.clientX, lastMove.clientY));
++    }
++  };
++  layer.addEventListener('pointermove', event => {
++    if (start && !start.dragging &&
++        Math.hypot(event.clientX - start.x, event.clientY - start.y) > 6)
++      start.dragging = true;
++    lastMove = event;
++    if (!frame) frame = requestAnimationFrame(update);
++  });
++  layer.addEventListener('pointerdown', event => {
++    if (finished || event.button !== 0) return;
++    event.preventDefault();
++    layer.setPointerCapture(event.pointerId);
++    start = {x: event.clientX, y: event.clientY, dragging: false};
++    say(strings.hint);
++  });
++  layer.addEventListener('pointerup', event => {
++    if (finished || !start) return;
++    const elements = start.dragging ? pickInRect(rectFrom(event))
++                                    : pickAt(event.clientX, event.clientY);
++    start = null;
++    drag.style.display = 'none';
++    show(elements);
++    choose(elements);
++  });
++  layer.addEventListener('contextmenu', event => event.preventDefault());
++  cancelButton.addEventListener('click', () => picker.cancel());
++  const onKey = event => {
++    if (event.key === 'Escape') picker.cancel();
++    if (!finished && event.key === 'Enter' && current?.length) choose(current);
++    event.preventDefault();
++    event.stopImmediatePropagation();
++  };
++  const onScroll = () => { if (!finished && current.length && !start) show(current); };
++  addEventListener('keydown', onKey, true);
++  addEventListener('scroll', onScroll, true);
++  addEventListener('resize', onScroll, true);
++  (document.body || document.documentElement).append(host);
++  globalThis.heliumNeoPicker = picker;
++  return {state: 'picking'};
++})
++)JS";
++
++inline constexpr char kPageChangeMonitorPollScript[] = R"JS(
++(() => {
++  const picker = globalThis.heliumNeoPicker;
++  if (!picker) return {state: 'gone'};
++  if (!picker.result) return {state: 'picking'};
++  delete globalThis.heliumNeoPicker;
++  return picker.result;
++})()
++)JS";
++
++inline constexpr char kPageChangeMonitorCancelScript[] = R"JS(
++(() => {
++  globalThis.heliumNeoPicker?.cancel();
++  delete globalThis.heliumNeoPicker;
++})()
 +)JS";
 +}  // namespace tabs
 +#endif  // CHROME_BROWSER_UI_TABS_PAGE_CHANGE_MONITOR_SCRIPT_H_
@@ -1586,7 +2271,7 @@
 +  AddCheckItem(kMonitorCommandId,
 +               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_MAIN));
 +  AddCheckItem(kMonitorSelectionCommandId,
-+               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_SELECTION));
++               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_PICK_MENU));
 +  AddItemWithStringId(kReviewChangesCommandId, IDS_NEO_MONITOR_REVIEW);
 +  AddCheckItem(kAutoScreenshotCommandId,
 +               l10n_util::GetStringUTF16(IDS_NEO_MONITOR_SCREENSHOT));
@@ -1596,7 +2281,7 @@
  }
  
  PaneSettingsMenuModel::~PaneSettingsMenuModel() = default;
-@@ -74,16 +94,47 @@ bool PaneSettingsMenuModel::IsCommandIdC
+@@ -74,16 +94,53 @@ bool PaneSettingsMenuModel::IsCommandIdC
      return settings && settings->mobile_enabled() &&
             settings->mobile_full_height();
    }
@@ -1631,8 +2316,14 @@
    if (!tab_ || model_->GetIndexOfTab(tab_.get()) == TabStripModel::kNoTab) {
      return false;
    }
-+  if (command_id == kJitterCommandId || command_id == kReviewChangesCommandId) {
++  if (command_id == kJitterCommandId) {
 +    return true;
++  }
++  if (command_id == kReviewChangesCommandId) {
++    auto* settings = PaneSettings::FromWebContents(tab_->GetContents());
++    auto* monitor = PageChangeMonitor::FromWebContents(tab_->GetContents());
++    return (settings && !settings->monitor_selector().empty()) ||
++           (monitor && monitor->has_history());
 +  }
 +  if (command_id == kAutoScreenshotCommandId ||
 +      command_id == kAutoPdfCommandId || command_id == kExportFolderCommandId) {
@@ -1648,7 +2339,7 @@
    if (command_id == kWorkspaceCommandId) {
      auto* browser = model_->delegate()->GetBrowserWindowInterface();
      return tab_->GetContents()->GetVisibleURL().SchemeIsHTTPOrHTTPS() &&
-@@ -111,17 +162,36 @@ void PaneSettingsMenuModel::ExecuteComma
+@@ -111,17 +168,41 @@ void PaneSettingsMenuModel::ExecuteComma
      return;
    }
    auto* settings = PaneSettings::GetOrCreate(tab_->GetContents());
@@ -1663,7 +2354,12 @@
 +    if (IsCommandIdChecked(command_id)) {
 +      settings->SetMonitorSelector("");
 +    } else {
-+      monitor->WatchSelection();
++      // The picker draws over the page, so it needs the tab to be visible.
++      if (const int index = model_->GetIndexOfTab(tab_.get());
++          index != model_->active_index()) {
++        model_->ActivateTabAt(index);
++      }
++      monitor->StartPicker();
 +    }
 +  } else if (command_id == kReviewChangesCommandId) {
 +    monitor->ShowChanges();
@@ -1691,7 +2387,7 @@
    }
    SaveWorkspaceSettings();
  }
-@@ -191,25 +261,30 @@ void PaneSettingsMenuModel::CreateWorksp
+@@ -191,25 +272,30 @@ void PaneSettingsMenuModel::CreateWorksp
  }
  
  void PaneSettingsMenuModel::SaveWorkspaceSettings() {

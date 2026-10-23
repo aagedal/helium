@@ -1729,12 +1729,6 @@
     "message": "Monitor article text for changes"
   },
   {
-    "name": "IDS_NEO_MONITOR_SELECTION",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Helium Neo page change monitoring: monitor_selection.",
-    "message": "Monitor selected section for changes"
-  },
-  {
     "name": "IDS_NEO_MONITOR_REVIEW",
     "source": "chrome/app/generated_resources.grd",
     "context": "Helium Neo page change monitoring: monitor_review.",
@@ -1819,22 +1813,10 @@
     "message": "Close"
   },
   {
-    "name": "IDS_NEO_MONITOR_REMOVED",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Helium Neo page change monitoring: monitor_removed.",
-    "message": "Removed / previous text (up to 16,000 characters):"
-  },
-  {
-    "name": "IDS_NEO_MONITOR_ADDED",
-    "source": "chrome/app/generated_resources.grd",
-    "context": "Helium Neo page change monitoring: monitor_added.",
-    "message": "Added / current text (up to 16,000 characters):"
-  },
-  {
     "name": "IDS_NEO_MONITOR_HELP",
     "source": "chrome/app/generated_resources.grd",
     "context": "Helium Neo page change monitoring: monitor_help.",
-    "message": "Checks run after page loads, not continuously. Only the latest two versions are kept in memory. Missing sections and scan failures do not count as changes. Review section selection after a site redesign. Automatic exports are off after restarting the browser."
+    "message": "The watched text is compared each time the page finishes loading. Turn on auto-refresh for regular checks. Only the latest two versions are kept. Missing sections and failed checks never count as changes. Automatic exports turn off when the browser restarts."
   },
   {
     "name": "IDS_NEO_MONITOR_FOLDER_READY",
@@ -1859,6 +1841,144 @@
     "source": "chrome/app/generated_resources.grd",
     "context": "Helium Neo page change monitoring: monitor_exported.",
     "message": "Change detected and exported with a source record and SHA-256 checksum."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICK_MENU",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Tab menu item that lets the user choose a part of the page to watch for text changes.",
+    "message": "Monitor a section of the page…"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICK_HINT",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Instructions shown over the page while choosing the section to watch.",
+    "message": "Drag across the part of the page to watch, or click a block of text. Press Esc to cancel."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICK_CANCEL",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Button that closes the section picker without watching anything.",
+    "message": "Cancel"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICK_EMPTY",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Shown in the section picker when the chosen area has no readable text.",
+    "message": "There is no readable text there. Try a larger area."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICK_DONE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Shown briefly over the page after a section was chosen.",
+    "message": "Watching this section for changes"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICKING",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Status while the user is choosing a section on the page.",
+    "message": "Choose the section to watch on the page."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_PICK_CANCELLED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Status after the section picker closed without a choice.",
+    "message": "No section was chosen. Change monitoring is off."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_TITLE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Title of the dialog that shows page text changes.",
+    "message": "Page changes"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_WATCHING",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label for what part of the page is being watched.",
+    "message": "Watching"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_SCOPE_OFF",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Value when change monitoring is off.",
+    "message": "Nothing (monitoring is off)"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_SCOPE_MAIN",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Value when the main article text is watched.",
+    "message": "Article text"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_SCOPE_SECTION",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Value when a user-chosen section is watched.",
+    "message": "Selected section"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_LAST_CHECK",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label for the time of the latest successful check.",
+    "message": "Last checked"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_LAST_CHANGE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label for the time the latest change was seen.",
+    "message": "Latest change"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_EXPORT_TO",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Label for the folder that automatic exports are saved to.",
+    "message": "Saving exports to"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_NOT_YET",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Value for a time that has not happened yet.",
+    "message": "Not yet"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_NO_CHANGES",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Shown instead of a diff when nothing changed since monitoring started.",
+    "message": "No changes since monitoring started."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_NO_BASELINE",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Shown instead of a diff before the first successful check.",
+    "message": "Changes will appear here after the first successful check."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_MORE_CHANGES",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Shown when the diff has more lines than the dialog displays.",
+    "message": "More changes are not shown."
+  },
+  {
+    "name": "IDS_NEO_MONITOR_STOP",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Button that turns off change monitoring for this tab.",
+    "message": "Stop monitoring"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_UNCHANGED_LINES",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Summary row for unchanged lines hidden from the diff.",
+    "message": "{COUNT, plural,\n        =1 {1 unchanged line}\n        other {# unchanged lines}}"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_LINE_REMOVED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Accessible name for a removed line in the diff.",
+    "message": "Removed: <ph name=\"TEXT\">$1<ex>The meeting will be on Wednesday.</ex></ph>"
+  },
+  {
+    "name": "IDS_NEO_MONITOR_LINE_ADDED",
+    "source": "chrome/app/generated_resources.grd",
+    "context": "Accessible name for an added line in the diff.",
+    "message": "Added: <ph name=\"TEXT\">$1<ex>The meeting has moved to Thursday.</ex></ph>"
   },
   {
     "name": "IDS_NEO_MONITOR_EXPORT_TIMEOUT",

@@ -2,7 +2,7 @@
 # Copyright 2026 The Helium Authors
 # You can use, redistribute, and/or modify this source code under
 # the terms of the GPL-3.0 license that can be found in the LICENSE file.
-"""Compile the production changed-line excerpt helper with sanitizers."""
+"""Compile the production line diff helper with sanitizers."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,34 +14,90 @@ HARNESS = r'''
 #include "diff.h"
 #include <cassert>
 #include <iostream>
-int main() {
-  auto diff = tabs::BuildPageChangeDiff("Title\nThe meeting will be on Wednesday.",
-                                       "Title\nThe meeting has moved to Thursday.");
-  assert(diff.first == "The meeting will be on Wednesday.");
-  assert(diff.second == "The meeting has moved to Thursday.");
-  diff = tabs::BuildPageChangeDiff("Title\nOld statement.\nFooter", "Title\nNew statement.\nFooter");
-  assert(diff.first == "Old statement." && diff.second == "New statement.");
-  diff = tabs::BuildPageChangeDiff("same", "same");
-  assert(diff.first.empty() && diff.second.empty());
-  diff = tabs::BuildPageChangeDiff("", "Added");
-  assert(diff.first.empty() && diff.second == "Added");
-  diff = tabs::BuildPageChangeDiff("Removed", "");
-  assert(diff.first == "Removed" && diff.second.empty());
-  diff = tabs::BuildPageChangeDiff("A\nB\nC", "A\nC");
-  assert(diff.first == "B" && diff.second.empty());
-  diff = tabs::BuildPageChangeDiff("A\nC", "A\nB\nC");
-  assert(diff.first.empty() && diff.second == "B");
-  diff = tabs::BuildPageChangeDiff("Tittel\nRødgrønn 日本語.", "Tittel\nBlågrønn 日本語.");
-  assert(diff.first == "Rødgrønn 日本語." && diff.second == "Blågrønn 日本語.");
-  diff = tabs::BuildPageChangeDiff(std::string(15999, 'x') + "日本語", "changed");
-  assert(diff.first.size() == 15999);
-  for (int count = 0; count < 200; ++count) {
-    const std::string prefix(count, 'p'), suffix(count, 's');
-    diff = tabs::BuildPageChangeDiff(prefix + "AAA" + suffix, prefix + "BBB" + suffix);
-    assert(diff.first == prefix + "AAA" + suffix);
-    assert(diff.second == prefix + "BBB" + suffix);
+#include <string>
+#include <vector>
+using Kind = tabs::PageChangeLine::Kind;
+static int cases = 0;
+static std::string render(const std::vector<tabs::PageChangeLine>& rows) {
+  std::string out;
+  for (const auto& row : rows) {
+    switch (row.kind) {
+      case Kind::kContext: out += " " + row.text; break;
+      case Kind::kRemoved: out += "-" + row.text; break;
+      case Kind::kAdded: out += "+" + row.text; break;
+      case Kind::kGap: out += "~" + std::to_string(row.hidden); break;
+      case Kind::kTruncated: out += "!"; break;
+    }
+    out += "|";
   }
-  std::cout << "PASS: 209 changed-line and UTF-8 excerpt cases\n";
+  return out;
+}
+static void expect(const std::string& before, const std::string& after,
+                   const std::string& expected, size_t context = 2) {
+  const auto actual = render(tabs::BuildPageChangeLines(before, after, context));
+  if (actual != expected) {
+    std::cerr << "expected " << expected << "\n  actual " << actual << "\n";
+    assert(false);
+  }
+  ++cases;
+}
+int main() {
+  expect("Title\nThe meeting will be on Wednesday.",
+         "Title\nThe meeting has moved to Thursday.",
+         " Title|-The meeting will be on Wednesday.|+The meeting has moved to Thursday.|");
+  expect("same", "same", "");
+  expect("", "Added", "+Added|");
+  expect("Removed", "", "-Removed|");
+  expect("A\nB\nC", "A\nC", " A|-B| C|");
+  expect("A\nC", "A\nB\nC", " A|+B| C|");
+  // Context is limited and the rest is summarized.
+  expect("1\n2\n3\n4\n5\nold\n6\n7\n8\n9", "1\n2\n3\n4\n5\nnew\n6\n7\n8\n9",
+         "~3| 4| 5|-old|+new| 6| 7|~2|");
+  // Separate edits keep their own context and a gap between them.
+  expect("a\nb\nc\nd\ne\nf\ng\nh\ni", "A\nb\nc\nd\ne\nf\ng\nh\nI",
+         "-a|+A| b| c|~3| g| h|-i|+I|");
+  // A moved block is shown as a removal and an addition, not a rewrite.
+  expect("x\ny\nz", "y\nz\nx", "-x| y| z|+x|");
+  // Removals precede additions within one edit.
+  expect("k\n1\n2\nk", "k\n3\n4\nk", " k|-1|-2|+3|+4| k|");
+  expect("Tittel\nRødgrønn 日本語.", "Tittel\nBlågrønn 日本語.",
+         " Tittel|-Rødgrønn 日本語.|+Blågrønn 日本語.|");
+  // Long lines are clipped without splitting a UTF-8 sequence.
+  {
+    const auto rows = tabs::BuildPageChangeLines(std::string(1999, 'x') + "日本語", "changed");
+    assert(rows.size() == 2 && rows[0].kind == Kind::kRemoved);
+    assert(rows[0].text == std::string(1999, 'x') + "…");
+    ++cases;
+  }
+  // Large edits fall back without the LCS table and stay bounded.
+  {
+    std::string before, after;
+    for (int i = 0; i < 1500; ++i) {
+      before += "old " + std::to_string(i) + "\n";
+      after += "new " + std::to_string(i) + "\n";
+    }
+    const auto rows = tabs::BuildPageChangeLines(before, after);
+    assert(rows.size() == 301 && rows.back().kind == Kind::kTruncated);
+    for (size_t i = 0; i < 300; ++i) assert(rows[i].kind == Kind::kRemoved);
+    ++cases;
+  }
+  for (int count = 0; count < 200; ++count) {
+    std::string prefix, suffix;
+    for (int i = 0; i < count; ++i) {
+      prefix += "p" + std::to_string(i) + "\n";
+      suffix += "\ns" + std::to_string(i);
+    }
+    const auto rows = tabs::BuildPageChangeLines(prefix + "AAA" + suffix, prefix + "BBB" + suffix);
+    size_t removed = 0, added = 0, context = 0;
+    for (const auto& row : rows) {
+      removed += row.kind == Kind::kRemoved && row.text == "AAA";
+      added += row.kind == Kind::kAdded && row.text == "BBB";
+      context += row.kind == Kind::kContext;
+    }
+    assert(removed == 1 && added == 1 && context == static_cast<size_t>(std::min(count, 2) * 2));
+    ++cases;
+  }
+  std::cout << "PASS: " << cases << " line diff, context and UTF-8 cases\n";
 }
 '''
 
