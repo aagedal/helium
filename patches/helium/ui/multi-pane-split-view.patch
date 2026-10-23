@@ -557,7 +557,7 @@
 -  // If new_start_size is within the snap point sizes, update to the snap
 -  // point.
 +  gfx::Rect available_space = GetLocalBounds();
-+  std::vector<views::ChildLayout> ignored_layouts;
++  views::ProposedLayout::ChildLayoutList ignored_layouts;
 +  available_space = CalculateSeparatorLayouts(available_space, ignored_layouts);
 +  available_space.Inset(split_view_insets_);
 +  const ViewSizes sizes = GetViewSizes(available_space);
