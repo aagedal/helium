@@ -57,7 +57,7 @@ From this repository, package into a new release directory:
 ```sh
 python3 devutils/macos/package_release.py \
   --source "$neo_source" --build-output "$neo_source/out/Beta3" \
-  --output "$neo_cache/releases/neo-stable-0.20.1.1" \
+  --output "$neo_cache/releases/neo-stable-0.20.1.2" \
   --identity '<Developer ID identity>' --notary-profile notary \
   --sparkle-tools '<extracted official Sparkle distribution>'
 ```

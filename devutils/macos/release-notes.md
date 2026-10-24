@@ -1,20 +1,16 @@
-Helium Neo 0.20.1.1 updates to Chromium 156.0.8078.47 and the latest Helium, and adds page change monitoring.
+Helium Neo 0.20.1.2 lets you choose the profile that opens links from other apps, plays streaming services in WebKit tabs by default, and keeps background tabs running like Chrome. Chromium (156.0.8078.47) and upstream Helium are unchanged from 0.20.1.1.
 
-Download **Helium-Neo-0.20.1.1-macOS-arm64-signed.dmg**, open it, and drag **Helium Neo** to Applications, replacing an existing copy. Requires an Apple Silicon Mac running macOS 13 or later. The experimental WebKit renderer requires macOS 14 or later. Installations of 0.19.4.1 with browser updates enabled receive this release automatically. Users of earlier betas must install it manually once.
+Download **Helium-Neo-0.20.1.2-macOS-arm64-signed.dmg**, open it, and drag **Helium Neo** to Applications, replacing an existing copy. Requires an Apple Silicon Mac running macOS 13 or later. WebKit streaming tabs require macOS 14 or later. Installations of 0.19.4.1 or later with browser updates enabled receive this release automatically. Users of earlier betas must install it manually once.
 
 **New in Neo**
 
-- **Page change monitoring:** under **Tab view**, monitor a page's article text or a selected section for changes. A tab indicator signals a change; **Review page changes…** shows the removed and added text. Optionally save a screenshot and/or PDF automatically on each change, with a JSON source record and SHA-256 checksum.
-- **More auto-refresh intervals:** auto-refresh now offers intervals from 5 seconds to 1 hour, with an optional ±5% variation for each refresh. Automatic reloads are rate-limited across the browser.
-- **Identifiable screenshot filenames:** saved screenshots include the capture time (UTC), the source hostname and the page title.
-
-**From upstream Helium**
-
-- Chromium 156.0.8078.47.
-- Zen mode fixes: expand on hover now works with zen mode, the sidebar no longer bounces at the window edge, hover corners update when the sidebar switches sides, and closing a zen-mode window no longer crashes.
-- New flag to hide the native window buttons. Refreshed browser layout and appearance settings.
-- Fixed canvas image-data noise writing past its pixel buffer.
+- **Choose where links from other apps open:** links from apps such as Slack or Mail normally open in the window you used last. Turn on **Open links from other apps in this profile** under **Settings › Behavior**, or use **Open links from other apps here** in a profile's menu in the profile picker, to always open them in one profile. Off by default.
+- **WebKit streaming tabs on by default:** Netflix, TV 2 Play, HBO Max and Disney+ play in Helium tabs using macOS's WebKit, with Helium's address bar and navigation buttons. These pages use separate logins per profile and don't run extensions or content blocking. Turn it off with `chrome://flags/#helium-webkit-streaming-tabs`.
+- **Background tabs keep running:** tab freezing is now off by default, matching Chrome, so sites in background tabs are no longer paused. Opt in with `chrome://flags/#infinite-tabs-freezing`; when enabled, the 15 most recently used tabs (up from 5) keep running.
+- **Memory Saver defaults to Moderate:** applies if you haven't chosen a Memory Saver level yourself.
+- **Link routing log:** the `chrome://flags/#log-link-routing` flag records how links from other apps are routed, for troubleshooting. View it with `log stream --predicate 'subsystem == "helium.link-routing"'`.
+- **Page change monitoring:** pick a section of the page to monitor, and review changes as a diff together with the watched text and change history.
 
 The installer is Developer ID signed and Apple notarized. `SHA256SUMS` covers the final stapled installer. Release feeds and `update-manifest.json` accompany the download for update delivery and verification.
 
-Neo is an independent fork of Helium. Report Neo issues to this repository; it is not an official imput release. Split layouts and the optional WebKit renderer remain experimental.
+Neo is an independent fork of Helium. Report Neo issues to this repository; it is not an official imput release. Split layouts and WebKit streaming remain experimental.
