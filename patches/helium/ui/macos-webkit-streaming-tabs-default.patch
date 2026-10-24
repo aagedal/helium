@@ -1,0 +1,95 @@
+--- a/chrome/browser/about_flags.cc
++++ b/chrome/browser/about_flags.cc
+@@ -350,6 +350,7 @@
+ #endif  // BUILDFLAG(IS_CHROMEOS)
+ 
+ #if BUILDFLAG(IS_MAC)
++#include "chrome/browser/helium_webkit_streaming_mac.h"
+ #include "chrome/browser/ui/dialogs/browser_dialogs.h"
+ #endif  // BUILDFLAG(IS_MAC)
+ 
+--- a/chrome/browser/helium_flag_entries.h
++++ b/chrome/browser/helium_flag_entries.h
+@@ -94,13 +94,16 @@
+      "Opens Netflix, TV 2 Play, HBO Max and Disney+ in a native WebKit window on "
+      "macOS 14 or later. Uses a separate login per Helium profile and does "
+      "not apply Chromium extensions or content blocking. Disabled in "
+-     "private/guest windows. Helium flag.",
++     "private/guest windows. Only applies when WebKit streaming tabs are "
++     "disabled. Helium flag.",
+      kOsMac, SINGLE_VALUE_TYPE("helium-webkit-streaming")},
+-    {"helium-webkit-streaming-tabs", "WebKit streaming tabs (prototype)",
++#if BUILDFLAG(IS_MAC)
++    {"helium-webkit-streaming-tabs", "WebKit streaming tabs",
+      "Hosts streaming services in Helium tabs on macOS 14+. Use the tab menu to "
+      "switch other HTTP(S) pages manually. Uses Helium’s address bar and "
+      "navigation controls. Separate logins; no extensions or session restore. "
+      "Hidden media is paused. Excludes private/guest windows. Overrides "
+      "streaming window mode. Helium flag.",
+-     kOsMac, SINGLE_VALUE_TYPE("helium-webkit-streaming-tabs")},
++     kOsMac, FEATURE_VALUE_TYPE(helium::kHeliumWebKitStreamingTabs)},
++#endif  // BUILDFLAG(IS_MAC)
+ #endif  // CHROME_BROWSER_HELIUM_FLAG_ENTRIES_H_
+--- a/chrome/browser/helium_webkit_streaming_mac.h
++++ b/chrome/browser/helium_webkit_streaming_mac.h
+@@ -7,6 +7,7 @@
+ 
+ #include "base/callback_list.h"
+ #include "base/component_export.h"
++#include "base/feature_list.h"
+ #include "base/functional/callback_forward.h"
+ #include "ui/gfx/native_ui_types.h"
+ 
+@@ -18,6 +19,11 @@
+ }
+ 
+ namespace helium {
++// Hosts streaming services in Helium tabs on macOS 14+. Enabled by default;
++// can be turned off from chrome://flags.
++COMPONENT_EXPORT(HELIUM_WEBKIT_STREAMING)
++BASE_DECLARE_FEATURE(kHeliumWebKitStreamingTabs);
++
+ // The WebContents remains a blank Chromium shell. Its user data owns the
+ // optional WebKit session; no Chromium security state represents the WK page.
+ // URL is for display only; it does not fabricate Chromium navigation/security.
+--- a/chrome/browser/helium_webkit_streaming_mac.mm
++++ b/chrome/browser/helium_webkit_streaming_mac.mm
+@@ -32,7 +32,6 @@
+ // view.
+ NSMutableDictionary<NSString*, NSWindowController*>* g_streaming_windows;
+ constexpr char kStreamingSwitch[] = "helium-webkit-streaming";
+-constexpr char kStreamingTabsSwitch[] = "helium-webkit-streaming-tabs";
+ const void* const kStreamingTabKey = &kStreamingTabKey;
+ 
+ bool IsWebKitPageURL(const GURL& url) {
+@@ -642,7 +641,7 @@
+ }
+ base::CallbackListSubscription ObserveWebKitStreamingTab(
+     content::WebContents* contents, base::RepeatingClosure callback) {
+-  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(kStreamingTabsSwitch))
++  if (!IsWebKitStreamingTabsEnabled())
+     return {};
+   auto* tab = GetStreamingTab(contents);
+   if (!tab) {
+@@ -657,9 +656,11 @@
+     tab->Pause();
+ }
+ 
++BASE_FEATURE(kHeliumWebKitStreamingTabs, base::FEATURE_ENABLED_BY_DEFAULT);
++
+ bool IsWebKitStreamingTabsEnabled() {
+   if (@available(macOS 14.0, *)) {
+-    return base::CommandLine::ForCurrentProcess()->HasSwitch(kStreamingTabsSwitch);
++    return base::FeatureList::IsEnabled(kHeliumWebKitStreamingTabs);
+   }
+   return false;
+ }
+@@ -692,7 +693,7 @@
+     return;
+   if (@available(macOS 14.0, *)) {
+     if (base::CommandLine::ForCurrentProcess()->HasSwitch(kStreamingSwitch) ||
+-        base::CommandLine::ForCurrentProcess()->HasSwitch(kStreamingTabsSwitch)) {
++        IsWebKitStreamingTabsEnabled()) {
+       registry.AddThrottle(std::make_unique<WebKitStreamingThrottle>(registry));
+     }
+   }

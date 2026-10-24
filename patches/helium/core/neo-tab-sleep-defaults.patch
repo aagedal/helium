@@ -1,0 +1,55 @@
+--- a/components/performance_manager/features.cc
++++ b/components/performance_manager/features.cc
+@@ -212,13 +212,13 @@
+ 
+ BASE_FEATURE(kRecordFreezingEligibilityUKM, base::FEATURE_ENABLED_BY_DEFAULT);
+ 
+-BASE_FEATURE(kInfiniteTabsFreezing, base::FEATURE_ENABLED_BY_DEFAULT);
++BASE_FEATURE(kInfiniteTabsFreezing, base::FEATURE_DISABLED_BY_DEFAULT);
+ 
+ BASE_FEATURE_PARAM(int,
+                    kInfiniteTabsFreezing_NumProtectedTabs,
+                    &kInfiniteTabsFreezing,
+                    "num_protected_tabs",
+-                   5);
++                   15);
+ 
+ BASE_FEATURE_PARAM(base::TimeDelta,
+                    kInfiniteTabsFreezing_UnfreezeInterval,
+--- a/components/performance_manager/user_tuning/prefs.cc
++++ b/components/performance_manager/user_tuning/prefs.cc
+@@ -35,7 +35,7 @@
+       kMemorySaverModeState, static_cast<int>(MemorySaverModeState::kEnabled));
+   registry->RegisterIntegerPref(
+       kMemorySaverModeAggressiveness,
+-      static_cast<int>(MemorySaverModeAggressiveness::kMedium));
++      static_cast<int>(MemorySaverModeAggressiveness::kConservative));
+   registry->RegisterIntegerPref(
+       kBatterySaverModeState,
+       static_cast<int>(BatterySaverModeState::kEnabledBelowThreshold));
+--- a/chrome/app/settings_strings.grdp
++++ b/chrome/app/settings_strings.grdp
+@@ -1178,10 +1178,10 @@
+       Choose time range
+     </message>
+     <message name="IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_CONSERVATIVE_LABEL" desc="Label for the conservative memory saver aggressiveness option">
+-      Moderate
++      Moderate (recommended)
+     </message>
+     <message name="IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_MEDIUM_LABEL" desc="Label for the medium memory saver aggressiveness option">
+-      Balanced (recommended)
++      Balanced
+     </message>
+     <message name="IDS_SETTINGS_PERFORMANCE_MEMORY_SAVER_MODE_AGGRESSIVE_LABEL" desc="Label for the aggressive memory saver aggressiveness option">
+       Maximum
+--- a/chrome/browser/flag-metadata.json
++++ b/chrome/browser/flag-metadata.json
+@@ -6347,7 +6347,7 @@
+   {
+     "name": "infinite-tabs-freezing",
+     "owners": [ "fdoray@ch40m1um.qjz9zk", "catan-team@ch40m1um.qjz9zk" ],
+-    "expiry_milestone": 142
++    "expiry_milestone": -1
+   },
+   {
+     "name": "infobar-banner-revamp",

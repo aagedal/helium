@@ -1,0 +1,1014 @@
+--- a/chrome/app/profiles_strings.grdp
++++ b/chrome/app/profiles_strings.grdp
+@@ -1072,6 +1072,15 @@
+     <message name="IDS_PROFILE_PICKER_PROFILE_MENU_CUSTOMIZE_TEXT" desc="Text of the customize button in profile card menu">
+       Edit
+     </message>
++    <message name="IDS_PROFILE_PICKER_PROFILE_MENU_EXTERNAL_LINKS_TEXT" desc="Text of the profile card menu button that makes links from other apps open in this profile.">
++      Open links from other apps here
++    </message>
++    <message name="IDS_PROFILE_PICKER_PROFILE_MENU_STOP_EXTERNAL_LINKS_TEXT" desc="Text of the profile card menu button that stops links from other apps from always opening in this profile.">
++      Stop opening links from other apps here
++    </message>
++    <message name="IDS_PROFILE_PICKER_PROFILE_CARD_OPENS_EXTERNAL_LINKS" desc="Shown on a profile card when links from other apps open in that profile.">
++      Opens links from apps
++    </message>
+     <message name="IDS_PROFILE_PICKER_ASK_ON_STARTUP" desc="Text for the checkbox on the profile picker main view">
+       Show on startup
+     </message>
+--- a/chrome/app/settings_strings.grdp
++++ b/chrome/app/settings_strings.grdp
+@@ -4763,6 +4763,14 @@
+       Use Ctrl+S to toggle vertical tabs in Vertical layout
+     </message>
+   </if>
++  <if expr="is_macosx">
++    <message name="IDS_SETTINGS_OPEN_EXTERNAL_LINKS_IN_PROFILE" desc="Toggle in settings that makes links opened from other apps always open in the current profile. Off by default.">
++      Open links from other apps in this profile
++    </message>
++    <message name="IDS_SETTINGS_OPEN_EXTERNAL_LINKS_IN_PROFILE_DESCRIPTION" desc="Description of the toggle that makes links opened from other apps always open in the current profile.">
++      Links from apps like Slack or Mail open in a window of this profile. When off, they open in the window you used last.
++    </message>
++  </if>
+ 
+   <!-- Experimental settings strings -->
+   <message name="IDS_SETTINGS_AI_PAGE_MAIN_TITLE" desc="This string is the title of a card that sets the context for the ‘AI innovations’ section of Chrome’s settings. Here, the user can see settings related to AI (artificial intelligence) in this section; these settings include Help me write and more. This title is before the ‘Things to consider’ subheading and bullet points. We want users to read this card and understand the considerations that apply to all Chrome’s AI features. The tone should be motivating." formatter_data="android_java">
+--- a/chrome/browser/BUILD.gn
++++ b/chrome/browser/BUILD.gn
+@@ -1564,6 +1564,8 @@
+       "browser_process_platform_part_mac.mm",
+       "chrome_browser_application_mac.mm",
+       "chrome_browser_main_mac.mm",
++      "external_links_profile_mac.cc",
++      "external_links_profile_mac.h",
+       "file_select_helper_mac.mm",
+       "fullscreen_mac.mm",
+       "global_keyboard_shortcuts_mac.mm",
+--- a/chrome/browser/app_controller_mac.mm
++++ b/chrome/browser/app_controller_mac.mm
+@@ -51,6 +51,7 @@
+ #include "chrome/browser/download/download_core_service_factory.h"
+ #include "chrome/browser/enterprise/isolated_mode/isolated_mode_settings_service_factory.h"
+ #include "chrome/browser/extensions/extension_service.h"
++#include "chrome/browser/external_links_profile_mac.h"
+ #include "chrome/browser/first_run/first_run.h"
+ #include "chrome/browser/global_keyboard_shortcuts_mac.h"
+ #include "chrome/browser/lifetime/application_lifetime.h"
+@@ -439,6 +440,111 @@
+ 
+ void OpenStartupTabsInBrowserWithProfile(const StartupTabs& tabs,
+                                          Profile* profile);
++void OpenStartupTabsInChosenProfile(const StartupTabs& tabs, Profile* profile);
++
++// Describes `window` for the link routing log.
++std::string DescribeWindowForLog(NSWindow* window) {
++  if (!window) {
++    return "(none)";
++  }
++  std::string description;
++  BrowserWindowInterface* browser =
++      GlobalBrowserCollection::GetInstance()->FindBrowserWithWindow(
++          gfx::NativeWindow(window));
++  if (!browser) {
++    description = base::SysNSStringToUTF8(NSStringFromClass(window.class));
++  } else if (browser->GetType() == BrowserWindowInterface::TYPE_NORMAL) {
++    description =
++        "window of " + external_links::DescribeProfile(browser->GetProfile());
++  } else {
++    description =
++        "window of type " +
++        base::NumberToString(static_cast<int>(browser->GetType())) + " of " +
++        external_links::DescribeProfile(browser->GetProfile());
++  }
++  description += " #" + base::NumberToString(window.windowNumber);
++  const NSUInteger screen =
++      window.screen ? [NSScreen.screens indexOfObject:window.screen]
++                    : NSNotFound;
++  description += screen == NSNotFound
++                     ? ", no screen"
++                     : ", screen " + base::NumberToString(screen + 1);
++  if (!window.visible) {
++    description += ", hidden";
++  }
++  if (window.miniaturized) {
++    description += ", minimized";
++  }
++  if (!window.onActiveSpace) {
++    description += ", other Space";
++  }
++  return description;
++}
++
++// Describes the app state and the event being handled for the link routing
++// log.
++std::string DescribeAppStateForLog() {
++  std::string event_description = "none";
++  if (NSEvent* event = NSApp.currentEvent) {
++    switch (event.type) {
++      case NSEventTypeLeftMouseDown:
++        event_description = "left click";
++        break;
++      case NSEventTypeRightMouseDown:
++        event_description = "right click";
++        break;
++      case NSEventTypeOtherMouseDown:
++        event_description = "other click";
++        break;
++      case NSEventTypeKeyDown:
++        event_description = "key press";
++        break;
++      case NSEventTypeScrollWheel:
++        event_description = "scroll";
++        break;
++      case NSEventTypeAppKitDefined:
++        event_description = "AppKit event";
++        break;
++      default:
++        event_description = "event type " +
++                            base::NumberToString(static_cast<int>(event.type));
++        break;
++    }
++    if (event.windowNumber > 0) {
++      event_description +=
++          " in window #" + base::NumberToString(event.windowNumber);
++    }
++  }
++  return std::string("app ") + (NSApp.active ? "active" : "inactive") +
++         "; main window: " + DescribeWindowForLog(NSApp.mainWindow) +
++         "; key window: " + DescribeWindowForLog(NSApp.keyWindow) +
++         "; current event: " + event_description;
++}
++
++std::string CallStackForLog() {
++  NSArray<NSString*>* symbols = NSThread.callStackSymbols;
++  std::string stack;
++  for (NSUInteger i = 1; i < std::min<NSUInteger>(symbols.count, 24); ++i) {
++    stack += "\n  " + base::SysNSStringToUTF8(symbols[i]);
++  }
++  return stack;
++}
++
++// Names the app that sent the Apple event being handled.
++std::string SenderOfCurrentAppleEventForLog() {
++  NSAppleEventDescriptor* event =
++      NSAppleEventManager.sharedAppleEventManager.currentAppleEvent;
++  NSAppleEventDescriptor* pid =
++      [event attributeDescriptorForKeyword:keySenderPIDAttr];
++  if (!pid) {
++    return "an unknown app";
++  }
++  NSRunningApplication* app = [NSRunningApplication
++      runningApplicationWithProcessIdentifier:pid.int32Value];
++  return app.localizedName
++             ? base::SysNSStringToUTF8(app.localizedName)
++             : "process " + base::NumberToString(pid.int32Value);
++}
+ 
+ void OpenStartupTabsInBrowser(StartupTabs tabs) {
+   StartupTabs regular_tabs;
+@@ -518,9 +624,26 @@
+   }
+ 
+   if (!regular_tabs.empty()) {
+-    app_controller_mac::RunInLastProfileSafely(
+-        base::BindOnce(&OpenStartupTabsInBrowserWithProfile, regular_tabs),
+-        app_controller_mac::kShowProfilePickerOnFailure);
++    const std::string count = base::NumberToString(regular_tabs.size());
++    const base::FilePath chosen_profile =
++        external_links::GetTargetProfilePath();
++    if (!chosen_profile.empty()) {
++      external_links::Log(
++          "Opening " + count + " link(s) in the chosen profile " +
++          external_links::DescribeProfilePath(chosen_profile));
++      app_controller_mac::RunInProfileSafely(
++          chosen_profile,
++          base::BindOnce(&OpenStartupTabsInChosenProfile, regular_tabs),
++          app_controller_mac::kIgnoreOnFailure);
++    } else {
++      external_links::Log(
++          "Opening " + count + " link(s) in the last used profile " +
++          external_links::DescribeProfile(
++              AppController.sharedController.lastProfileIfLoaded));
++      app_controller_mac::RunInLastProfileSafely(
++          base::BindOnce(&OpenStartupTabsInBrowserWithProfile, regular_tabs),
++          app_controller_mac::kShowProfilePickerOnFailure);
++    }
+   }
+ }
+ 
+@@ -911,6 +1034,11 @@
+          selector:@selector(windowDidBecomeMain:)
+              name:NSWindowDidBecomeMainNotification
+            object:nil];
++  [notificationCenter
++      addObserver:self
++         selector:@selector(windowDidBecomeKeyForLinkRouting:)
++             name:NSWindowDidBecomeKeyNotification
++           object:nil];
+ 
+   [NSWorkspace.sharedWorkspace.notificationCenter
+       addObserver:self
+@@ -1129,7 +1257,32 @@
+              afterDelay:0.0];
+ }
+ 
++- (void)windowDidBecomeKeyForLinkRouting:(NSNotification*)notify {
++  if (external_links::IsLoggingEnabled()) {
++    external_links::Log("Key window: " + DescribeWindowForLog([notify object]) +
++                        "; " + DescribeAppStateForLog());
++  }
++}
++
++- (void)applicationDidBecomeActive:(NSNotification*)notify {
++  if (external_links::IsLoggingEnabled()) {
++    external_links::Log("App became active; " + DescribeAppStateForLog());
++  }
++}
++
++- (void)applicationDidResignActive:(NSNotification*)notify {
++  if (external_links::IsLoggingEnabled()) {
++    external_links::Log("App resigned active; last used profile: " +
++                        external_links::DescribeProfile(_lastProfile) + "; " +
++                        DescribeAppStateForLog());
++  }
++}
++
+ - (void)windowDidBecomeMain:(NSNotification*)notify {
++  if (external_links::IsLoggingEnabled()) {
++    external_links::Log("Main window: " + DescribeWindowForLog([notify object]) +
++                        "; " + DescribeAppStateForLog());
++  }
+   BrowserWindowInterface* browser =
+       GlobalBrowserCollection::GetInstance()->FindBrowserWithWindow(
+           gfx::NativeWindow([notify object]));
+@@ -1266,6 +1419,7 @@
+   }
+ 
+   if (!_startupComplete) {
++    external_links::Log("Holding links until startup finishes");
+     for (auto& tab : tabs) {
+       _startupTabs.push_back(std::move(tab));
+     }
+@@ -2065,6 +2219,26 @@
+ }
+ 
+ - (void)application:(NSApplication*)sender openURLs:(NSArray<NSURL*>*)urls {
++  if (external_links::IsLoggingEnabled()) {
++    std::string hosts;
++    for (NSURL* url in urls) {
++      NSString* host = url.host.length ? url.host : url.scheme;
++      hosts += (hosts.empty() ? "" : ", ") +
++               (host ? base::SysNSStringToUTF8(host) : std::string("?"));
++    }
++    BrowserWindowInterface* lastActive =
++        GlobalBrowserCollection::GetInstance()->GetLastActiveBrowser();
++    external_links::Log(
++        "Received " + base::NumberToString(urls.count) + " link(s) (" + hosts +
++        ") from " + SenderOfCurrentAppleEventForLog() +
++        "; last used profile: " + external_links::DescribeProfile(_lastProfile) +
++        "; last active window: " +
++        (lastActive ? DescribeWindowForLog(lastActive->GetWindow()
++                                               ->GetNativeWindow()
++                                               .GetNativeNSWindow())
++                    : std::string("(none)")) +
++        "; " + DescribeAppStateForLog());
++  }
+   StartupTabs startupTabs;
+   for (NSURL* url in urls) {
+     // Handle the google-chrome:// scheme (and chromium://).
+@@ -2221,6 +2395,13 @@
+   if (profile == _lastProfile)
+     return;
+ 
++  if (external_links::IsLoggingEnabled()) {
++    external_links::Log("Last used profile changed from " +
++                        external_links::DescribeProfile(_lastProfile) + " to " +
++                        external_links::DescribeProfile(profile) + "; " +
++                        DescribeAppStateForLog() + CallStackForLog());
++  }
++
+   // If _lastProfile becomes null, remember the last state of Cmd+Shift+T so the
+   // command can continue working (or stay disabled). This is primarily meant
+   // for the zero-profile state.
+@@ -2641,6 +2822,18 @@
+ 
+ namespace {
+ 
++void OpenStartupTabsInChosenProfile(const StartupTabs& tabs, Profile* profile) {
++  if (profile) {
++    OpenStartupTabsInBrowserWithProfile(tabs, profile);
++    return;
++  }
++  external_links::Log(
++      "The chosen profile could not be opened, using the last used profile");
++  app_controller_mac::RunInLastProfileSafely(
++      base::BindOnce(&OpenStartupTabsInBrowserWithProfile, tabs),
++      app_controller_mac::kShowProfilePickerOnFailure);
++}
++
+ void UpdateProfileInUse(Profile* profile) {
+   if (!profile) {
+     return;
+@@ -2661,6 +2854,15 @@
+   // window, not in PWA/app windows which cannot accept new tabs.
+   BrowserWindowInterface* browser =
+       ProfileBrowserCollection::GetForProfile(profile)->FindTabbedBrowser();
++  if (external_links::IsLoggingEnabled()) {
++    external_links::Log(
++        browser ? "Opening in " +
++                      DescribeWindowForLog(browser->GetWindow()
++                                               ->GetNativeWindow()
++                                               .GetNativeNSWindow())
++                : "No window of " + external_links::DescribeProfile(profile) +
++                      " on the current Space, opening a new window");
++  }
+   int startupIndex = TabStripModel::kNoTab;
+   content::WebContents* startupContent = nullptr;
+   if (browser && browser->GetTabStripModel()->count() == 1) {
+--- a/chrome/browser/helium_flag_entries.h
++++ b/chrome/browser/helium_flag_entries.h
+@@ -48,6 +48,11 @@
+      "Randomizes the number of cores returned by "
+      "`navigator.hardwareConcurrency` in a reasonable range. Helium flag.",
+      kOsAll, FEATURE_VALUE_TYPE(blink::features::kHeliumNoiseCpuCores)},
++    {"log-link-routing", "Log link routing",
++     "Logs which profile and window links from other apps open in, and what "
++     "changes the last used profile. View the log with: log stream --predicate "
++     "'subsystem == \"helium.link-routing\"'. Helium flag.",
++     kOsMac, SINGLE_VALUE_TYPE("log-link-routing")},
+     // core/network
+     {helium::kDisableEchCommandLine, "Disable Encrypted Client Hello (ECH)",
+      "Disables TLS Encrypted Client Hello, reducing traffic privacy when "
+--- a/chrome/browser/prefs/browser_prefs.cc
++++ b/chrome/browser/prefs/browser_prefs.cc
+@@ -512,6 +512,7 @@
+ #endif  // BUILDFLAG(IS_CHROMEOS)
+ 
+ #if BUILDFLAG(IS_MAC)
++#include "chrome/browser/external_links_profile_mac.h"
+ #include "chrome/browser/media/webrtc/system_media_capture_permissions_stats_mac.h"
+ #include "chrome/browser/ui/cocoa/apps/quit_with_apps_controller_mac.h"
+ #include "chrome/browser/ui/cocoa/confirm_quit.h"
+@@ -1748,6 +1749,7 @@
+ 
+ #if BUILDFLAG(IS_MAC)
+   confirm_quit::RegisterLocalState(registry);
++  external_links::RegisterLocalStatePrefs(registry);
+   QuitWithAppsController::RegisterPrefs(registry);
+   system_media_permissions::RegisterSystemMediaPermissionStatesPrefs(registry);
+   AppShimRegistry::Get()->RegisterLocalPrefs(registry);
+--- a/chrome/browser/resources/settings/appearance_page/appearance_behavior_page.html
++++ b/chrome/browser/resources/settings/appearance_page/appearance_behavior_page.html
+@@ -36,4 +36,14 @@
+       label="$i18n{allowSplitViewDragAndDrop}">
+   </settings-toggle-button>
+ 
++<if expr="is_macosx">
++  <settings-toggle-button class="hr" id="openExternalLinksInProfile"
++      pref="[[opensExternalLinksPref_]]"
++      label="$i18n{openExternalLinksInProfile}"
++      sub-label="$i18n{openExternalLinksInProfileDescription}"
++      on-settings-boolean-control-change="onOpensExternalLinksChange_"
++      no-set-pref>
++  </settings-toggle-button>
++</if>
++
+ </settings-section>
+--- a/chrome/browser/resources/settings/appearance_page/appearance_behavior_page.ts
++++ b/chrome/browser/resources/settings/appearance_page/appearance_behavior_page.ts
+@@ -5,11 +5,20 @@
+ import '../controls/settings_toggle_button.js';
+ import '../settings_page/settings_section.js';
+ 
++import {WebUiListenerMixin} from 'chrome://resources/cr_elements/web_ui_listener_mixin.js';
+ import {PolymerElement} from 'chrome://resources/polymer/v3_0/polymer/polymer_bundled.min.js';
+ 
++// <if expr="is_macosx">
++import type {SettingsToggleButtonElement} from '../controls/settings_toggle_button.js';
++
++import {AppearanceBrowserProxyImpl} from './appearance_browser_proxy.js';
++// </if>
+ import {getTemplate} from './appearance_behavior_page.html.js';
+ 
+-export class AppearanceBehaviorPageElement extends PolymerElement {
++const AppearanceBehaviorPageElementBase = WebUiListenerMixin(PolymerElement);
++
++export class AppearanceBehaviorPageElement extends
++    AppearanceBehaviorPageElementBase {
+   static get is() {
+     return 'settings-appearance-behavior-page';
+   }
+@@ -17,6 +26,41 @@
+   static get template() {
+     return getTemplate();
+   }
++
++  // <if expr="is_macosx">
++  static get properties() {
++    return {
++      opensExternalLinksPref_: Object,
++    };
++  }
++
++  declare private opensExternalLinksPref_:
++      chrome.settingsPrivate.PrefObject<boolean>;
++
++  override ready() {
++    super.ready();
++    this.setOpensExternalLinks_(false);
++    AppearanceBrowserProxyImpl.getInstance().getOpensExternalLinks().then(
++        opens => this.setOpensExternalLinks_(opens));
++    this.addWebUiListener(
++        'opens-external-links-changed',
++        (opens: boolean) => this.setOpensExternalLinks_(opens));
++  }
++
++  private setOpensExternalLinks_(opens: boolean) {
++    this.opensExternalLinksPref_ = {
++      key: '',
++      type: chrome.settingsPrivate.PrefType.BOOLEAN,
++      value: opens,
++    };
++  }
++
++  private onOpensExternalLinksChange_(event: Event) {
++    const toggle = event.target as SettingsToggleButtonElement;
++    AppearanceBrowserProxyImpl.getInstance().setOpensExternalLinks(
++        toggle.checked);
++  }
++  // </if>
+ }
+ 
+ declare global {
+--- a/chrome/browser/resources/settings/appearance_page/appearance_browser_proxy.ts
++++ b/chrome/browser/resources/settings/appearance_page/appearance_browser_proxy.ts
+@@ -29,6 +29,12 @@
+   useQtTheme(): void;
+   // </if>
+ 
++  // <if expr="is_macosx">
++  /** @return Whether links from other apps open in this profile. */
++  getOpensExternalLinks(): Promise<boolean>;
++  setOpensExternalLinks(opens: boolean): void;
++  // </if>
++
+   validateStartupPage(url: string): Promise<boolean>;
+   pinnedToolbarActionsAreDefault(): Promise<boolean>;
+ }
+@@ -90,6 +96,16 @@
+   }
+   // </if>
+ 
++  // <if expr="is_macosx">
++  getOpensExternalLinks() {
++    return sendWithPromise<boolean>('getOpensExternalLinks');
++  }
++
++  setOpensExternalLinks(opens: boolean) {
++    chrome.send('setOpensExternalLinks', [opens]);
++  }
++  // </if>
++
+   validateStartupPage(url: string) {
+     return sendWithPromise<boolean>('validateStartupPage', url);
+   }
+--- a/chrome/browser/resources/signin/profile_picker/manage_profiles_browser_proxy.ts
++++ b/chrome/browser/resources/signin/profile_picker/manage_profiles_browser_proxy.ts
+@@ -22,6 +22,8 @@
+   avatarBadge: string;
+   hasEnterpriseLabel: boolean;
+   hasAvatarRing: boolean;
++  // Whether links from other apps open in this profile.
++  opensExternalLinks: boolean;
+ }
+ 
+ /**
+@@ -164,6 +166,14 @@
+    * Chrome" Help center page. Does not close the Picker.
+    */
+   onLearnMoreClicked(): void;
++
++  // <if expr="is_macosx">
++  /**
++   * Makes links from other apps open in the profile at `profilePath`, or stops
++   * doing so.
++   */
++  setOpensExternalLinks(profilePath: string, opens: boolean): void;
++  // </if>
+ }
+ 
+ /** @implements {ManageProfilesBrowserProxy} */
+@@ -250,6 +260,12 @@
+     chrome.send('onLearnMoreClicked');
+   }
+ 
++  // <if expr="is_macosx">
++  setOpensExternalLinks(profilePath: string, opens: boolean) {
++    chrome.send('setOpensExternalLinks', [profilePath, opens]);
++  }
++  // </if>
++
+   static getInstance(): ManageProfilesBrowserProxy {
+     return instance || (instance = new ManageProfilesBrowserProxyImpl());
+   }
+--- a/chrome/browser/resources/signin/profile_picker/profile_card.html.ts
++++ b/chrome/browser/resources/signin/profile_picker/profile_card.html.ts
+@@ -24,7 +24,9 @@
+     </div>
+     <div id="gaiaName" class="profile-card-info secondary-text"
+         ?hidden="${this.profileState.needsSignin}">
+-      ${this.profileState.gaiaName}
++      ${this.profileState.gaiaName ||
++        (this.profileState.opensExternalLinks ?
++             this.i18n('profileCardOpensExternalLinks') : '')}
+     </div>
+     <div id="forceSigninContainer" class="profile-card-info secondary-text"
+         ?hidden="${!this.profileState.needsSignin}">
+--- a/chrome/browser/resources/signin/profile_picker/profile_card_menu.html.ts
++++ b/chrome/browser/resources/signin/profile_picker/profile_card_menu.html.ts
+@@ -18,6 +18,15 @@
+     <cr-icon icon="cr:edit-filled" aria-hidden="true"></cr-icon>
+     $i18n{profileMenuCustomizeText}
+   </button>
++<if expr="is_macosx">
++  <button class="dropdown-item" id="externalLinksButton"
++      @click="${this.onExternalLinksButtonClick_}">
++    <cr-icon icon="cr:open-in-new" aria-hidden="true"></cr-icon>
++    ${this.profileState.opensExternalLinks ?
++        this.i18n('profileMenuStopExternalLinksText') :
++        this.i18n('profileMenuExternalLinksText')}
++  </button>
++</if>
+   <button class="dropdown-item" @click="${this.onRemoveButtonClick_}">
+     <cr-icon icon="cr:delete" aria-hidden="true"></cr-icon>
+     $i18n{profileMenuRemoveText}
+--- a/chrome/browser/resources/signin/profile_picker/profile_card_menu.ts
++++ b/chrome/browser/resources/signin/profile_picker/profile_card_menu.ts
+@@ -230,6 +230,14 @@
+     }
+   }
+ 
++  // <if expr="is_macosx">
++  protected onExternalLinksButtonClick_() {
++    this.manageProfilesBrowserProxy_.setOpensExternalLinks(
++        this.profileState.profilePath, !this.profileState.opensExternalLinks);
++    this.$.actionMenu.close();
++  }
++  // </if>
++
+   protected onCustomizeButtonClick_() {
+     this.manageProfilesBrowserProxy_.openManageProfileSettingsSubPage(
+         this.profileState.profilePath);
+--- a/chrome/browser/resources/signin/profile_picker/profile_picker_util.ts
++++ b/chrome/browser/resources/signin/profile_picker/profile_picker_util.ts
+@@ -17,6 +17,7 @@
+     profileCardButtonLabel: '',
+     hasEnterpriseLabel: false,
+     hasAvatarRing: false,
++    opensExternalLinks: false,
+   };
+ }
+ 
+--- a/chrome/browser/ui/webui/settings/appearance_handler.cc
++++ b/chrome/browser/ui/webui/settings/appearance_handler.cc
+@@ -22,6 +22,11 @@
+ #include "content/public/browser/web_ui.h"
+ #include "ui/actions/actions.h"
+ 
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/browser_process.h"
++#include "chrome/browser/external_links_profile_mac.h"
++#endif
++
+ namespace settings {
+ 
+ AppearanceHandler::AppearanceHandler(content::WebUI* webui)
+@@ -29,8 +34,21 @@
+ 
+ AppearanceHandler::~AppearanceHandler() = default;
+ 
+-void AppearanceHandler::OnJavascriptAllowed() {}
+-void AppearanceHandler::OnJavascriptDisallowed() {}
++void AppearanceHandler::OnJavascriptAllowed() {
++#if BUILDFLAG(IS_MAC)
++  local_state_registrar_.Init(g_browser_process->local_state());
++  local_state_registrar_.Add(
++      external_links::kProfilePref,
++      base::BindRepeating(&AppearanceHandler::OnExternalLinksProfileChanged,
++                          base::Unretained(this)));
++#endif
++}
++
++void AppearanceHandler::OnJavascriptDisallowed() {
++#if BUILDFLAG(IS_MAC)
++  local_state_registrar_.Reset();
++#endif
++}
+ 
+ void AppearanceHandler::RegisterMessages() {
+   web_ui()->RegisterMessageCallback(
+@@ -69,6 +87,16 @@
+       base::BindRepeating(
+           &AppearanceHandler::HandleRecordVerticalTabStripModeChanged,
+           base::Unretained(this)));
++#if BUILDFLAG(IS_MAC)
++  web_ui()->RegisterMessageCallback(
++      "getOpensExternalLinks",
++      base::BindRepeating(&AppearanceHandler::HandleGetOpensExternalLinks,
++                          base::Unretained(this)));
++  web_ui()->RegisterMessageCallback(
++      "setOpensExternalLinks",
++      base::BindRepeating(&AppearanceHandler::HandleSetOpensExternalLinks,
++                          base::Unretained(this)));
++#endif
+ }
+ 
+ void AppearanceHandler::HandleUseTheme(ui::SystemTheme system_theme,
+@@ -117,4 +145,30 @@
+       is_vertical, tabs::VerticalTabStripEntryPoint::kSettings);
+ }
+ 
++#if BUILDFLAG(IS_MAC)
++void AppearanceHandler::HandleGetOpensExternalLinks(
++    const base::ListValue& args) {
++  CHECK_EQ(1U, args.size());
++  AllowJavascript();
++  ResolveJavascriptCallback(args[0], base::Value(OpensExternalLinks()));
++}
++
++void AppearanceHandler::HandleSetOpensExternalLinks(
++    const base::ListValue& args) {
++  CHECK_EQ(1U, args.size());
++  external_links::SetTargetProfile(profile_->GetOriginalProfile()->GetPath(),
++                                   args[0].GetBool());
++}
++
++void AppearanceHandler::OnExternalLinksProfileChanged() {
++  FireWebUIListener("opens-external-links-changed",
++                    base::Value(OpensExternalLinks()));
++}
++
++bool AppearanceHandler::OpensExternalLinks() const {
++  return external_links::IsTargetProfile(
++      profile_->GetOriginalProfile()->GetPath());
++}
++#endif
++
+ }  // namespace settings
+--- a/chrome/browser/ui/webui/settings/appearance_handler.h
++++ b/chrome/browser/ui/webui/settings/appearance_handler.h
+@@ -11,6 +11,10 @@
+ #include "chrome/browser/themes/theme_service.h"
+ #include "chrome/browser/ui/webui/settings/settings_page_ui_handler.h"
+ 
++#if BUILDFLAG(IS_MAC)
++#include "components/prefs/pref_change_registrar.h"
++#endif
++
+ namespace content {
+ class WebUI;
+ }
+@@ -49,6 +53,16 @@
+   // Records the vertical tab strip mode change.
+   void HandleRecordVerticalTabStripModeChanged(const base::ListValue& args);
+ 
++#if BUILDFLAG(IS_MAC)
++  // Whether links from other apps open in this profile.
++  void HandleGetOpensExternalLinks(const base::ListValue& args);
++  void HandleSetOpensExternalLinks(const base::ListValue& args);
++  void OnExternalLinksProfileChanged();
++  bool OpensExternalLinks() const;
++
++  PrefChangeRegistrar local_state_registrar_;
++#endif
++
+   raw_ptr<Profile> profile_;  // Weak pointer.
+ 
+   base::WeakPtrFactory<AppearanceHandler> weak_ptr_factory_{this};
+--- a/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
++++ b/chrome/browser/ui/webui/settings/settings_localized_strings_provider.cc
+@@ -623,6 +623,12 @@
+       {"zenModePinToolbar", IDS_SETTINGS_ZEN_PIN_TOP_TOOLBAR},
+       {"centeredLocationBar", IDS_SETTINGS_CENTERED_LOCATION_BAR},
+       {"verticalCollapseShortcut", IDS_SETTINGS_VERTICAL_COLLAPSE_SHORTCUT},
++#if BUILDFLAG(IS_MAC)
++      {"openExternalLinksInProfile",
++       IDS_SETTINGS_OPEN_EXTERNAL_LINKS_IN_PROFILE},
++      {"openExternalLinksInProfileDescription",
++       IDS_SETTINGS_OPEN_EXTERNAL_LINKS_IN_PROFILE_DESCRIPTION},
++#endif
+       {"minimalLocationBar", IDS_SETTINGS_MINIMAL_LOCATION_BAR},
+       {"showProgressBar", IDS_SETTINGS_SHOW_PROGRESS_BAR},
+       {"shiftRightClickContextMenu",
+--- a/chrome/browser/ui/webui/signin/profile_picker_handler.cc
++++ b/chrome/browser/ui/webui/signin/profile_picker_handler.cc
+@@ -85,6 +85,10 @@
+ #include "ui/gfx/image/image_skia_rep.h"
+ #include "ui/webui/webui_util.h"
+ 
++#if BUILDFLAG(IS_MAC)
++#include "chrome/browser/external_links_profile_mac.h"
++#endif
++
+ namespace {
+ const size_t kProfileCardAvatarSize = 74;
+ const size_t kProfileCreationAvatarSize = 100;
+@@ -239,6 +243,12 @@
+   profile_entry.Set("profileCardButtonLabel", profileCardButtonLabel);
+   profile_entry.Set("hasAvatarRing", has_gradient_ring);
+   profile_entry.Set("avatarIcon", icon_url);
++#if BUILDFLAG(IS_MAC)
++  profile_entry.Set("opensExternalLinks",
++                    external_links::IsTargetProfile(entry->GetPath()));
++#else
++  profile_entry.Set("opensExternalLinks", false);
++#endif
+   return profile_entry;
+ }
+ 
+@@ -367,6 +377,12 @@
+       "onLearnMoreClicked",
+       base::BindRepeating(&ProfilePickerHandler::HandleOnLearnMoreClicked,
+                           base::Unretained(this)));
++#if BUILDFLAG(IS_MAC)
++  web_ui()->RegisterMessageCallback(
++      "setOpensExternalLinks",
++      base::BindRepeating(&ProfilePickerHandler::HandleSetOpensExternalLinks,
++                          base::Unretained(this)));
++#endif
+   Profile* profile = Profile::FromWebUI(web_ui());
+   content::URLDataSource::Add(profile, std::make_unique<ThemeSource>(profile));
+ }
+@@ -375,9 +391,17 @@
+   ProfileManager* profile_manager = g_browser_process->profile_manager();
+   profile_attributes_storage_observation_.Observe(
+       &profile_manager->GetProfileAttributesStorage());
++#if BUILDFLAG(IS_MAC)
++  local_state_registrar_.Init(g_browser_process->local_state());
++  local_state_registrar_.Add(
++      external_links::kProfilePref,
++      base::BindRepeating(&ProfilePickerHandler::PushProfilesList,
++                          base::Unretained(this)));
++#endif
+ }
+ void ProfilePickerHandler::OnJavascriptDisallowed() {
+   profile_attributes_storage_observation_.Reset();
++  local_state_registrar_.Reset();
+   weak_factory_.InvalidateWeakPtrs();
+ }
+ 
+@@ -542,6 +566,20 @@
+                      weak_factory_.GetWeakPtr()));
+ }
+ 
++#if BUILDFLAG(IS_MAC)
++void ProfilePickerHandler::HandleSetOpensExternalLinks(
++    const base::ListValue& args) {
++  if (args.size() != 2 || !args[1].is_bool()) {
++    return;
++  }
++  std::optional<base::FilePath> profile_path = base::ValueToFilePath(args[0]);
++  if (!profile_path) {
++    return;
++  }
++  external_links::SetTargetProfile(*profile_path, args[1].GetBool());
++}
++#endif
++
+ void ProfilePickerHandler::HandleAskOnStartupChanged(
+     const base::ListValue& list) {
+   if (list.empty() || !list[0].is_bool()) {
+--- a/chrome/browser/ui/webui/signin/profile_picker_handler.h
++++ b/chrome/browser/ui/webui/signin/profile_picker_handler.h
+@@ -19,6 +19,7 @@
+ #include "chrome/browser/profiles/profile.h"
+ #include "chrome/browser/profiles/profile_attributes_storage.h"
+ #include "chrome/browser/profiles/profile_statistics_common.h"
++#include "components/prefs/pref_change_registrar.h"
+ #include "content/public/browser/web_contents_observer.h"
+ #include "content/public/browser/web_ui_message_handler.h"
+ 
+@@ -126,6 +127,9 @@
+ 
+   // |args| is unused.
+   void HandleRecordSignInPromoImpression(const base::ListValue& args);
++#if BUILDFLAG(IS_MAC)
++  void HandleSetOpensExternalLinks(const base::ListValue& args);
++#endif
+ 
+   void OnLoadSigninFinished(bool success);
+   void OnResetPickerButtons(bool success);
+@@ -192,6 +196,9 @@
+                           ProfileAttributesStorage::Observer>
+       profile_attributes_storage_observation_{this};
+ 
++  // Observes which profile links from other apps open in.
++  PrefChangeRegistrar local_state_registrar_;
++
+   // Creation time of the handler, to measure performance on startup. Only set
+   // when the picker is shown on startup.
+   base::TimeTicks creation_time_on_startup_;
+--- a/chrome/browser/ui/webui/signin/profile_picker_ui.cc
++++ b/chrome/browser/ui/webui/signin/profile_picker_ui.cc
+@@ -138,6 +138,12 @@
+       {"profileMenuRemoveText", IDS_PROFILE_PICKER_PROFILE_MENU_REMOVE_TEXT},
+       {"profileMenuCustomizeText",
+        IDS_PROFILE_PICKER_PROFILE_MENU_CUSTOMIZE_TEXT},
++      {"profileMenuExternalLinksText",
++       IDS_PROFILE_PICKER_PROFILE_MENU_EXTERNAL_LINKS_TEXT},
++      {"profileMenuStopExternalLinksText",
++       IDS_PROFILE_PICKER_PROFILE_MENU_STOP_EXTERNAL_LINKS_TEXT},
++      {"profileCardOpensExternalLinks",
++       IDS_PROFILE_PICKER_PROFILE_CARD_OPENS_EXTERNAL_LINKS},
+       {"removeWarningLocalProfileTitle",
+        IDS_PROFILE_PICKER_REMOVE_WARNING_LOCAL_PROFILE_TITLE},
+       {"removeWarningSignedInProfileTitle",
+--- /dev/null
++++ b/chrome/browser/external_links_profile_mac.cc
+@@ -0,0 +1,130 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/external_links_profile_mac.h"
++
++#include <os/log.h>
++
++#include "base/command_line.h"
++#include "base/files/file_path.h"
++#include "base/logging.h"
++#include "base/strings/utf_string_conversions.h"
++#include "chrome/browser/browser_process.h"
++#include "chrome/browser/profiles/profile.h"
++#include "chrome/browser/profiles/profile_attributes_entry.h"
++#include "chrome/browser/profiles/profile_attributes_storage.h"
++#include "chrome/browser/profiles/profile_manager.h"
++#include "components/prefs/pref_registry_simple.h"
++#include "components/prefs/pref_service.h"
++
++namespace external_links {
++
++namespace {
++
++ProfileAttributesEntry* GetEntry(const base::FilePath& profile_path) {
++  ProfileManager* profile_manager = g_browser_process->profile_manager();
++  if (!profile_manager || profile_path.empty()) {
++    return nullptr;
++  }
++  return profile_manager->GetProfileAttributesStorage()
++      .GetProfileAttributesWithPath(profile_path);
++}
++
++}  // namespace
++
++void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
++  registry->RegisterStringPref(kProfilePref, std::string());
++}
++
++base::FilePath GetTargetProfilePath() {
++  PrefService* local_state = g_browser_process->local_state();
++  ProfileManager* profile_manager = g_browser_process->profile_manager();
++  if (!local_state || !profile_manager) {
++    return base::FilePath();
++  }
++  const std::string& name = local_state->GetString(kProfilePref);
++  if (name.empty()) {
++    return base::FilePath();
++  }
++  const base::FilePath path = profile_manager->user_data_dir().Append(
++      base::FilePath::FromUTF8Unsafe(name));
++  if (!GetEntry(path)) {
++    Log("Chosen profile \"" + name + "\" no longer exists");
++    return base::FilePath();
++  }
++  return path;
++}
++
++bool IsTargetProfile(const base::FilePath& profile_path) {
++  return !profile_path.empty() && GetTargetProfilePath() == profile_path;
++}
++
++void SetTargetProfile(const base::FilePath& profile_path, bool enabled) {
++  PrefService* local_state = g_browser_process->local_state();
++  if (!local_state || !GetEntry(profile_path)) {
++    return;
++  }
++  if (enabled) {
++    local_state->SetString(kProfilePref,
++                           profile_path.BaseName().AsUTF8Unsafe());
++    Log("Links from other apps now open in " +
++        DescribeProfilePath(profile_path));
++  } else if (IsTargetProfile(profile_path)) {
++    local_state->ClearPref(kProfilePref);
++    Log("Links from other apps now open in the last used window");
++  }
++}
++
++bool IsLoggingEnabled() {
++  return base::CommandLine::ForCurrentProcess()->HasSwitch(kLogSwitch);
++}
++
++void Log(std::string_view message) {
++  if (!IsLoggingEnabled()) {
++    return;
++  }
++  static os_log_t log = os_log_create("helium.link-routing", "routing");
++  LOG(WARNING) << "[link-routing] " << message;
++  // The unified log truncates long messages, so long ones (such as call
++  // stacks) are written in parts split at line breaks.
++  constexpr size_t kMaxPartSize = 800;
++  while (!message.empty()) {
++    size_t size = message.size();
++    if (size > kMaxPartSize) {
++      const size_t line_break = message.rfind('\n', kMaxPartSize);
++      size = line_break == std::string_view::npos || line_break == 0
++                 ? kMaxPartSize
++                 : line_break;
++    }
++    const std::string part(message.substr(0, size));
++    os_log(log, "%{public}s", part.c_str());
++    message.remove_prefix(size);
++    if (!message.empty() && message.front() == '\n') {
++      message.remove_prefix(1);
++    }
++  }
++}
++
++std::string DescribeProfile(const Profile* profile) {
++  if (!profile) {
++    return "(no profile)";
++  }
++  std::string description =
++      DescribeProfilePath(profile->GetOriginalProfile()->GetPath());
++  if (profile->IsOffTheRecord()) {
++    description += " (incognito)";
++  }
++  return description;
++}
++
++std::string DescribeProfilePath(const base::FilePath& profile_path) {
++  const std::string directory = profile_path.BaseName().AsUTF8Unsafe();
++  if (ProfileAttributesEntry* entry = GetEntry(profile_path)) {
++    return "\"" + base::UTF16ToUTF8(entry->GetLocalProfileName()) + "\" [" +
++           directory + "]";
++  }
++  return "[" + directory + "]";
++}
++
++}  // namespace external_links
+--- /dev/null
++++ b/chrome/browser/external_links_profile_mac.h
+@@ -0,0 +1,53 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#ifndef CHROME_BROWSER_EXTERNAL_LINKS_PROFILE_MAC_H_
++#define CHROME_BROWSER_EXTERNAL_LINKS_PROFILE_MAC_H_
++
++#include <string>
++#include <string_view>
++
++namespace base {
++class FilePath;
++}
++
++class PrefRegistrySimple;
++class Profile;
++
++// Links opened from other apps normally go to the profile of the most recently
++// focused window. This lets the user pick one profile for them instead.
++namespace external_links {
++
++// Local state pref with the directory name of the chosen profile. Empty means
++// links open in the profile of the most recently focused window.
++inline constexpr char kProfilePref[] = "helium.external_links.profile";
++
++// Command line switch, set from chrome://flags, that logs how links from other
++// apps are routed.
++inline constexpr char kLogSwitch[] = "log-link-routing";
++
++void RegisterLocalStatePrefs(PrefRegistrySimple* registry);
++
++// Returns the chosen profile, or an empty path when none is chosen or the
++// chosen profile no longer exists.
++base::FilePath GetTargetProfilePath();
++
++bool IsTargetProfile(const base::FilePath& profile_path);
++
++// Makes `profile_path` the chosen profile. Disabling only clears the choice if
++// `profile_path` is the chosen profile.
++void SetTargetProfile(const base::FilePath& profile_path, bool enabled);
++
++bool IsLoggingEnabled();
++
++// Writes `message` to the unified system log and the Chromium log when logging
++// is enabled.
++void Log(std::string_view message);
++
++std::string DescribeProfile(const Profile* profile);
++std::string DescribeProfilePath(const base::FilePath& profile_path);
++
++}  // namespace external_links
++
++#endif  // CHROME_BROWSER_EXTERNAL_LINKS_PROFILE_MAC_H_
