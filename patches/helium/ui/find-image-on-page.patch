@@ -1,0 +1,2356 @@
+--- a/chrome/app/chrome_command_ids.h
++++ b/chrome/app/chrome_command_ids.h
+@@ -355,6 +355,8 @@
+ #define IDC_CONTENT_CONTEXT_SEARCHWEBFORVIDEOFRAME 50135
+ #define IDC_CONTENT_CONTEXT_OPENAVNEWTAB 50136
+ #define IDC_CONTENT_CONTEXT_PICTUREINPICTURE 50137
++#define IDC_CONTENT_CONTEXT_FIND_IMAGE_IN_TABS 50138
++#define IDC_CONTENT_CONTEXT_FIND_IMAGE_ON_PAGE 50139
+ // Media items.
+ #define IDC_CONTENT_CONTEXT_LOOP 50140
+ #define IDC_CONTENT_CONTEXT_CONTROLS 50141
+--- a/chrome/app/generated_resources.grd
++++ b/chrome/app/generated_resources.grd
+@@ -20599,6 +20599,75 @@
+     <message name="IDS_OSCRYPTASYNC_AVAILABILITY_INFOBAR_BUTTON" desc="The text of the button to proceed with relaunching the entire browser to resolve keychain permission issues.">
+       Relaunch
+     </message>
++    <message name="IDS_NEO_IMAGE_MATCH_FIND_BAR" desc="Tooltip and accessible name of the find bar button that searches the page for an image.">
++      Find an image on this page
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_PASTE" desc="Find bar image menu item that searches for the image on the clipboard.">
++      Paste image
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_CHOOSE_FILE" desc="Find bar image menu item that opens a file chooser for an image to search for.">
++      Choose image file…
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_USE_CHOSEN" desc="Find bar image menu item that searches for the image chosen earlier with 'Find this image in other tabs'.">
++      Use image chosen from page
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_FILE_TITLE" desc="Title of the file chooser for an image to find on the page.">
++      Choose an image to find
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_SEARCHING" desc="Find bar placeholder while looking for an image on the page.">
++      Searching for image…
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_PLACEHOLDER" desc="Find bar placeholder while browsing image matches.">
++      Image matches · type to search text
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_NO_CLIPBOARD_IMAGE" desc="Find bar placeholder when there is no image on the clipboard to search for.">
++      No image on the clipboard
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_UNREADABLE" desc="Find bar placeholder when the chosen image could not be opened.">
++      Couldn't open this image
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_FIND_IN_TABS" desc="Context menu item on an image that looks for the same picture in the other open tabs.">
++      Find this image in other tabs
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_FIND_ON_PAGE" desc="Context menu item that looks for the image chosen earlier with 'Find this image in other tabs' on the current page.">
++      Find chosen image on this page
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_COUNTER" desc="Shown over the page while browsing image matches. CURRENT is the shown match, TOTAL the number of matches.">
++      Image match <ph name="CURRENT">$1<ex>2</ex></ph> of <ph name="TOTAL">$2<ex>5</ex></ph>
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_EXACT" desc="Label on an image that looks the same as the chosen image.">
++      Same image
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_SIMILAR" desc="Label on an image that looks similar to the chosen image.">
++      Similar image
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_HIDDEN" desc="Added to the match counter when the matching image is not visible, for example in a closed gallery slide.">
++      hidden on the page
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_PREVIOUS" desc="Button that shows the previous image match.">
++      Previous
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_NEXT" desc="Button that shows the next image match.">
++      Next
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_CLOSE" desc="Button that removes the image match outlines from the page.">
++      Close
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_UNLOADED" desc="Shown when images further down the page had not loaded and could not be compared.">
++      Images further down the page weren't loaded. Scroll down, then search again.
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_TOO_PLAIN" desc="Shown when the chosen image is too small or too plain to search for.">
++      This image is too small or too plain to search for.
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_NO_TABS" desc="Shown when there are no other tabs to search for the chosen image.">
++      No other tabs to search. Open the page the image came from, then right-click it and choose Find chosen image on this page.
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_NONE_IN_TABS" desc="Shown when none of the other tabs contains the chosen image.">
++      No match in the other tabs. Open the page the image came from, then right-click it and choose Find chosen image on this page.
++    </message>
++    <message name="IDS_NEO_IMAGE_MATCH_NONE_ON_PAGE" desc="Shown when the current page does not contain the chosen image.">
++      No matching image on this page.
++    </message>
+     <message name="IDS_NEO_REFRESH_MINUTE" desc="One minute auto refresh interval.">
+       1 minute
+     </message>
+--- a/chrome/browser/actor/execution_engine_unittest.cc
++++ b/chrome/browser/actor/execution_engine_unittest.cc
+@@ -159,6 +159,10 @@
+       RequestBitmapForContextNodeWithBoundsHintCallback callback) override {}
+   void RequestBoundsHintForAllImages(
+       RequestBoundsHintForAllImagesCallback callback) override {}
++  void RequestImageThumbnailForContextNode(
++      RequestImageThumbnailForContextNodeCallback callback) override {}
++  void RequestImageThumbnails(
++      RequestImageThumbnailsCallback callback) override {}
+   void RequestImageForContextNode(
+       int32_t image_min_area_pixels,
+       const gfx::Size& image_max_size_pixels,
+--- a/chrome/browser/password_manager/actor_login/internal/actor_login_siwg_controller_unittest.cc
++++ b/chrome/browser/password_manager/actor_login/internal/actor_login_siwg_controller_unittest.cc
+@@ -98,6 +98,14 @@
+               (RequestBoundsHintForAllImagesCallback),
+               (override));
+   MOCK_METHOD(void,
++              RequestImageThumbnailForContextNode,
++              (RequestImageThumbnailForContextNodeCallback),
++              (override));
++  MOCK_METHOD(void,
++              RequestImageThumbnails,
++              (RequestImageThumbnailsCallback),
++              (override));
++  MOCK_METHOD(void,
+               RequestImageForContextNode,
+               (int32_t,
+                const gfx::Size&,
+--- a/chrome/browser/password_manager/password_change/password_change_page_stability_waiter_unittest.cc
++++ b/chrome/browser/password_manager/password_change/password_change_page_stability_waiter_unittest.cc
+@@ -87,6 +87,14 @@
+               (RequestBoundsHintForAllImagesCallback),
+               (override));
+   MOCK_METHOD(void,
++              RequestImageThumbnailForContextNode,
++              (RequestImageThumbnailForContextNodeCallback),
++              (override));
++  MOCK_METHOD(void,
++              RequestImageThumbnails,
++              (RequestImageThumbnailsCallback),
++              (override));
++  MOCK_METHOD(void,
+               RequestImageForContextNode,
+               (int32_t,
+                const gfx::Size&,
+--- a/chrome/browser/renderer_context_menu/BUILD.gn
++++ b/chrome/browser/renderer_context_menu/BUILD.gn
+@@ -164,6 +164,7 @@
+       "//chrome/browser/ui/send_tab_to_self",
+       "//chrome/browser/ui/sharing_hub",
+       "//chrome/browser/ui/tabs",
++      "//chrome/browser/ui/tabs:image_match_finder",
+       "//chrome/browser/ui/toasts",
+       "//chrome/browser/ui/toasts/api:toasts",
+       "//chrome/browser/ui/translate",
+--- a/chrome/browser/renderer_context_menu/render_view_context_menu.cc
++++ b/chrome/browser/renderer_context_menu/render_view_context_menu.cc
+@@ -136,6 +136,7 @@
+ #include "chrome/browser/ui/send_tab_to_self/send_tab_to_self_context_menu_delegate.h"
+ #include "chrome/browser/ui/sharing_hub/screenshot/screenshot_captured_bubble_controller.h"
+ #include "chrome/browser/ui/tab_contents/core_tab_helper.h"
++#include "chrome/browser/ui/tabs/image_match_finder.h"
+ #include "chrome/browser/ui/tabs/features.h"
+ #include "chrome/browser/ui/tabs/page_context_eligibility_helper.h"
+ #include "chrome/browser/ui/tabs/public/tab_features.h"
+@@ -1283,6 +1284,17 @@
+   const bool use_simplified_menu_for_text_selection =
+       ShouldUseSimplifiedTextSelection();
+ 
++  if (tabs::HasChosenImage(browser_context_) &&
++      (embedder_web_contents_->GetLastCommittedURL().SchemeIsHTTPOrHTTPS() ||
++       embedder_web_contents_->GetLastCommittedURL().SchemeIsFile())) {
++    menu_model_.AddItemWithStringId(IDC_CONTENT_CONTEXT_FIND_IMAGE_ON_PAGE,
++                                    IDS_NEO_IMAGE_MATCH_FIND_ON_PAGE);
++    if (!embedder_web_contents_->GetLastCommittedURL().SchemeIsHTTPOrHTTPS() ||
++        !sharing_hub::DesktopScreenshotsFeatureEnabled(browser_context_)) {
++      menu_model_.AddSeparator(ui::NORMAL_SEPARATOR);
++    }
++  }
++
+   if (embedder_web_contents_->GetLastCommittedURL().SchemeIsHTTPOrHTTPS() &&
+       sharing_hub::DesktopScreenshotsFeatureEnabled(browser_context_)) {
+     menu_model_.AddItemWithStringId(IDC_SHARING_HUB_SCREENSHOT,
+@@ -1648,8 +1660,10 @@
+ }
+ 
+ void RenderViewContextMenu::RecordUsedItem(int id) {
+-  // Neo's local capture action has no entry in Chromium's metrics enum.
+-  if (id == IDC_SHARING_HUB_SCREENSHOT) {
++  // Neo's own actions have no entry in Chromium's metrics enum.
++  if (id == IDC_SHARING_HUB_SCREENSHOT ||
++      id == IDC_CONTENT_CONTEXT_FIND_IMAGE_IN_TABS ||
++      id == IDC_CONTENT_CONTEXT_FIND_IMAGE_ON_PAGE) {
+     return;
+   }
+   // Log general ID.
+@@ -1768,7 +1782,9 @@
+ }
+ 
+ void RenderViewContextMenu::RecordShownItem(int id, bool is_submenu) {
+-  if (id == IDC_SHARING_HUB_SCREENSHOT) {
++  if (id == IDC_SHARING_HUB_SCREENSHOT ||
++      id == IDC_CONTENT_CONTEXT_FIND_IMAGE_IN_TABS ||
++      id == IDC_CONTENT_CONTEXT_FIND_IMAGE_ON_PAGE) {
+     return;
+   }
+   // The "RenderViewContextMenu.Shown" histogram is not recorded for submenus.
+@@ -2322,6 +2338,10 @@
+                                   IDS_CONTENT_CONTEXT_COPYIMAGE);
+   menu_model_.AddItemWithStringId(IDC_CONTENT_CONTEXT_COPYIMAGELOCATION,
+                                   IDS_CONTENT_CONTEXT_COPYIMAGELOCATION);
++  if (params_.has_image_contents) {
++    menu_model_.AddItemWithStringId(IDC_CONTENT_CONTEXT_FIND_IMAGE_IN_TABS,
++                                    IDS_NEO_IMAGE_MATCH_FIND_IN_TABS);
++  }
+ 
+   // Don't double-add for linked images, which also add the item.
+   if (params_.link_url.is_empty()) {
+@@ -3425,6 +3445,12 @@
+       enterprise_isolated_mode::IsolatedModeReplacesIncognito(GetProfile());
+ 
+   switch (id) {
++    case IDC_CONTENT_CONTEXT_FIND_IMAGE_IN_TABS:
++      return params_.has_image_contents && GetRenderFrameHost();
++
++    case IDC_CONTENT_CONTEXT_FIND_IMAGE_ON_PAGE:
++      return tabs::HasChosenImage(browser_context_);
++
+     case IDC_SHARING_HUB_SCREENSHOT:
+       return GetBrowser() &&
+              embedder_web_contents_->GetLastCommittedURL()
+@@ -4033,6 +4059,16 @@
+       chrome::GoForward(embedder_web_contents_);
+       break;
+ 
++    case IDC_CONTENT_CONTEXT_FIND_IMAGE_IN_TABS:
++      if (content::RenderFrameHost* frame = GetRenderFrameHost()) {
++        tabs::FindContextImageInOtherTabs(frame);
++      }
++      break;
++
++    case IDC_CONTENT_CONTEXT_FIND_IMAGE_ON_PAGE:
++      tabs::FindChosenImageOnPage(embedder_web_contents_);
++      break;
++
+     case IDC_SHARING_HUB_SCREENSHOT:
+       if (IsCommandIdEnabled(id)) {
+         sharing_hub::ScreenshotCapturedBubbleController::Get(
+--- a/chrome/browser/ui/BUILD.gn
++++ b/chrome/browser/ui/BUILD.gn
+@@ -2316,6 +2316,10 @@
+       "browser.h",
+       "browser_tabstrip.cc",
+       "browser_tabstrip.h",
++      "tabs/image_match_compare.cc",
++      "tabs/image_match_compare.h",
++      "tabs/image_match_finder.cc",
++      "tabs/image_match_script.h",
+       "tabs/page_change_monitor.cc",
+       "tabs/page_change_monitor_diff.h",
+       "tabs/page_change_monitor_script.h",
+@@ -2325,6 +2329,7 @@
+       deps += [
+         "//chrome/browser/sharing_hub",
+         "//chrome/browser/ui/select_file_policy",
++        "//chrome/browser/ui/tabs:image_match_finder",
+         "//chrome/browser/ui/tabs:page_change_monitor",
+         "//chrome/browser/ui/views/search_ai_mode",
+         "//chrome/browser/ui/views/search_ai_mode:impl",
+--- a/chrome/browser/ui/tabs/BUILD.gn
++++ b/chrome/browser/ui/tabs/BUILD.gn
+@@ -96,6 +96,10 @@
+ }
+ 
+ if (!is_android) {
++  source_set("image_match_finder") {
++    public = [ "image_match_finder.h" ]
++  }
++
+   source_set("page_change_monitor") {
+     public = [ "page_change_monitor.h" ]
+     public_deps = [
+--- a/chrome/browser/ui/views/BUILD.gn
++++ b/chrome/browser/ui/views/BUILD.gn
+@@ -1526,9 +1526,13 @@
+     "//chrome/browser/ui/browser_window",
+     "//chrome/browser/ui/color:color_headers",
+     "//chrome/browser/ui/find_bar",
++    "//chrome/browser/ui/select_file_policy",
++    "//chrome/browser/ui/tabs:image_match_finder",
+     "//chrome/browser/ui/views/frame:browser_view_header",
+     "//chrome/browser/user_education",
+     "//components/find_in_page",
++    "//services/data_decoder/public/cpp",
++    "//ui/shell_dialogs",
+     "//components/strings:components_strings",
+     "//components/vector_icons",
+     "//content/public/browser",
+--- a/chrome/browser/ui/views/find_bar_host.cc
++++ b/chrome/browser/ui/views/find_bar_host.cc
+@@ -309,6 +309,8 @@
+ }
+ 
+ void FindBarHost::Hide(bool animate) {
++  // Image search outlines belong to the open find bar.
++  view_->ExitImageMode();
+   // Restore/Save is non-symmetric as hiding the FindBarHost could change
+   // the focus state of the external view. Saving the focus tracker before the
+   // hide preserves the appropriate view in the event the FindBarHost visibility
+--- a/chrome/browser/ui/views/find_bar_view.cc
++++ b/chrome/browser/ui/views/find_bar_view.cc
+@@ -9,7 +9,10 @@
+ #include <utility>
+ 
+ #include "base/feature_list.h"
++#include "base/files/file_util.h"
++#include "base/functional/bind.h"
+ #include "base/i18n/number_formatting.h"
++#include "base/task/thread_pool.h"
+ #include "base/strings/string_util.h"
+ #include "build/build_config.h"
+ #include "chrome/app/vector_icons/vector_icons.h"
+@@ -21,6 +24,8 @@
+ #include "chrome/browser/ui/find_bar/find_bar_controller.h"
+ #include "chrome/browser/ui/find_bar/find_bar_state.h"
+ #include "chrome/browser/ui/find_bar/find_bar_state_factory.h"
++#include "chrome/browser/ui/select_file_policy/chrome_select_file_policy.h"
++#include "chrome/browser/ui/tabs/image_match_finder.h"
+ #include "chrome/browser/ui/view_ids.h"
+ #include "chrome/browser/ui/views/chrome_layout_provider.h"
+ #include "chrome/browser/ui/views/find_bar_host.h"
+@@ -33,6 +38,9 @@
+ #include "components/strings/grit/components_strings.h"
+ #include "components/vector_icons/vector_icons.h"
+ #include "content/public/browser/clipboard_types.h"
++#include "content/public/browser/web_contents.h"
++#include "services/data_decoder/public/cpp/decode_image.h"
++#include "skia/ext/image_operations.h"
+ #include "ui/accessibility/ax_enums.mojom.h"
+ #include "ui/accessibility/ax_node_data.h"
+ #include "ui/base/data_transfer_policy/data_transfer_endpoint.h"
+@@ -40,12 +48,16 @@
+ #include "ui/base/ime/text_input_flags.h"
+ #include "ui/base/l10n/l10n_util.h"
+ #include "ui/base/metadata/metadata_impl_macros.h"
++#include "ui/base/clipboard/clipboard.h"
++#include "ui/base/mojom/menu_source_type.mojom.h"
+ #include "ui/base/theme_provider.h"
+ #include "ui/base/ui_base_features.h"
+ #include "ui/color/color_id.h"
+ #include "ui/color/color_provider.h"
+ #include "ui/events/event.h"
+ #include "ui/gfx/geometry/insets.h"
++#include "ui/gfx/image/image_skia.h"
++#include "ui/gfx/image/image_skia_operations.h"
+ #include "ui/gfx/paint_vector_icon.h"
+ #include "ui/views/accessibility/view_accessibility.h"
+ #include "ui/views/background.h"
+@@ -54,7 +66,10 @@
+ #include "ui/views/controls/button/image_button_factory.h"
+ #include "ui/views/controls/button/md_text_button.h"
+ #include "ui/views/controls/highlight_path_generator.h"
++#include "ui/views/controls/image_view.h"
+ #include "ui/views/controls/label.h"
++#include "ui/views/controls/menu/menu_runner.h"
++#include "ui/shell_dialogs/selected_file_info.h"
+ #include "ui/views/controls/separator.h"
+ #include "ui/views/layout/box_layout.h"
+ #include "ui/views/layout/box_layout_view.h"
+@@ -74,6 +89,24 @@
+ constexpr int kBasePadding = 4;
+ constexpr int kHorizontalGap = 6;
+ 
++// Helium Neo image search.
++constexpr int kImagePreviewSize = 20;
++// Larger files are not worth decoding to find a 64 pixel thumbnail.
++constexpr int64_t kMaxImageFileSize = 64 * 1024 * 1024;
++enum ImageMenuCommand {
++  kPasteImage = 1,
++  kChooseImageFile,
++  kUseChosenImage,
++};
++
++std::vector<uint8_t> ReadImageFile(const base::FilePath& path) {
++  const std::optional<int64_t> size = base::GetFileSize(path);
++  if (!size || *size <= 0 || *size > kMaxImageFileSize) {
++    return {};
++  }
++  return base::ReadFileToBytes(path).value_or(std::vector<uint8_t>());
++}
++
+ }  // namespace
+ 
+ DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(FindBarView, kElementId);
+@@ -204,6 +237,12 @@
+           .SetInsideBorderInsets(
+               gfx::Insets::VH(0, kBasePadding * 2))
+           .AddChildren(
++              views::Builder<views::ImageView>()
++                  .CopyAddressTo(&image_preview_)
++                  .SetVisible(false)
++                  .SetCanProcessEventsWithinSubtree(false)
++                  .SetProperty(views::kMarginsKey,
++                               gfx::Insets::TLBR(0, kHorizontalGap, 0, 0)),
+               views::Builder<views::Textfield>()
+                   .CopyAddressTo(&find_text_)
+                   .SetAccessibleName(
+@@ -235,6 +274,15 @@
+                       gfx::Insets(horizontal_margin +
+                                   chrome_refresh_separator_vertical_margin)),
+               views::Builder<views::ImageButton>()
++                  .CopyAddressTo(&image_button_)
++                  .SetAccessibleName(
++                      l10n_util::GetStringUTF16(IDS_NEO_IMAGE_MATCH_FIND_BAR))
++                  .SetTooltipText(
++                      l10n_util::GetStringUTF16(IDS_NEO_IMAGE_MATCH_FIND_BAR))
++                  .SetCallback(base::BindRepeating(&FindBarView::ShowImageMenu,
++                                                   base::Unretained(this)))
++                  .SetProperty(views::kMarginsKey, image_button_margins),
++              views::Builder<views::ImageButton>()
+                   .CopyAddressTo(&find_previous_button_)
+                   .SetAccessibleName(
+                       l10n_util::GetStringUTF16(IDS_ACCNAME_PREVIOUS))
+@@ -314,6 +362,14 @@
+           kColorFindBarButtonIconHovered));
+ 
+   views::SetImageFromVectorIconWithColor(
++      image_button_, kImageIcon,
++      {kColorFindBarButtonIcon, kColorFindBarButtonIconDisabled});
++  image_button_->SetImageModel(
++      views::Button::STATE_HOVERED,
++      ui::ImageModel::FromVectorIcon(kImageIcon,
++                                     kColorFindBarButtonIconHovered));
++
++  views::SetImageFromVectorIconWithColor(
+       close_button_,
+       features::IsRoundedIconsEnabled() ? kCloseSmallIcon
+                                         : kCloseChromeRefreshOldIcon,
+@@ -356,9 +412,14 @@
+   SetCommonButtonAttributes(find_previous_button_);
+   SetCommonButtonAttributes(find_next_button_);
+   SetCommonButtonAttributes(close_button_);
++  SetCommonButtonAttributes(image_button_);
+ }
+ 
+-FindBarView::~FindBarView() = default;
++FindBarView::~FindBarView() {
++  if (select_file_dialog_) {
++    select_file_dialog_->ListenerDestroyed();
++  }
++}
+ 
+ void FindBarView::SetHost(FindBarHost* host) {
+   find_bar_host_ = host;
+@@ -369,6 +430,8 @@
+ void FindBarView::SetFindTextAndSelectedRange(
+     const std::u16string& find_text,
+     const gfx::Range& selected_range) {
++  // Called when the find bar moves to another tab or is filled in again.
++  ExitImageMode();
+   find_text_->SetText(find_text);
+   find_text_->SetSelectedRange(selected_range);
+   last_searched_text_ = find_text;
+@@ -393,6 +456,9 @@
+ void FindBarView::UpdateForResult(
+     const find_in_page::FindNotificationDetails& result,
+     const std::u16string& find_text) {
++  if (image_mode_) {
++    return;
++  }
+   bool have_valid_range =
+       result.number_of_matches() != -1 && result.active_match_ordinal() != -1;
+ 
+@@ -438,7 +504,8 @@
+ 
+ bool FindBarView::ContainsFocus() const {
+   return find_text_->HasFocus() || find_previous_button_->HasFocus() ||
+-         find_next_button_->HasFocus() || close_button_->HasFocus();
++         find_next_button_->HasFocus() || close_button_->HasFocus() ||
++         image_button_->HasFocus();
+ }
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+@@ -503,6 +570,12 @@
+     return true;  // Handled, we are done!
+   }
+ 
++  if (image_mode_ && key_event.key_code() == ui::VKEY_RETURN &&
++      key_event.type() == ui::EventType::kKeyPressed) {
++    StepImageMatch(key_event.IsShiftDown());
++    return true;
++  }
++
+   if (key_event.key_code() == ui::VKEY_RETURN &&
+       key_event.type() == ui::EventType::kKeyPressed) {
+     // Pressing Return/Enter starts the search (unless text box is empty).
+@@ -541,6 +614,9 @@
+ void FindBarView::OnAfterUserAction(views::Textfield* sender) {
+   // The composition text wouldn't be what the user is really looking for.
+   // We delay the search until the user commits the composition text.
++  if (image_mode_ && !sender->GetText().empty()) {
++    ExitImageMode();
++  }
+   if (!sender->IsIMEComposing() && sender->GetText() != last_searched_text_) {
+     Find(sender->GetText());
+   }
+@@ -566,9 +642,39 @@
+ void FindBarView::OnBeforePaste(
+     views::Textfield* sender,
+     base::OnceCallback<void(std::optional<std::u16string>)> callback) {
+-  enterprise_data_protection::ReplacePasteToFindBar(
+-      find_bar_host_->GetFindBarController()->web_contents(),
+-      std::move(callback));
++  // A copied picture without text becomes an image search.
++  ui::Clipboard::GetForCurrentThread()->ReadText(
++      ui::ClipboardBuffer::kCopyPaste, /*data_dst=*/std::nullopt,
++      base::BindOnce(&FindBarView::OnPasteText, weak_factory_.GetWeakPtr(),
++                     std::move(callback)));
++}
++
++void FindBarView::OnPasteText(
++    base::OnceCallback<void(std::optional<std::u16string>)> callback,
++    std::u16string text) {
++  if (!text.empty()) {
++    enterprise_data_protection::ReplacePasteToFindBar(GetWebContents(),
++                                                      std::move(callback));
++    return;
++  }
++  ui::Clipboard::GetForCurrentThread()->ReadPng(
++      ui::ClipboardBuffer::kCopyPaste, /*data_dst=*/std::nullopt,
++      base::BindOnce(&FindBarView::OnPastePng, weak_factory_.GetWeakPtr(),
++                     std::move(callback)));
++}
++
++void FindBarView::OnPastePng(
++    base::OnceCallback<void(std::optional<std::u16string>)> callback,
++    const std::vector<uint8_t>& png) {
++  if (png.empty()) {
++    enterprise_data_protection::ReplacePasteToFindBar(GetWebContents(),
++                                                      std::move(callback));
++    return;
++  }
++  // Paste nothing into the text field.
++  std::move(callback).Run(std::u16string());
++  StartImageSearch();
++  SearchForEncodedImage(png);
+ }
+ 
+ std::unique_ptr<ui::ScopedClipboardWriter>
+@@ -621,6 +727,10 @@
+   if (!find_bar_host_) {
+     return;
+   }
++  if (image_mode_) {
++    StepImageMatch(reverse);
++    return;
++  }
+   if (!find_text_->GetText().empty()) {
+     find_in_page::FindTabHelper* find_tab_helper =
+         find_in_page::FindTabHelper::FromWebContents(
+@@ -641,10 +751,237 @@
+ }
+ 
+ void FindBarView::UpdateMatchCountAppearance(bool no_match) {
+-  bool enable_buttons = !find_text_->GetText().empty() && !no_match;
++  bool enable_buttons =
++      (image_mode_ ? image_match_count_ > 0 : !find_text_->GetText().empty()) &&
++      !no_match;
+   find_previous_button_->SetEnabled(enable_buttons);
+   find_next_button_->SetEnabled(enable_buttons);
+ }
+ 
++content::WebContents* FindBarView::GetWebContents() const {
++  return find_bar_host_ && find_bar_host_->GetFindBarController()
++             ? find_bar_host_->GetFindBarController()->web_contents()
++             : nullptr;
++}
++
++void FindBarView::ShowImageMenu() {
++  image_menu_model_ = std::make_unique<ui::SimpleMenuModel>(this);
++  image_menu_model_->AddItemWithStringId(kPasteImage,
++                                         IDS_NEO_IMAGE_MATCH_PASTE);
++  image_menu_model_->AddItemWithStringId(kChooseImageFile,
++                                         IDS_NEO_IMAGE_MATCH_CHOOSE_FILE);
++  if (content::WebContents* contents = GetWebContents();
++      contents && tabs::HasChosenImage(contents->GetBrowserContext())) {
++    image_menu_model_->AddItemWithStringId(kUseChosenImage,
++                                           IDS_NEO_IMAGE_MATCH_USE_CHOSEN);
++  }
++  image_menu_runner_ = std::make_unique<views::MenuRunner>(
++      image_menu_model_.get(), views::MenuRunner::HAS_MNEMONICS);
++  image_menu_runner_->RunMenuAt(
++      GetWidget(), nullptr, image_button_->GetAnchorBoundsInScreen(),
++      views::MenuAnchorPosition::kTopRight, ui::mojom::MenuSourceType::kNone);
++}
++
++void FindBarView::ExecuteCommand(int command_id, int event_flags) {
++  content::WebContents* contents = GetWebContents();
++  if (!contents) {
++    return;
++  }
++  switch (command_id) {
++    case kPasteImage:
++      ui::Clipboard::GetForCurrentThread()->ReadPng(
++          ui::ClipboardBuffer::kCopyPaste, /*data_dst=*/std::nullopt,
++          base::BindOnce(&FindBarView::OnMenuPastePng,
++                         weak_factory_.GetWeakPtr()));
++      break;
++    case kChooseImageFile: {
++      if (select_file_dialog_) {
++        select_file_dialog_->ListenerDestroyed();
++      }
++      select_file_dialog_ = ui::SelectFileDialog::Create(
++          this, std::make_unique<ChromeSelectFilePolicy>(contents));
++      ui::SelectFileDialog::FileTypeInfo types;
++      types.extensions = {{FILE_PATH_LITERAL("png"), FILE_PATH_LITERAL("jpg"),
++                           FILE_PATH_LITERAL("jpeg"), FILE_PATH_LITERAL("webp"),
++                           FILE_PATH_LITERAL("gif"), FILE_PATH_LITERAL("bmp"),
++                           FILE_PATH_LITERAL("avif"), FILE_PATH_LITERAL("ico")}};
++      types.include_all_files = true;
++      select_file_dialog_->SelectFile(
++          ui::SelectFileDialog::SELECT_OPEN_FILE,
++          l10n_util::GetStringUTF16(IDS_NEO_IMAGE_MATCH_FILE_TITLE),
++          base::FilePath(), &types, 1, base::FilePath::StringType(),
++          contents->GetTopLevelNativeWindow());
++      break;
++    }
++    case kUseChosenImage:
++      StartImageSearch();
++      image_preview_->SetImage(ui::ImageModel::FromVectorIcon(
++          kImageIcon, kColorFindBarButtonIcon, kImagePreviewSize));
++      image_preview_->SetVisible(true);
++      tabs::FindChosenImageOnPage(
++          contents, base::BindOnce(&FindBarView::OnImageSearchDone,
++                                   weak_factory_.GetWeakPtr(),
++                                   image_search_generation_));
++      break;
++  }
++}
++
++bool FindBarView::IsCommandIdEnabled(int command_id) const {
++  return GetWebContents() != nullptr;
++}
++
++void FindBarView::FileSelected(const ui::SelectedFileInfo& file, int index) {
++  StartImageSearch();
++  base::ThreadPool::PostTaskAndReplyWithResult(
++      FROM_HERE, {base::MayBlock(), base::TaskPriority::USER_VISIBLE},
++      base::BindOnce(&ReadImageFile, file.path()),
++      base::BindOnce(&FindBarView::SearchForEncodedImage,
++                     weak_factory_.GetWeakPtr()));
++}
++
++void FindBarView::OnMenuPastePng(const std::vector<uint8_t>& png) {
++  StartImageSearch();
++  if (png.empty()) {
++    SetImageStatus(IDS_NEO_IMAGE_MATCH_NO_CLIPBOARD_IMAGE);
++    return;
++  }
++  SearchForEncodedImage(png);
++}
++
++void FindBarView::StartImageSearch() {
++  content::WebContents* contents = GetWebContents();
++  if (image_contents_ && image_contents_.get() != contents) {
++    tabs::ClearImageMatches(image_contents_.get());
++  }
++  image_contents_ = contents ? contents->GetWeakPtr() : nullptr;
++  if (contents) {
++    // Text matches would compete with the image outlines.
++    find_in_page::FindTabHelper::FromWebContents(contents)->StopFinding(
++        find_in_page::SelectionAction::kClear);
++  }
++  image_mode_ = true;
++  ++image_search_generation_;
++  image_match_count_ = 0;
++  image_match_index_ = 0;
++  find_text_->SetText(std::u16string());
++  last_searched_text_.clear();
++  find_text_->SetPlaceholderText(
++      l10n_util::GetStringUTF16(IDS_NEO_IMAGE_MATCH_SEARCHING));
++  match_count_text_->ClearResult();
++  UpdateMatchCountAppearance(true);
++  find_text_->RequestFocus();
++}
++
++void FindBarView::SearchForEncodedImage(std::vector<uint8_t> data) {
++  if (!image_mode_) {
++    return;
++  }
++  if (data.empty()) {
++    SetImageStatus(IDS_NEO_IMAGE_MATCH_UNREADABLE);
++    return;
++  }
++  // Untrusted image data is only decoded in the sandboxed decoder.
++  const int generation = image_search_generation_;
++  data_decoder::DecodeImageIsolated(
++      data, data_decoder::mojom::ImageCodec::kDefault,
++      /*shrink_to_fit=*/true, data_decoder::kDefaultMaxSizeInBytes,
++      gfx::Size(),
++      base::BindOnce(
++          [](base::WeakPtr<FindBarView> view, int generation,
++             const SkBitmap& image) {
++            if (!view || generation != view->image_search_generation_) {
++              return;
++            }
++            if (image.drawsNothing()) {
++              view->SetImageStatus(IDS_NEO_IMAGE_MATCH_UNREADABLE);
++              return;
++            }
++            view->SearchForImage(image);
++          },
++          weak_factory_.GetWeakPtr(), generation));
++}
++
++void FindBarView::SearchForImage(const SkBitmap& image) {
++  content::WebContents* contents = image_contents_.get();
++  if (!contents || contents != GetWebContents()) {
++    ExitImageMode();
++    return;
++  }
++  const gfx::ImageSkia preview = gfx::ImageSkia::CreateFrom1xBitmap(image);
++  const double scale = static_cast<double>(kImagePreviewSize) /
++                       std::max(image.width(), image.height());
++  const gfx::Size size(std::max(1, static_cast<int>(image.width() * scale)),
++                       std::max(1, static_cast<int>(image.height() * scale)));
++  image_preview_->SetImage(ui::ImageModel::FromImageSkia(
++      gfx::ImageSkiaOperations::CreateResizedImage(
++          preview, skia::ImageOperations::RESIZE_GOOD, size)));
++  image_preview_->SetVisible(true);
++  tabs::FindImageOnPage(
++      contents, image,
++      base::BindOnce(&FindBarView::OnImageSearchDone,
++                     weak_factory_.GetWeakPtr(), image_search_generation_));
++}
++
++void FindBarView::OnImageSearchDone(int generation, int count, bool usable) {
++  if (!image_mode_ || generation != image_search_generation_) {
++    return;
++  }
++  if (!usable) {
++    SetImageStatus(IDS_NEO_IMAGE_MATCH_TOO_PLAIN);
++    return;
++  }
++  image_match_count_ = count;
++  image_match_index_ = 0;
++  find_text_->SetPlaceholderText(l10n_util::GetStringUTF16(
++      count ? IDS_NEO_IMAGE_MATCH_PLACEHOLDER
++            : IDS_NEO_IMAGE_MATCH_NONE_ON_PAGE));
++  UpdateImageMatchCount();
++}
++
++void FindBarView::SetImageStatus(int message_id) {
++  image_match_count_ = 0;
++  find_text_->SetPlaceholderText(l10n_util::GetStringUTF16(message_id));
++  match_count_text_->ClearResult();
++  UpdateMatchCountAppearance(true);
++  DeprecatedLayoutImmediately();
++  SchedulePaint();
++}
++
++void FindBarView::StepImageMatch(bool reverse) {
++  if (!image_match_count_ || !image_contents_) {
++    return;
++  }
++  image_match_index_ =
++      (image_match_index_ + (reverse ? -1 : 1) + image_match_count_) %
++      image_match_count_;
++  tabs::SelectImageMatch(image_contents_.get(), image_match_index_);
++  UpdateImageMatchCount();
++}
++
++void FindBarView::UpdateImageMatchCount() {
++  match_count_text_->SetResult(find_in_page::FindNotificationDetails(
++      image_search_generation_, image_match_count_, gfx::Rect(),
++      image_match_count_ ? image_match_index_ + 1 : 0, /*final_update=*/true));
++  UpdateMatchCountAppearance(image_match_count_ == 0);
++  DeprecatedLayoutImmediately();
++  SchedulePaint();
++}
++
++void FindBarView::ExitImageMode() {
++  if (!image_mode_) {
++    return;
++  }
++  image_mode_ = false;
++  ++image_search_generation_;
++  image_match_count_ = 0;
++  if (image_contents_) {
++    tabs::ClearImageMatches(image_contents_.get());
++  }
++  image_contents_ = nullptr;
++  image_preview_->SetVisible(false);
++  find_text_->SetPlaceholderText(std::u16string());
++  ClearMatchCount();
++}
++
+ BEGIN_METADATA(FindBarView)
+ END_METADATA
+--- a/chrome/browser/ui/views/find_bar_view.h
++++ b/chrome/browser/ui/views/find_bar_view.h
+@@ -5,14 +5,21 @@
+ #ifndef CHROME_BROWSER_UI_VIEWS_FIND_BAR_VIEW_H_
+ #define CHROME_BROWSER_UI_VIEWS_FIND_BAR_VIEW_H_
+ 
++#include <cstdint>
+ #include <memory>
++#include <optional>
+ #include <string>
+ #include <string_view>
++#include <vector>
+ 
+ #include "base/gtest_prod_util.h"
+ #include "base/memory/raw_ptr.h"
++#include "base/memory/scoped_refptr.h"
++#include "base/memory/weak_ptr.h"
+ #include "chrome/browser/ui/views/chrome_views_export.h"
+ #include "ui/base/interaction/element_identifier.h"
++#include "ui/menus/simple_menu_model.h"
++#include "ui/shell_dialogs/select_file_dialog.h"
+ #include "ui/views/controls/button/button.h"
+ #include "ui/views/controls/button/image_button.h"
+ #include "ui/views/controls/textfield/textfield.h"
+@@ -22,6 +29,11 @@
+ 
+ class FindBarHost;
+ class FindBarMatchCountLabel;
++class SkBitmap;
++
++namespace content {
++class WebContents;
++}
+ 
+ namespace find_in_page {
+ class FindNotificationDetails;
+@@ -32,6 +44,8 @@
+ }
+ 
+ namespace views {
++class ImageView;
++class MenuRunner;
+ class Painter;
+ class Separator;
+ class Textfield;
+@@ -45,7 +59,9 @@
+ //
+ ////////////////////////////////////////////////////////////////////////////////
+ class FindBarView : public views::BoxLayoutView,
+-                    public views::TextfieldController {
++                    public views::TextfieldController,
++                    public ui::SimpleMenuModel::Delegate,
++                    public ui::SelectFileDialog::Listener {
+   METADATA_HEADER(FindBarView, views::BoxLayoutView)
+ 
+  public:
+@@ -113,7 +129,35 @@
+                          callback) override;
+   std::unique_ptr<ui::ScopedClipboardWriter> CreateClipboardWriter() override;
+ 
++  // ui::SimpleMenuModel::Delegate:
++  void ExecuteCommand(int command_id, int event_flags) override;
++  bool IsCommandIdEnabled(int command_id) const override;
++
++  // ui::SelectFileDialog::Listener:
++  void FileSelected(const ui::SelectedFileInfo& file, int index) override;
++
++  // Helium Neo: leaves image search, removing its outlines from the page.
++  void ExitImageMode();
++
+  private:
++  // Helium Neo: finding a picture on the page instead of text.
++  content::WebContents* GetWebContents() const;
++  void ShowImageMenu();
++  void StartImageSearch();
++  void SearchForEncodedImage(std::vector<uint8_t> data);
++  void SearchForImage(const SkBitmap& image);
++  void OnImageSearchDone(int generation, int count, bool usable);
++  void SetImageStatus(int message_id);
++  void StepImageMatch(bool reverse);
++  void UpdateImageMatchCount();
++  void OnPasteText(
++      base::OnceCallback<void(std::optional<std::u16string>)> callback,
++      std::u16string text);
++  void OnPastePng(
++      base::OnceCallback<void(std::optional<std::u16string>)> callback,
++      const std::vector<uint8_t>& png);
++  void OnMenuPastePng(const std::vector<uint8_t>& png);
++
+   FRIEND_TEST_ALL_PREFIXES(LegacyFindInPageTest, AccessibleName);
+   const views::ViewAccessibility&
+   GetFindBarMatchCountLabelViewAccessibilityForTesting();
+@@ -149,6 +193,19 @@
+   raw_ptr<views::ImageButton> find_previous_button_;
+   raw_ptr<views::ImageButton> find_next_button_;
+   raw_ptr<views::ImageButton> close_button_;
++
++  // Helium Neo image search.
++  raw_ptr<views::ImageView> image_preview_;
++  raw_ptr<views::ImageButton> image_button_;
++  std::unique_ptr<ui::SimpleMenuModel> image_menu_model_;
++  std::unique_ptr<views::MenuRunner> image_menu_runner_;
++  scoped_refptr<ui::SelectFileDialog> select_file_dialog_;
++  base::WeakPtr<content::WebContents> image_contents_;
++  bool image_mode_ = false;
++  int image_search_generation_ = 0;
++  int image_match_count_ = 0;
++  int image_match_index_ = 0;
++  base::WeakPtrFactory<FindBarView> weak_factory_{this};
+ };
+ 
+ BEGIN_VIEW_BUILDER(/* no export */, FindBarView, views::BoxLayoutView)
+--- a/chrome/common/BUILD.gn
++++ b/chrome/common/BUILD.gn
+@@ -153,6 +153,8 @@
+     "crash_keys.h",
+     "google_url_loader_throttle.cc",
+     "google_url_loader_throttle.h",
++    "image_match_thumbnail.cc",
++    "image_match_thumbnail.h",
+     "logging_chrome.cc",
+     "logging_chrome.h",
+     "media/cdm_registration.cc",
+--- a/chrome/common/chrome_render_frame.mojom
++++ b/chrome/common/chrome_render_frame.mojom
+@@ -27,6 +27,19 @@
+ };
+ 
+ // Messages sent from chrome to the render frame.
++// Helium Neo: a small grayscale copy of a decoded image, used to find a
++// picture on a page by appearance. The browser compares these instead of
++// handling page images itself.
++struct ImageThumbnail {
++  // Position among the document's <img> elements, in tree order.
++  uint32 index;
++  // At most 64 pixels on the longest side.
++  uint16 width;
++  uint16 height;
++  // Brightness, row by row; width * height bytes.
++  array<uint8> luma;
++};
++
+ interface ChromeRenderFrame {
+   // Updates the window features of the main frame's render view.
+   SetWindowFeatures(blink.mojom.WindowFeatures window_features);
+@@ -58,6 +71,16 @@
+   // image.
+   RequestBoundsHintForAllImages() => (array<gfx.mojom.Rect> all_bounds);
+ 
++  // Helium Neo: thumbnails the image selected by the most recently opened
++  // context menu. Null when there is no image or it is too small.
++  RequestImageThumbnailForContextNode() => (ImageThumbnail? thumbnail);
++
++  // Helium Neo: thumbnails every decoded <img> in the document.
++  // |unloaded_count| counts images that have no decoded pixels yet, such as
++  // lazy-loaded images that have not been scrolled into view.
++  RequestImageThumbnails()
++      => (array<ImageThumbnail> thumbnails, uint32 unloaded_count);
++
+   // Requests an encoded image selected by the most recently opened context
+   // menu. The encoding format is specified as a parameter. If no image is
+   // selected or there's an error capturing the image, |image_data| will be
+--- a/chrome/renderer/chrome_render_frame_observer.cc
++++ b/chrome/renderer/chrome_render_frame_observer.cc
+@@ -7,6 +7,7 @@
+ #include <stddef.h>
+ #include <string.h>
+ 
++#include <algorithm>
+ #include <limits>
+ #include <map>
+ #include <memory>
+@@ -28,6 +29,7 @@
+ #include "chrome/common/chrome_features.h"
+ #include "chrome/common/chrome_isolated_world_ids.h"
+ #include "chrome/common/chrome_switches.h"
++#include "chrome/common/image_match_thumbnail.h"
+ #include "chrome/common/open_search_description_document_handler.mojom.h"
+ #include "chrome/common/webui_url_constants.h"
+ #include "chrome/renderer/actor/chrome_page_stability_monitor_delegate.h"
+@@ -71,6 +73,7 @@
+ #include "third_party/blink/public/web/web_document.h"
+ #include "third_party/blink/public/web/web_document_loader.h"
+ #include "third_party/blink/public/web/web_element.h"
++#include "third_party/blink/public/web/web_element_collection.h"
+ #include "third_party/blink/public/web/web_frame_content_dumper.h"
+ #include "third_party/blink/public/web/web_local_frame.h"
+ #include "third_party/blink/public/web/web_local_frame_client.h"
+@@ -606,6 +609,63 @@
+   std::move(callback).Run(all_bounds);
+ }
+ 
++namespace {
++
++// Helium Neo: thumbnails for finding a picture by appearance.
++constexpr size_t kMaxThumbnailedImages = 3000;
++
++chrome::mojom::ImageThumbnailPtr ThumbnailImage(const SkBitmap& image,
++                                                uint32_t index) {
++  image_match::Thumbnail thumbnail = image_match::MakeThumbnail(image);
++  if (thumbnail.luma.empty()) {
++    return nullptr;
++  }
++  return chrome::mojom::ImageThumbnail::New(
++      index, thumbnail.width, thumbnail.height, std::move(thumbnail.luma));
++}
++
++}  // namespace
++
++void ChromeRenderFrameObserver::RequestImageThumbnailForContextNode(
++    RequestImageThumbnailForContextNodeCallback callback) {
++  WebNode context_node = render_frame()->GetWebFrame()->ContextMenuImageNode();
++  if (context_node.IsNull() || !context_node.IsElementNode()) {
++    std::move(callback).Run(nullptr);
++    return;
++  }
++  std::move(callback).Run(
++      ThumbnailImage(context_node.To<WebElement>().ImageContents(), 0));
++}
++
++void ChromeRenderFrameObserver::RequestImageThumbnails(
++    RequestImageThumbnailsCallback callback) {
++  std::vector<chrome::mojom::ImageThumbnailPtr> thumbnails;
++  const blink::WebDocument doc = render_frame()->GetWebFrame()->GetDocument();
++  if (doc.IsNull()) {
++    std::move(callback).Run(std::move(thumbnails), 0);
++    return;
++  }
++  // Same elements and order as document.getElementsByTagName('img'), so the
++  // page overlay can find each match by its index.
++  blink::WebElementCollection images = doc.GetElementsByHTMLTagName("img");
++  uint32_t index = 0;
++  uint32_t unloaded_count = 0;
++  for (WebElement image = images.FirstItem(); !image.IsNull();
++       image = images.NextItem(), ++index) {
++    if (index >= kMaxThumbnailedImages) {
++      ++unloaded_count;
++      continue;
++    }
++    const SkBitmap contents = image.ImageContents();
++    if (contents.isNull()) {
++      ++unloaded_count;
++    } else if (auto thumbnail = ThumbnailImage(contents, index)) {
++      thumbnails.push_back(std::move(thumbnail));
++    }
++  }
++  std::move(callback).Run(std::move(thumbnails), unloaded_count);
++}
++
+ // Depth-first search for recursively traversing DOM elements and pulling out
+ // references for images.
+ void ChromeRenderFrameObserver::FindImageElements(
+--- a/chrome/renderer/chrome_render_frame_observer.h
++++ b/chrome/renderer/chrome_render_frame_observer.h
+@@ -124,6 +124,9 @@
+       RequestBitmapForContextNodeWithBoundsHintCallback callback) override;
+   void RequestBoundsHintForAllImages(
+       RequestBoundsHintForAllImagesCallback callback) override;
++  void RequestImageThumbnailForContextNode(
++      RequestImageThumbnailForContextNodeCallback callback) override;
++  void RequestImageThumbnails(RequestImageThumbnailsCallback callback) override;
+   void FindImageElements(blink::WebElement element,
+                          std::vector<blink::WebElement>& images);
+   void RequestReloadImageForContextNode() override;
+--- /dev/null
++++ b/chrome/browser/ui/tabs/image_match_compare.cc
+@@ -0,0 +1,396 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/ui/tabs/image_match_compare.h"
++
++#include <algorithm>
++#include <array>
++#include <bit>
++#include <cmath>
++#include <utility>
++
++namespace tabs {
++namespace {
++
++using Integral = ImageMatcher::Integral;
++
++// Fingerprint cells per side; one more than the bits per row.
++constexpr int kHashSide = 9;
++// Correlation cells per side.
++constexpr int kCorrelationSide = 16;
++// Windows narrower than this many thumbnail pixels carry too little detail.
++constexpr double kMinWindowSide = 10;
++// The smallest crop searched for, relative to the larger image.
++constexpr double kMinScale = 0.5;
++constexpr double kScaleStep = 0.07;
++constexpr double kOffsetStep = 0.08;
++// Coarse alignments refined per direction.
++constexpr size_t kRefinedCandidates = 3;
++// Out of 128 bits; above this the best alignment is not the same picture.
++constexpr int kMaxHashDistance = 30;
++// Standard deviation of the query, out of 255.
++constexpr double kMinContrast = 8;
++
++struct Window {
++  double x = 0;
++  double y = 0;
++  double width = 0;
++  double height = 0;
++};
++
++struct Hash {
++  uint64_t rows = 0;
++  uint64_t columns = 0;
++};
++
++// Brightness and its horizontal and vertical differences between cells.
++constexpr int kCorrelationCells = kCorrelationSide * kCorrelationSide;
++constexpr int kEdgeCells = kCorrelationSide * (kCorrelationSide - 1);
++using Correlation = std::array<float, kCorrelationCells + 2 * kEdgeCells>;
++
++struct Signature {
++  Hash hash;
++  Correlation correlation{};
++};
++
++Integral MakeIntegral(const GrayImage& image) {
++  Integral integral;
++  integral.width = image.width;
++  integral.height = image.height;
++  const int stride = image.width + 1;
++  integral.sums.assign(static_cast<size_t>(stride) * (image.height + 1), 0);
++  for (int y = 0; y < image.height; ++y) {
++    double row = 0;
++    for (int x = 0; x < image.width; ++x) {
++      row += image.pixels[static_cast<size_t>(y) * image.width + x];
++      integral.sums[(y + 1) * stride + x + 1] =
++          integral.sums[y * stride + x + 1] + row;
++    }
++  }
++  return integral;
++}
++
++// Sum of the image above and left of (x, y), at fractional positions.
++double SumAt(const Integral& integral, double x, double y) {
++  x = std::clamp(x, 0.0, static_cast<double>(integral.width));
++  y = std::clamp(y, 0.0, static_cast<double>(integral.height));
++  const int x0 = std::min(static_cast<int>(x), integral.width - 1);
++  const int y0 = std::min(static_cast<int>(y), integral.height - 1);
++  const double fx = x - x0;
++  const double fy = y - y0;
++  const int stride = integral.width + 1;
++  const double* row = &integral.sums[y0 * stride + x0];
++  const double top = row[0] + (row[1] - row[0]) * fx;
++  const double bottom =
++      row[stride] + (row[stride + 1] - row[stride]) * fx;
++  return top + (bottom - top) * fy;
++}
++
++// Average brightness of |window| split into side x side cells.
++template <int side>
++std::array<float, side * side> Grid(const Integral& integral,
++                                    const Window& window) {
++  std::array<double, (side + 1) * (side + 1)> corners;
++  for (int j = 0; j <= side; ++j) {
++    const double y = window.y + window.height * j / side;
++    for (int i = 0; i <= side; ++i) {
++      corners[j * (side + 1) + i] =
++          SumAt(integral, window.x + window.width * i / side, y);
++    }
++  }
++  const double area = window.width * window.height / (side * side);
++  std::array<float, side * side> cells;
++  for (int j = 0; j < side; ++j) {
++    for (int i = 0; i < side; ++i) {
++      const double* top = &corners[j * (side + 1) + i];
++      const double* bottom = top + side + 1;
++      cells[j * side + i] =
++          static_cast<float>((bottom[1] - bottom[0] - top[1] + top[0]) / area);
++    }
++  }
++  return cells;
++}
++
++// Brightness differences between neighbouring cells, across rows and columns.
++Hash HashOf(const Integral& integral, const Window& window) {
++  const auto cells = Grid<kHashSide>(integral, window);
++  Hash hash;
++  for (int y = 0; y < kHashSide - 1; ++y) {
++    for (int x = 0; x < kHashSide - 1; ++x) {
++      hash.rows = (hash.rows << 1) |
++                  (cells[y * kHashSide + x] < cells[y * kHashSide + x + 1]);
++      hash.columns = (hash.columns << 1) |
++                     (cells[x * kHashSide + y] < cells[(x + 1) * kHashSide + y]);
++    }
++  }
++  return hash;
++}
++
++int Distance(const Hash& a, const Hash& b) {
++  return std::popcount(a.rows ^ b.rows) + std::popcount(a.columns ^ b.columns);
++}
++
++// Makes |values| zero-mean and unit-length, so exposure and contrast changes
++// cancel out. Returns the standard deviation before normalizing.
++double Normalize(float* values, size_t count) {
++  double mean = 0;
++  for (size_t i = 0; i < count; ++i) {
++    mean += values[i];
++  }
++  mean /= count;
++  double norm = 0;
++  for (size_t i = 0; i < count; ++i) {
++    values[i] -= mean;
++    norm += values[i] * values[i];
++  }
++  if (norm > 0) {
++    const double scale = 1 / std::sqrt(norm);
++    for (size_t i = 0; i < count; ++i) {
++      values[i] *= scale;
++    }
++  }
++  return std::sqrt(norm / count);
++}
++
++// Brightness alone lets smooth, unrelated areas line up; the edges between
++// cells carry the picture's structure. Returns the brightness deviation.
++double CorrelationOf(const Integral& integral,
++                     const Window& window,
++                     Correlation& out) {
++  const auto cells = Grid<kCorrelationSide>(integral, window);
++  std::copy(cells.begin(), cells.end(), out.begin());
++  float* edges = out.data() + kCorrelationCells;
++  for (int y = 0; y < kCorrelationSide; ++y) {
++    for (int x = 0; x + 1 < kCorrelationSide; ++x) {
++      *edges++ = cells[y * kCorrelationSide + x + 1] -
++                 cells[y * kCorrelationSide + x];
++      *edges++ = cells[(x + 1) * kCorrelationSide + y] -
++                 cells[x * kCorrelationSide + y];
++    }
++  }
++  Normalize(out.data() + kCorrelationCells, 2 * kEdgeCells);
++  return Normalize(out.data(), kCorrelationCells);
++}
++
++// The weaker of the brightness and edge correlations.
++float Correlate(const Correlation& a, const Correlation& b) {
++  float brightness = 0;
++  for (int i = 0; i < kCorrelationCells; ++i) {
++    brightness += a[i] * b[i];
++  }
++  float edges = 0;
++  for (size_t i = kCorrelationCells; i < a.size(); ++i) {
++    edges += a[i] * b[i];
++  }
++  return std::min(brightness, edges);
++}
++
++Window Whole(const Integral& integral) {
++  return {0, 0, static_cast<double>(integral.width),
++          static_cast<double>(integral.height)};
++}
++
++// Moves |window| inside |integral|; false when it does not fit.
++bool Fit(const Integral& integral, Window& window) {
++  if (window.width > integral.width + 1e-6 ||
++      window.height > integral.height + 1e-6 ||
++      std::min(window.width, window.height) < kMinWindowSide) {
++    return false;
++  }
++  window.x = std::clamp(window.x, 0.0, integral.width - window.width);
++  window.y = std::clamp(window.y, 0.0, integral.height - window.height);
++  return true;
++}
++
++// Best correlation between |target| and a window of |area| with the
++// target's |aspect|, over crops from the whole area down to kMinScale.
++float Search(const Integral& area, double aspect, const Signature& target) {
++  double fit_width = area.width;
++  double fit_height = fit_width / aspect;
++  if (fit_height > area.height) {
++    fit_height = area.height;
++    fit_width = fit_height * aspect;
++  }
++
++  // Coarse pass: fingerprints at every scale and offset.
++  std::vector<std::pair<int, Window>> candidates;
++  for (double scale = 1; scale >= kMinScale - 1e-6; scale -= kScaleStep) {
++    const double width = fit_width * scale;
++    const double height = fit_height * scale;
++    if (std::min(width, height) < kMinWindowSide) {
++      break;
++    }
++    const double step_x = std::max(width * kOffsetStep, 0.5);
++    const double step_y = std::max(height * kOffsetStep, 0.5);
++    const double last_x = area.width - width;
++    const double last_y = area.height - height;
++    for (double y = 0;; y = std::min(y + step_y, last_y)) {
++      for (double x = 0;; x = std::min(x + step_x, last_x)) {
++        const Window window{x, y, width, height};
++        candidates.emplace_back(Distance(HashOf(area, window), target.hash),
++                                window);
++        if (x >= last_x) {
++          break;
++        }
++      }
++      if (y >= last_y) {
++        break;
++      }
++    }
++  }
++  const size_t kept = std::min(candidates.size(), kRefinedCandidates);
++  std::partial_sort(
++      candidates.begin(), candidates.begin() + kept, candidates.end(),
++      [](const auto& a, const auto& b) { return a.first < b.first; });
++
++  // Fine pass: climb towards the best correlation around each candidate.
++  float best = 0;
++  Correlation cells;
++  for (size_t c = 0; c < kept; ++c) {
++    if (candidates[c].first > kMaxHashDistance) {
++      break;
++    }
++    Window current = candidates[c].second;
++    CorrelationOf(area, current, cells);
++    float score = Correlate(cells, target.correlation);
++    for (double reach = 1; reach >= 0.125; reach /= 2) {
++      for (int climb = 0; climb < 4; ++climb) {
++        Window next = current;
++        float next_score = score;
++        for (int ds = -1; ds <= 1; ++ds) {
++          for (int dy = -1; dy <= 1; ++dy) {
++            for (int dx = -1; dx <= 1; ++dx) {
++              if (!ds && !dx && !dy) {
++                continue;
++              }
++              const double factor = 1 + ds * 0.05 * reach;
++              Window window{0, 0, current.width * factor,
++                            current.height * factor};
++              window.x = current.x + (current.width - window.width) / 2 +
++                         dx * kOffsetStep * current.width * reach;
++              window.y = current.y + (current.height - window.height) / 2 +
++                         dy * kOffsetStep * current.height * reach;
++              if (!Fit(area, window)) {
++                continue;
++              }
++              CorrelationOf(area, window, cells);
++              const float value = Correlate(cells, target.correlation);
++              if (value > next_score) {
++                next_score = value;
++                next = window;
++              }
++            }
++          }
++        }
++        if (next_score <= score) {
++          break;
++        }
++        score = next_score;
++        current = next;
++      }
++    }
++    if (score > best &&
++        Distance(HashOf(area, current), target.hash) <= kMaxHashDistance) {
++      best = score;
++    }
++  }
++  return best;
++}
++
++// Corners and centre of |integral|, each covering most of it, for crops that
++// overlap without one containing the other.
++std::array<Window, 5> Parts(const Integral& integral) {
++  constexpr double kPart = 0.6;
++  const double width = integral.width * kPart;
++  const double height = integral.height * kPart;
++  const double right = integral.width - width;
++  const double bottom = integral.height - height;
++  return {{{0, 0, width, height},
++           {right, 0, width, height},
++           {0, bottom, width, height},
++           {right, bottom, width, height},
++           {right / 2, bottom / 2, width, height}}};
++}
++
++Signature SignatureOf(const Integral& integral,
++                      const Window& window,
++                      double* deviation = nullptr) {
++  Signature signature;
++  signature.hash = HashOf(integral, window);
++  const double value = CorrelationOf(integral, window, signature.correlation);
++  if (deviation) {
++    *deviation = value;
++  }
++  return signature;
++}
++
++Signature SignatureOf(const Integral& integral, double* deviation = nullptr) {
++  Signature signature;
++  const Window whole = Whole(integral);
++  signature.hash = HashOf(integral, whole);
++  const double value =
++      CorrelationOf(integral, whole, signature.correlation);
++  if (deviation) {
++    *deviation = value;
++  }
++  return signature;
++}
++
++bool Valid(const GrayImage& image) {
++  return image.width >= kMinWindowSide && image.height >= kMinWindowSide &&
++         image.width <= ImageMatcher::kThumbnailSide &&
++         image.height <= ImageMatcher::kThumbnailSide &&
++         image.pixels.size() ==
++             static_cast<size_t>(image.width) * image.height;
++}
++
++}  // namespace
++
++ImageMatcher::ImageMatcher(const GrayImage& query) {
++  if (!Valid(query)) {
++    return;
++  }
++  query_ = MakeIntegral(query);
++  double deviation = 0;
++  SignatureOf(query_, &deviation);
++  usable_ = deviation >= kMinContrast;
++}
++
++ImageMatcher::~ImageMatcher() = default;
++
++float ImageMatcher::Compare(const GrayImage& candidate) const {
++  if (!usable_ || !Valid(candidate)) {
++    return 0;
++  }
++  const Integral image = MakeIntegral(candidate);
++  double deviation = 0;
++  const Signature candidate_signature = SignatureOf(image, &deviation);
++  if (deviation < kMinContrast) {
++    return 0;
++  }
++  const Signature query_signature = SignatureOf(query_);
++  const double query_aspect =
++      static_cast<double>(query_.width) / query_.height;
++  const double candidate_aspect =
++      static_cast<double>(image.width) / image.height;
++  // The query cropped from the candidate, and the candidate from the query.
++  float best = std::max(Search(image, query_aspect, query_signature),
++                        Search(query_, candidate_aspect, candidate_signature));
++  if (best >= kMatchScore) {
++    return best;
++  }
++  // Two different crops of one picture: some part of either must still
++  // appear in the other.
++  for (const Window& part : Parts(query_)) {
++    best = std::max(best, Search(image, part.width / part.height,
++                                 SignatureOf(query_, part)));
++  }
++  for (const Window& part : Parts(image)) {
++    best = std::max(best, Search(query_, part.width / part.height,
++                                 SignatureOf(image, part)));
++  }
++  return best;
++}
++
++}  // namespace tabs
+--- /dev/null
++++ b/chrome/browser/ui/tabs/image_match_compare.h
+@@ -0,0 +1,57 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_BROWSER_UI_TABS_IMAGE_MATCH_COMPARE_H_
++#define CHROME_BROWSER_UI_TABS_IMAGE_MATCH_COMPARE_H_
++
++#include <cstdint>
++#include <vector>
++
++namespace tabs {
++
++// A small grayscale copy of an image, row by row.
++struct GrayImage {
++  int width = 0;
++  int height = 0;
++  std::vector<uint8_t> pixels;
++};
++
++// Compares images by appearance, tolerating resizing, recompression and
++// cropping in either direction: the query may be a crop of a candidate, or
++// a candidate a crop of the query. Cheap fingerprints find likely alignments
++// across scales and offsets; pixel correlation then confirms them.
++class ImageMatcher {
++ public:
++  // Thumbnails are at most this many pixels on their longest side.
++  static constexpr int kThumbnailSide = 64;
++
++  explicit ImageMatcher(const GrayImage& query);
++  ~ImageMatcher();
++  ImageMatcher(const ImageMatcher&) = delete;
++  ImageMatcher& operator=(const ImageMatcher&) = delete;
++
++  // False when the query is too small or plain to tell apart from others.
++  bool usable() const { return usable_; }
++
++  // Similarity in [0, 1] at the best alignment; 0 when nothing lines up.
++  // Matches score at least kMatchScore; untouched copies near 1.
++  float Compare(const GrayImage& candidate) const;
++
++  static constexpr float kMatchScore = 0.84f;
++  static constexpr float kSameScore = 0.96f;
++
++  // Summed-area table with bilinear lookups, public for the helpers.
++  struct Integral {
++    int width = 0;
++    int height = 0;
++    std::vector<double> sums;  // (width + 1) * (height + 1)
++  };
++
++ private:
++  bool usable_ = false;
++  Integral query_;
++};
++
++}  // namespace tabs
++
++#endif  // CHROME_BROWSER_UI_TABS_IMAGE_MATCH_COMPARE_H_
+--- /dev/null
++++ b/chrome/browser/ui/tabs/image_match_finder.cc
+@@ -0,0 +1,500 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/browser/ui/tabs/image_match_finder.h"
++
++#include <algorithm>
++#include <memory>
++#include <string>
++#include <utility>
++#include <vector>
++
++#include "base/functional/bind.h"
++#include "base/functional/callback.h"
++#include "base/functional/callback_helpers.h"
++#include "base/json/json_writer.h"
++#include "base/memory/weak_ptr.h"
++#include "base/strings/string_number_conversions.h"
++#include "base/strings/utf_string_conversions.h"
++#include "base/supports_user_data.h"
++#include "base/task/sequenced_task_runner.h"
++#include "base/task/thread_pool.h"
++#include "base/time/time.h"
++#include "base/timer/timer.h"
++#include "base/values.h"
++#include "chrome/browser/ui/browser_window/public/browser_window_interface.h"
++#include "chrome/browser/ui/tabs/image_match_compare.h"
++#include "chrome/browser/ui/tabs/image_match_script.h"
++#include "chrome/browser/ui/tabs/tab_strip_model.h"
++#include "chrome/common/chrome_isolated_world_ids.h"
++#include "chrome/common/chrome_render_frame.mojom.h"
++#include "chrome/common/image_match_thumbnail.h"
++#include "chrome/grit/generated_resources.h"
++#include "components/tabs/public/tab_interface.h"
++#include "content/public/browser/browser_context.h"
++#include "content/public/browser/render_frame_host.h"
++#include "content/public/browser/web_contents.h"
++#include "mojo/public/cpp/bindings/associated_remote.h"
++#include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
++#include "ui/base/l10n/l10n_util.h"
++#include "url/gurl.h"
++
++namespace tabs {
++namespace {
++
++constexpr size_t kMaxShownMatches = 20;
++// Lazy images this far below the current position are loaded first. Pages
++// are never scrolled, so infinite scroll pages do not grow.
++constexpr int kLoadScreens = 20;
++constexpr base::TimeDelta kLoadWait = base::Seconds(3);
++constexpr base::TimeDelta kLoadPollInterval = base::Milliseconds(200);
++// Frozen background tabs may never answer.
++constexpr base::TimeDelta kScanTimeout = kLoadWait + base::Seconds(4);
++
++constexpr char kChosenImageKey[] = "helium_neo_image_match_query";
++
++// Kept on the profile, so a picture chosen in an incognito window is never
++// searched for in a regular one.
++struct ChosenImage : public base::SupportsUserData::Data {
++  explicit ChosenImage(GrayImage value) : thumbnail(std::move(value)) {}
++  GrayImage thumbnail;
++};
++
++struct Match {
++  uint32_t index = 0;
++  float score = 0;
++};
++
++GrayImage ToGrayImage(chrome::mojom::ImageThumbnail& thumbnail) {
++  return {thumbnail.width, thumbnail.height, std::move(thumbnail.luma)};
++}
++
++// Runs on the thread pool: cropped matches need a search per image.
++std::vector<Match> FindMatches(
++    std::shared_ptr<const ImageMatcher> matcher,
++    std::vector<std::pair<uint32_t, GrayImage>> images) {
++  std::vector<Match> matches;
++  for (const auto& [index, image] : images) {
++    const float score = matcher->Compare(image);
++    if (score >= ImageMatcher::kMatchScore) {
++      matches.push_back({index, score});
++    }
++  }
++  // Best first; page order among equally good matches.
++  std::stable_sort(
++      matches.begin(), matches.end(),
++      [](const Match& a, const Match& b) { return a.score > b.score; });
++  if (matches.size() > kMaxShownMatches) {
++    matches.resize(kMaxShownMatches);
++  }
++  return matches;
++}
++
++struct PageResult {
++  base::WeakPtr<content::WebContents> contents;
++  std::vector<Match> matches;
++  uint32_t unloaded_count = 0;
++  bool loading = false;
++  bool polling = false;
++  bool answered = false;
++};
++
++std::string Text(int id) {
++  return l10n_util::GetStringUTF8(id);
++}
++
++bool CanScan(content::WebContents* contents) {
++  if (!contents || contents->WasDiscarded() || contents->IsCrashed()) {
++    return false;
++  }
++  content::RenderFrameHost* frame = contents->GetPrimaryMainFrame();
++  const GURL& url = contents->GetLastCommittedURL();
++  return frame && frame->IsRenderFrameLive() &&
++         (url.SchemeIsHTTPOrHTTPS() || url.SchemeIsFile());
++}
++
++// Outlines |matches| in |contents|, or shows |message| when there are none.
++// Without |controls| the find bar steps through the matches.
++void ShowOnPage(content::WebContents* contents,
++                const std::vector<Match>& matches,
++                const std::string& message,
++                bool some_unloaded,
++                bool controls = true) {
++  if (!CanScan(contents)) {
++    return;
++  }
++  base::ListValue shown;
++  for (const Match& match : matches) {
++    shown.Append(base::DictValue()
++                     .Set("index", static_cast<int>(match.index))
++                     .Set("exact", match.score >= ImageMatcher::kSameScore));
++  }
++  base::DictValue strings;
++  strings.Set("counter", Text(IDS_NEO_IMAGE_MATCH_COUNTER));
++  strings.Set("exact", Text(IDS_NEO_IMAGE_MATCH_EXACT));
++  strings.Set("similar", Text(IDS_NEO_IMAGE_MATCH_SIMILAR));
++  strings.Set("hidden", Text(IDS_NEO_IMAGE_MATCH_HIDDEN));
++  strings.Set("previous", Text(IDS_NEO_IMAGE_MATCH_PREVIOUS));
++  strings.Set("next", Text(IDS_NEO_IMAGE_MATCH_NEXT));
++  strings.Set("close", Text(IDS_NEO_IMAGE_MATCH_CLOSE));
++  base::DictValue argument;
++  argument.Set("matches", std::move(shown));
++  argument.Set("message", message);
++  argument.Set("hint", some_unloaded ? Text(IDS_NEO_IMAGE_MATCH_UNLOADED)
++                                     : std::string());
++  argument.Set("strings", std::move(strings));
++  argument.Set("controls", controls);
++  std::string json;
++  base::JSONWriter::Write(argument, &json);
++  contents->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
++      base::UTF8ToUTF16(std::string(kImageMatchScript) + "(" + json + ")"),
++      base::DoNothing(), ISOLATED_WORLD_ID_CHROME_INTERNAL);
++  // Escape must reach the page rather than the menu or tab strip.
++  if (controls) {
++    contents->Focus();
++  }
++}
++
++void RunOnPage(content::WebContents* contents, const std::string& script) {
++  if (CanScan(contents)) {
++    contents->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
++        base::UTF8ToUTF16(script), base::DoNothing(),
++        ISOLATED_WORLD_ID_CHROME_INTERNAL);
++  }
++}
++
++// Loads nearby lazy images in each page's main frame, then asks for its image
++// thumbnails and compares them with the query. Deletes itself once every
++// page answered or the time ran out.
++class Scan {
++ public:
++  using Done = base::OnceCallback<void(std::vector<PageResult>)>;
++
++  static void Start(std::shared_ptr<const ImageMatcher> matcher,
++                    const std::vector<content::WebContents*>& pages,
++                    Done done) {
++    (new Scan(std::move(matcher), std::move(done)))->Request(pages);
++  }
++
++  Scan(const Scan&) = delete;
++  Scan& operator=(const Scan&) = delete;
++  ~Scan() = default;
++
++ private:
++  Scan(std::shared_ptr<const ImageMatcher> matcher, Done done)
++      : matcher_(std::move(matcher)), done_(std::move(done)) {}
++
++  void Request(const std::vector<content::WebContents*>& pages) {
++    results_.resize(pages.size());
++    remotes_.resize(pages.size());
++    pending_ = pages.size();
++    load_deadline_ = base::TimeTicks::Now() + kLoadWait;
++    for (size_t i = 0; i < pages.size(); ++i) {
++      results_[i].contents = pages[i]->GetWeakPtr();
++      results_[i].loading = true;
++      results_[i].polling = true;
++      pages[i]->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
++          base::UTF8ToUTF16(std::string(kImageMatchLoadScript) + "(" +
++                            base::NumberToString(kLoadScreens) + ")"),
++          base::BindOnce(&Scan::OnLoadState, weak_factory_.GetWeakPtr(), i),
++          ISOLATED_WORLD_ID_CHROME_INTERNAL);
++    }
++    if (!pending_) {
++      Finish();
++      return;
++    }
++    timeout_.Start(FROM_HERE, kScanTimeout,
++                   base::BindOnce(&Scan::Finish, base::Unretained(this)));
++    poll_timer_.Start(
++        FROM_HERE, kLoadPollInterval,
++        base::BindRepeating(&Scan::PollLoads, base::Unretained(this)));
++  }
++
++  // |state| is the number of images still loading in |page|.
++  void OnLoadState(size_t page, base::Value state) {
++    PageResult& result = results_[page];
++    result.polling = false;
++    if (!result.loading) {
++      return;
++    }
++    if (state.GetIfInt().value_or(0) <= 0) {
++      RequestThumbnails(page);
++    }
++  }
++
++  void PollLoads() {
++    const bool expired = base::TimeTicks::Now() >= load_deadline_;
++    bool loading = false;
++    for (size_t i = 0; i < results_.size(); ++i) {
++      PageResult& result = results_[i];
++      if (!result.loading) {
++        continue;
++      }
++      if (!result.contents) {
++        result.loading = false;
++        Answered(i);
++        continue;
++      }
++      // Compare whatever has loaded by now.
++      if (expired) {
++        RequestThumbnails(i);
++        continue;
++      }
++      loading = true;
++      if (!result.polling) {
++        result.polling = true;
++        result.contents->GetPrimaryMainFrame()
++            ->ExecuteJavaScriptInIsolatedWorld(
++                base::UTF8ToUTF16(std::string(kImageMatchLoadPollScript)),
++                base::BindOnce(&Scan::OnLoadState, weak_factory_.GetWeakPtr(),
++                               i),
++                ISOLATED_WORLD_ID_CHROME_INTERNAL);
++      }
++    }
++    if (!loading) {
++      poll_timer_.Stop();
++    }
++  }
++
++  void RequestThumbnails(size_t page) {
++    PageResult& result = results_[page];
++    result.loading = false;
++    if (!result.contents) {
++      Answered(page);
++      return;
++    }
++    result.contents->GetPrimaryMainFrame()
++        ->GetRemoteAssociatedInterfaces()
++        ->GetInterface(&remotes_[page]);
++    remotes_[page].set_disconnect_handler(base::BindOnce(
++        &Scan::Answered, weak_factory_.GetWeakPtr(), page));
++    remotes_[page]->RequestImageThumbnails(base::BindOnce(
++        &Scan::OnThumbnails, weak_factory_.GetWeakPtr(), page));
++  }
++
++  void OnThumbnails(size_t page,
++                    std::vector<chrome::mojom::ImageThumbnailPtr> thumbnails,
++                    uint32_t unloaded_count) {
++    results_[page].unloaded_count = unloaded_count;
++    std::vector<std::pair<uint32_t, GrayImage>> images;
++    images.reserve(thumbnails.size());
++    for (auto& thumbnail : thumbnails) {
++      images.emplace_back(thumbnail->index, ToGrayImage(*thumbnail));
++    }
++    base::ThreadPool::PostTaskAndReplyWithResult(
++        FROM_HERE, {base::TaskPriority::USER_VISIBLE},
++        base::BindOnce(&FindMatches, matcher_, std::move(images)),
++        base::BindOnce(&Scan::OnMatches, weak_factory_.GetWeakPtr(), page));
++  }
++
++  void OnMatches(size_t page, std::vector<Match> matches) {
++    results_[page].matches = std::move(matches);
++    Answered(page);
++  }
++
++  void Answered(size_t page) {
++    if (finished_ || results_[page].answered) {
++      return;
++    }
++    results_[page].answered = true;
++    if (--pending_ == 0) {
++      Finish();
++    }
++  }
++
++  void Finish() {
++    if (finished_) {
++      return;
++    }
++    finished_ = true;
++    timeout_.Stop();
++    poll_timer_.Stop();
++    weak_factory_.InvalidateWeakPtrs();
++    std::move(done_).Run(std::move(results_));
++    // A reply callback may still be running on one of |remotes_|.
++    base::SequencedTaskRunner::GetCurrentDefault()->DeleteSoon(FROM_HERE,
++                                                               this);
++  }
++
++  const std::shared_ptr<const ImageMatcher> matcher_;
++  Done done_;
++  std::vector<PageResult> results_;
++  std::vector<mojo::AssociatedRemote<chrome::mojom::ChromeRenderFrame>>
++      remotes_;
++  size_t pending_ = 0;
++  bool finished_ = false;
++  base::TimeTicks load_deadline_;
++  base::OneShotTimer timeout_;
++  base::RepeatingTimer poll_timer_;
++  base::WeakPtrFactory<Scan> weak_factory_{this};
++};
++
++void ShowBestTab(base::WeakPtr<content::WebContents> source,
++                 std::vector<PageResult> results) {
++  const PageResult* best = nullptr;
++  for (const PageResult& result : results) {
++    if (result.contents && !result.matches.empty() &&
++        (!best || result.matches[0].score > best->matches[0].score)) {
++      best = &result;
++    }
++  }
++  if (!best) {
++    const bool some_unloaded = std::any_of(
++        results.begin(), results.end(),
++        [](const PageResult& result) { return result.unloaded_count > 0; });
++    if (source) {
++      ShowOnPage(source.get(), {},
++                 Text(results.empty() ? IDS_NEO_IMAGE_MATCH_NO_TABS
++                                      : IDS_NEO_IMAGE_MATCH_NONE_IN_TABS),
++                 some_unloaded);
++    }
++    return;
++  }
++  content::WebContents* target = best->contents.get();
++  if (TabInterface* tab = TabInterface::MaybeGetFromContents(target)) {
++    if (auto* window = tab->GetBrowserWindowInterface()) {
++      TabStripModel* tab_strip = window->GetTabStripModel();
++      const int index = tab_strip->GetIndexOfWebContents(target);
++      if (index != TabStripModel::kNoTab) {
++        tab_strip->ActivateTabAt(index);
++      }
++    }
++  }
++  ShowOnPage(target, best->matches, std::string(), best->unloaded_count > 0);
++}
++
++void ShowOnScannedPage(std::vector<PageResult> results) {
++  if (results.empty() || !results[0].contents) {
++    return;
++  }
++  const PageResult& result = results[0];
++  ShowOnPage(result.contents.get(), result.matches,
++             result.matches.empty() ? Text(IDS_NEO_IMAGE_MATCH_NONE_ON_PAGE)
++                                    : std::string(),
++             result.unloaded_count > 0);
++}
++
++void OnContextThumbnail(
++    mojo::AssociatedRemote<chrome::mojom::ChromeRenderFrame> remote,
++    base::WeakPtr<content::WebContents> source,
++    chrome::mojom::ImageThumbnailPtr thumbnail) {
++  if (!source) {
++    return;
++  }
++  GrayImage query = thumbnail ? ToGrayImage(*thumbnail) : GrayImage();
++  auto matcher = std::make_shared<const ImageMatcher>(query);
++  if (!matcher->usable()) {
++    ShowOnPage(source.get(), {}, Text(IDS_NEO_IMAGE_MATCH_TOO_PLAIN), false);
++    return;
++  }
++  source->GetBrowserContext()->SetUserData(
++      kChosenImageKey, std::make_unique<ChosenImage>(std::move(query)));
++  std::vector<content::WebContents*> pages;
++  TabInterface* tab = TabInterface::MaybeGetFromContents(source.get());
++  BrowserWindowInterface* window =
++      tab ? tab->GetBrowserWindowInterface() : nullptr;
++  if (TabStripModel* tab_strip = window ? window->GetTabStripModel() : nullptr) {
++    for (int i = 0; i < tab_strip->count(); ++i) {
++      content::WebContents* contents = tab_strip->GetWebContentsAt(i);
++      if (contents != source.get() && CanScan(contents)) {
++        pages.push_back(contents);
++      }
++    }
++  }
++  Scan::Start(std::move(matcher), pages,
++              base::BindOnce(&ShowBestTab, source));
++}
++
++void ShowInFindBar(ImageSearchDone done, std::vector<PageResult> results) {
++  if (results.empty() || !results[0].contents) {
++    std::move(done).Run(0, true);
++    return;
++  }
++  const PageResult& result = results[0];
++  ShowOnPage(result.contents.get(), result.matches, std::string(),
++             result.unloaded_count > 0, /*controls=*/false);
++  std::move(done).Run(static_cast<int>(result.matches.size()), true);
++}
++
++void SearchForFindBar(content::WebContents* contents,
++                      GrayImage query,
++                      ImageSearchDone done) {
++  auto matcher = std::make_shared<const ImageMatcher>(query);
++  if (!CanScan(contents) || !matcher->usable()) {
++    std::move(done).Run(0, matcher->usable());
++    return;
++  }
++  ClearImageMatches(contents);
++  Scan::Start(std::move(matcher), {contents},
++              base::BindOnce(&ShowInFindBar, std::move(done)));
++}
++
++}  // namespace
++
++void FindContextImageInOtherTabs(content::RenderFrameHost* frame) {
++  content::WebContents* source =
++      content::WebContents::FromRenderFrameHost(frame);
++  if (!source) {
++    return;
++  }
++  mojo::AssociatedRemote<chrome::mojom::ChromeRenderFrame> remote;
++  frame->GetRemoteAssociatedInterfaces()->GetInterface(&remote);
++  auto* proxy = remote.get();
++  // The remote rides along in the callback so it stays open for the reply.
++  proxy->RequestImageThumbnailForContextNode(
++      base::BindOnce(&OnContextThumbnail, std::move(remote),
++                     source->GetWeakPtr()));
++}
++
++bool HasChosenImage(content::BrowserContext* context) {
++  return context && context->GetUserData(kChosenImageKey);
++}
++
++void FindChosenImageOnPage(content::WebContents* contents) {
++  if (!CanScan(contents)) {
++    return;
++  }
++  const auto* chosen = static_cast<ChosenImage*>(
++      contents->GetBrowserContext()->GetUserData(kChosenImageKey));
++  if (!chosen) {
++    return;
++  }
++  Scan::Start(std::make_shared<const ImageMatcher>(chosen->thumbnail),
++              {contents}, base::BindOnce(&ShowOnScannedPage));
++}
++
++void FindImageOnPage(content::WebContents* contents,
++                     const SkBitmap& image,
++                     ImageSearchDone done) {
++  image_match::Thumbnail thumbnail = image_match::MakeThumbnail(image);
++  SearchForFindBar(contents,
++                   {thumbnail.width, thumbnail.height,
++                    std::move(thumbnail.luma)},
++                   std::move(done));
++}
++
++void FindChosenImageOnPage(content::WebContents* contents,
++                           ImageSearchDone done) {
++  const auto* chosen =
++      contents ? static_cast<ChosenImage*>(
++                     contents->GetBrowserContext()->GetUserData(
++                         kChosenImageKey))
++               : nullptr;
++  if (!chosen) {
++    std::move(done).Run(0, false);
++    return;
++  }
++  SearchForFindBar(contents, chosen->thumbnail, std::move(done));
++}
++
++void SelectImageMatch(content::WebContents* contents, int index) {
++  RunOnPage(contents, "globalThis.heliumNeoImageMatch?.select(" +
++                          base::NumberToString(index) + ")");
++}
++
++void ClearImageMatches(content::WebContents* contents) {
++  RunOnPage(contents, "globalThis.heliumNeoImageMatch?.close()");
++}
++
++}  // namespace tabs
+--- /dev/null
++++ b/chrome/browser/ui/tabs/image_match_finder.h
+@@ -0,0 +1,54 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_BROWSER_UI_TABS_IMAGE_MATCH_FINDER_H_
++#define CHROME_BROWSER_UI_TABS_IMAGE_MATCH_FINDER_H_
++
++#include "base/functional/callback_forward.h"
++
++class SkBitmap;
++
++namespace content {
++class BrowserContext;
++class RenderFrameHost;
++class WebContents;
++}  // namespace content
++
++namespace tabs {
++// Finds a picture among a page's images by its appearance, for pages reached
++// from a reverse image search. Renderers send small grayscale thumbnails of
++// the decoded images; the browser compares them, and nothing leaves the
++// machine.
++
++// Remembers the image under the context menu in |frame| and looks for it in
++// the other tabs of its window, switching to the tab with the best match.
++void FindContextImageInOtherTabs(content::RenderFrameHost* frame);
++
++// Whether an image was chosen earlier in this profile.
++bool HasChosenImage(content::BrowserContext* context);
++
++// Looks for the chosen image in |contents| and outlines the matches.
++void FindChosenImageOnPage(content::WebContents* contents);
++
++// For the find bar. |count| matches are outlined, the first one selected;
++// |usable| is false when the image was too small or plain to search for.
++using ImageSearchDone = base::OnceCallback<void(int count, bool usable)>;
++
++// Looks for |image| in |contents|, outlining matches without page controls.
++void FindImageOnPage(content::WebContents* contents,
++                     const SkBitmap& image,
++                     ImageSearchDone done);
++
++// Same, for the image chosen from a context menu. |done| gets usable=false
++// when there is none.
++void FindChosenImageOnPage(content::WebContents* contents,
++                           ImageSearchDone done);
++
++// Scrolls to match |index| of the last find bar search and highlights it.
++void SelectImageMatch(content::WebContents* contents, int index);
++
++// Removes image match outlines from |contents|.
++void ClearImageMatches(content::WebContents* contents);
++}  // namespace tabs
++
++#endif  // CHROME_BROWSER_UI_TABS_IMAGE_MATCH_FINDER_H_
+--- /dev/null
++++ b/chrome/browser/ui/tabs/image_match_script.h
+@@ -0,0 +1,182 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_BROWSER_UI_TABS_IMAGE_MATCH_SCRIPT_H_
++#define CHROME_BROWSER_UI_TABS_IMAGE_MATCH_SCRIPT_H_
++
++namespace tabs {
++// Outlines image matches, called as
++// show({matches, message, hint, strings, controls}) in an isolated world.
++// Each match names an index into document.getElementsByTagName('img'). With
++// no matches it only shows |message|. Without |controls| the find bar steps
++// through matches instead of a bar on the page. The outlines ignore pointer
++// input; only the bar is clickable.
++inline constexpr char kImageMatchScript[] = R"JS(
++(({matches, message, hint, strings, controls}) => {
++  globalThis.heliumNeoImageMatch?.close();
++  const images = document.getElementsByTagName('img');
++  const found = matches.map(match => ({...match, image: images[match.index]}))
++      .filter(match => match.image);
++  const host = document.createElement('div');
++  host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none;';
++  const shadow = host.attachShadow({mode: 'closed'});
++  const sheet = new CSSStyleSheet();
++  sheet.replaceSync(`
++    .box { position: fixed; border: 2px solid #1a73e8; border-radius: 4px;
++           background: rgb(26 115 232 / .08); transition: box-shadow .5s, opacity .2s; }
++    .box.other { opacity: .55; border-style: dashed; }
++    .box.current { border-width: 3px; box-shadow: 0 0 0 4px rgb(26 115 232 / .3); }
++    .box.spotlight { box-shadow: 0 0 0 4px rgb(26 115 232 / .3), 0 0 0 100vmax rgb(0 0 0 / .35); }
++    .tag { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; white-space: nowrap;
++           padding: 3px 8px; border-radius: 4px; background: #1a73e8; color: white;
++           font: 12px/1.4 system-ui, sans-serif; }
++    .below .tag { bottom: auto; top: 100%; margin: 4px 0 0; }
++    .box:not(.current) .tag { display: none; }
++    .bar { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
++           display: flex; align-items: center; gap: 8px; max-width: min(560px, calc(100vw - 32px));
++           padding: 8px 8px 8px 14px; border-radius: 10px; background: rgb(32 33 36 / .94);
++           color: white; font: 13px/1.4 system-ui, sans-serif; pointer-events: auto;
++           box-shadow: 0 4px 16px rgb(0 0 0 / .3); }
++    .text { display: flex; flex-direction: column; min-width: 0; }
++    .hint { opacity: .75; font-size: 12px; }
++    button { font: inherit; color: inherit; background: rgb(255 255 255 / .16);
++             border: 0; border-radius: 6px; padding: 4px 10px; cursor: pointer; flex: none; }
++    button:hover { background: rgb(255 255 255 / .26); }
++    button:disabled { opacity: .4; cursor: default; }
++  `);
++  shadow.adoptedStyleSheets = [sheet];
++  const element = (tag, className, text) => {
++    const node = document.createElement(tag);
++    if (className) node.className = className;
++    if (text) node.textContent = text;
++    return node;
++  };
++  const boxes = found.map(match => {
++    const box = element('div', 'box other');
++    box.append(element('div', 'tag', match.exact ? strings.exact : strings.similar));
++    shadow.append(box);
++    return box;
++  });
++  const bar = element('div', 'bar');
++  const text = element('div', 'text');
++  const status = element('div', '', message);
++  const note = element('div', 'hint', hint);
++  text.append(status);
++  if (hint) text.append(note);
++  const button = (label, onClick) => {
++    const node = element('button', '', label);
++    node.addEventListener('click', onClick);
++    return node;
++  };
++  let current = 0;
++  const previous = button(strings.previous, () => select(current - 1));
++  const next = button(strings.next, () => select(current + 1));
++  if (found.length > 1) bar.append(text, previous, next);
++  else bar.append(text);
++  bar.append(button(strings.close, () => close()));
++  if (controls) shadow.append(bar);
++
++  const hidden = image => {
++    const rect = image.getBoundingClientRect();
++    return rect.width < 2 || rect.height < 2 || !image.checkVisibility?.({visibilityProperty: true});
++  };
++  const select = index => {
++    if (!found.length) return;
++    current = (index + found.length) % found.length;
++    boxes.forEach((box, i) => {
++      box.classList.toggle('current', i === current);
++      box.classList.toggle('other', i !== current);
++      box.classList.remove('spotlight');
++    });
++    const image = found[current].image;
++    status.textContent = strings.counter.replace('$1', current + 1).replace('$2', found.length) +
++        (hidden(image) ? ' · ' + strings.hidden : '');
++    image.scrollIntoView({block: 'center', inline: 'center', behavior: 'smooth'});
++    // Dim the rest of the page briefly so the match stands out.
++    boxes[current].classList.add('spotlight');
++    clearTimeout(spotlight);
++    spotlight = setTimeout(() => boxes[current]?.classList.remove('spotlight'), 1400);
++  };
++  let spotlight;
++  const place = () => found.forEach((match, i) => {
++    const rect = match.image.getBoundingClientRect();
++    const invisible = rect.width < 2 || rect.height < 2;
++    Object.assign(boxes[i].style, {display: invisible ? 'none' : 'block',
++                                   left: rect.left - 4 + 'px', top: rect.top - 4 + 'px',
++                                   width: rect.width + 8 + 'px', height: rect.height + 8 + 'px'});
++    boxes[i].classList.toggle('below', rect.top < 40);
++  });
++  const onKey = event => {
++    if (controls && event.key === 'Escape') { close(); event.stopPropagation(); event.preventDefault(); }
++  };
++  const close = () => {
++    clearTimeout(spotlight);
++    clearTimeout(expiry);
++    window.removeEventListener('keydown', onKey, true);
++    host.remove();
++    if (globalThis.heliumNeoImageMatch === api) delete globalThis.heliumNeoImageMatch;
++  };
++  const frame = () => {
++    if (!host.isConnected) return;
++    place();
++    requestAnimationFrame(frame);
++  };
++  const api = {close, select};
++  globalThis.heliumNeoImageMatch = api;
++  window.addEventListener('keydown', onKey, true);
++  (document.body || document.documentElement).append(host);
++  // A message without matches needs no action, so it goes away on its own.
++  const expiry = found.length || !controls ? 0 : setTimeout(close, 8000);
++  frame();
++  select(0);
++  return found.length;
++})
++)JS";
++
++// Starts loading lazy images up to |screens| viewport heights below the
++// current position, called as load(screens). It never scrolls, so infinite
++// scroll pages do not fetch more content. Returns how many are loading.
++inline constexpr char kImageMatchLoadScript[] = R"JS(
++(screens => {
++  const limit = scrollY + innerHeight * screens;
++  const lazy = ['data-src', 'data-lazy-src', 'data-original', 'data-lazy', 'data-url'];
++  const lazySet = ['data-srcset', 'data-lazy-srcset'];
++  const real = value => value && !value.startsWith('data:');
++  const placeholder = img => !img.currentSrc || img.currentSrc.startsWith('data:') ||
++      (img.complete && img.naturalWidth <= 1);
++  const pending = [];
++  for (const img of document.getElementsByTagName('img')) {
++    if (img.complete && img.naturalWidth > 1) continue;
++    // Collapsed placeholders still sit roughly where the image will be.
++    if (img.getBoundingClientRect().top + scrollY > limit) continue;
++    if (img.loading === 'lazy') img.loading = 'eager';
++    // Script-driven lazy loading keeps the real address in a data attribute.
++    if (placeholder(img)) {
++      const picture = img.parentElement?.tagName === 'PICTURE' ? img.parentElement : null;
++      for (const source of picture ? picture.querySelectorAll('source') : []) {
++        const set = lazySet.map(name => source.getAttribute(name)).find(real);
++        if (set) source.srcset = set;
++      }
++      const set = lazySet.map(name => img.getAttribute(name)).find(real);
++      if (set) img.srcset = set;
++      const src = lazy.map(name => img.getAttribute(name)).find(real);
++      if (src && img.getAttribute('src') !== src) img.src = src;
++    }
++    if (!img.complete) pending.push(img);
++  }
++  globalThis.heliumNeoImageLoad = pending;
++  return pending.length;
++})
++)JS";
++
++// Returns how many images started by kImageMatchLoadScript still load.
++inline constexpr char kImageMatchLoadPollScript[] = R"JS(
++(() => {
++  const pending = (globalThis.heliumNeoImageLoad || []).filter(img => !img.complete);
++  globalThis.heliumNeoImageLoad = pending;
++  return pending.length;
++})()
++)JS";
++}  // namespace tabs
++
++#endif  // CHROME_BROWSER_UI_TABS_IMAGE_MATCH_SCRIPT_H_
+--- /dev/null
++++ b/chrome/common/image_match_thumbnail.cc
+@@ -0,0 +1,60 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++
++#include "chrome/common/image_match_thumbnail.h"
++
++#include <algorithm>
++
++#include "skia/ext/image_operations.h"
++#include "third_party/skia/include/core/SkBitmap.h"
++#include "third_party/skia/include/core/SkColor.h"
++
++namespace image_match {
++
++Thumbnail MakeThumbnail(const SkBitmap& image) {
++  if (image.drawsNothing() || image.width() < kThumbnailMinSize ||
++      image.height() < kThumbnailMinSize) {
++    return {};
++  }
++  SkBitmap source = image;
++  if (source.colorType() != kN32_SkColorType) {
++    if (!source.tryAllocPixels(image.info().makeColorType(kN32_SkColorType)) ||
++        !image.readPixels(source.pixmap())) {
++      return {};
++    }
++  }
++  const double scale =
++      std::min(1.0, static_cast<double>(kThumbnailSide) /
++                        std::max(source.width(), source.height()));
++  const int width = std::max(1, static_cast<int>(source.width() * scale + 0.5));
++  const int height =
++      std::max(1, static_cast<int>(source.height() * scale + 0.5));
++  const SkBitmap small =
++      (width == source.width() && height == source.height())
++          ? source
++          : skia::ImageOperations::Resize(
++                source, skia::ImageOperations::RESIZE_BOX, width, height);
++  if (small.drawsNothing()) {
++    return {};
++  }
++  Thumbnail thumbnail{width, height,
++                      std::vector<uint8_t>(static_cast<size_t>(width) * height)};
++  for (int y = 0; y < height; ++y) {
++    for (int x = 0; x < width; ++x) {
++      const SkColor pixel = small.getColor(x, y);
++      const int alpha = SkColorGetA(pixel);
++      const auto over_white = [alpha](int channel) {
++        return (channel * alpha + 255 * (255 - alpha)) / 255;
++      };
++      thumbnail.luma[static_cast<size_t>(y) * width + x] =
++          static_cast<uint8_t>((299 * over_white(SkColorGetR(pixel)) +
++                                587 * over_white(SkColorGetG(pixel)) +
++                                114 * over_white(SkColorGetB(pixel)) + 500) /
++                               1000);
++    }
++  }
++  return thumbnail;
++}
++
++}  // namespace image_match
+--- /dev/null
++++ b/chrome/common/image_match_thumbnail.h
+@@ -0,0 +1,32 @@
++// Copyright 2026 The Helium Authors
++// You can use, redistribute, and/or modify this source code under
++// the terms of the GPL-3.0 license that can be found in the LICENSE file.
++#ifndef CHROME_COMMON_IMAGE_MATCH_THUMBNAIL_H_
++#define CHROME_COMMON_IMAGE_MATCH_THUMBNAIL_H_
++
++#include <cstdint>
++#include <vector>
++
++class SkBitmap;
++
++namespace image_match {
++
++// Images smaller than this on either side, such as icons, are not compared.
++inline constexpr int kThumbnailMinSize = 24;
++// Thumbnails are at most this many pixels on their longest side.
++inline constexpr int kThumbnailSide = 64;
++
++struct Thumbnail {
++  int width = 0;
++  int height = 0;
++  // Brightness, row by row, with transparent areas shown over white.
++  std::vector<uint8_t> luma;
++};
++
++// Shrinks |image| to a grayscale thumbnail for appearance matching. Returns
++// an empty thumbnail when |image| is missing or too small.
++Thumbnail MakeThumbnail(const SkBitmap& image);
++
++}  // namespace image_match
++
++#endif  // CHROME_COMMON_IMAGE_MATCH_THUMBNAIL_H_
