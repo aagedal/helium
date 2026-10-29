@@ -47,7 +47,7 @@
 @@ -6347,7 +6347,7 @@
    {
      "name": "infinite-tabs-freezing",
-     "owners": [ "fdoray@ch40m1um.qjz9zk", "catan-team@ch40m1um.qjz9zk" ],
+     "owners": [ "fdoray@chromium.org", "catan-team@chromium.org" ],
 -    "expiry_milestone": 142
 +    "expiry_milestone": -1
    },
