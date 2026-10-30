@@ -91,9 +91,10 @@ persist after restarting the browser. Automatic exports require enabling again.
 ### Find an image on the page
 
 After a reverse image search, find where a picture appears on an image-heavy
-page. Press Command-F and paste a copied image into the empty find field, or
-click the image button in the find bar to paste, choose an image file, or reuse
-an image chosen from a page. The find bar counts the matches; Enter, Shift-Enter
+page. Press Command-F and paste a copied image into the empty find field, drag
+an image file or a picture from another page or app onto the find bar, or click
+the image button in the find bar to paste, choose an image file, or reuse an
+image chosen from a page. The find bar counts the matches; Enter, Shift-Enter
 and the arrow buttons scroll to each outlined match. Typing text returns to an
 ordinary text search, and closing the find bar removes the outlines.
 
@@ -104,9 +105,11 @@ image on this page** in a page's context menu looks for it again there.
 Matching compares appearance rather than files, so it tolerates resizing,
 recompression, different formats, and crops in either direction, including
 partly overlapping crops of at least about half the image. Mirrored or rotated
-copies, CSS background images, iframes and shadow DOM are not covered. Lazy
-images within 20 screen heights below the current position are loaded first;
-the page is never scrolled, so infinite scroll does not fetch more content.
+copies, CSS background images, iframes and shadow DOM are not covered. Up to
+300 lazy images, nearest the current position first, are loaded before
+comparing, including script-driven ones that keep their address in attributes
+such as `data-src` or `data-srcset`. The page is never scrolled, so infinite
+scroll does not fetch more content.
 Renderers send small grayscale thumbnails to the browser for comparison; images
 are not uploaded anywhere. Pasted and chosen files are decoded in a sandboxed
 process. The chosen image is remembered per profile until the browser restarts.

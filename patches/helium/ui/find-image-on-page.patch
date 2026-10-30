@@ -330,16 +330,22 @@
  #include "ui/accessibility/ax_enums.mojom.h"
  #include "ui/accessibility/ax_node_data.h"
  #include "ui/base/data_transfer_policy/data_transfer_endpoint.h"
-@@ -40,12 +48,16 @@
+@@ -40,12 +48,22 @@
  #include "ui/base/ime/text_input_flags.h"
  #include "ui/base/l10n/l10n_util.h"
  #include "ui/base/metadata/metadata_impl_macros.h"
 +#include "ui/base/clipboard/clipboard.h"
++#include "ui/base/clipboard/file_info.h"
++#include "ui/base/dragdrop/drag_drop_types.h"
++#include "ui/base/dragdrop/drop_target_event.h"
++#include "ui/base/dragdrop/mojom/drag_drop_types.mojom.h"
++#include "ui/base/dragdrop/os_exchange_data.h"
 +#include "ui/base/mojom/menu_source_type.mojom.h"
  #include "ui/base/theme_provider.h"
  #include "ui/base/ui_base_features.h"
  #include "ui/color/color_id.h"
  #include "ui/color/color_provider.h"
++#include "ui/compositor/layer_tree_owner.h"
  #include "ui/events/event.h"
  #include "ui/gfx/geometry/insets.h"
 +#include "ui/gfx/image/image_skia.h"
@@ -347,7 +353,7 @@
  #include "ui/gfx/paint_vector_icon.h"
  #include "ui/views/accessibility/view_accessibility.h"
  #include "ui/views/background.h"
-@@ -54,7 +66,10 @@
+@@ -54,7 +72,10 @@
  #include "ui/views/controls/button/image_button_factory.h"
  #include "ui/views/controls/button/md_text_button.h"
  #include "ui/views/controls/highlight_path_generator.h"
@@ -358,7 +364,7 @@
  #include "ui/views/controls/separator.h"
  #include "ui/views/layout/box_layout.h"
  #include "ui/views/layout/box_layout_view.h"
-@@ -74,6 +89,24 @@
+@@ -74,6 +95,27 @@
  constexpr int kBasePadding = 4;
  constexpr int kHorizontalGap = 6;
  
@@ -366,6 +372,9 @@
 +constexpr int kImagePreviewSize = 20;
 +// Larger files are not worth decoding to find a 64 pixel thumbnail.
 +constexpr int64_t kMaxImageFileSize = 64 * 1024 * 1024;
++// Image files dropped from Finder, or image data dragged from a page or app.
++constexpr int kImageDropFormats =
++    ui::OSExchangeData::FILE_NAME | ui::OSExchangeData::FILE_CONTENTS;
 +enum ImageMenuCommand {
 +  kPasteImage = 1,
 +  kChooseImageFile,
@@ -383,7 +392,7 @@
  }  // namespace
  
  DEFINE_CLASS_ELEMENT_IDENTIFIER_VALUE(FindBarView, kElementId);
-@@ -204,6 +237,12 @@
+@@ -204,6 +246,12 @@
            .SetInsideBorderInsets(
                gfx::Insets::VH(0, kBasePadding * 2))
            .AddChildren(
@@ -396,7 +405,7 @@
                views::Builder<views::Textfield>()
                    .CopyAddressTo(&find_text_)
                    .SetAccessibleName(
-@@ -235,6 +274,15 @@
+@@ -235,6 +283,15 @@
                        gfx::Insets(horizontal_margin +
                                    chrome_refresh_separator_vertical_margin)),
                views::Builder<views::ImageButton>()
@@ -412,7 +421,7 @@
                    .CopyAddressTo(&find_previous_button_)
                    .SetAccessibleName(
                        l10n_util::GetStringUTF16(IDS_ACCNAME_PREVIOUS))
-@@ -314,6 +362,14 @@
+@@ -314,6 +371,14 @@
            kColorFindBarButtonIconHovered));
  
    views::SetImageFromVectorIconWithColor(
@@ -427,7 +436,7 @@
        close_button_,
        features::IsRoundedIconsEnabled() ? kCloseSmallIcon
                                          : kCloseChromeRefreshOldIcon,
-@@ -356,9 +412,14 @@
+@@ -356,9 +421,14 @@
    SetCommonButtonAttributes(find_previous_button_);
    SetCommonButtonAttributes(find_next_button_);
    SetCommonButtonAttributes(close_button_);
@@ -443,7 +452,7 @@
  
  void FindBarView::SetHost(FindBarHost* host) {
    find_bar_host_ = host;
-@@ -369,6 +430,8 @@
+@@ -369,6 +439,8 @@
  void FindBarView::SetFindTextAndSelectedRange(
      const std::u16string& find_text,
      const gfx::Range& selected_range) {
@@ -452,7 +461,7 @@
    find_text_->SetText(find_text);
    find_text_->SetSelectedRange(selected_range);
    last_searched_text_ = find_text;
-@@ -393,6 +456,9 @@
+@@ -393,6 +465,9 @@
  void FindBarView::UpdateForResult(
      const find_in_page::FindNotificationDetails& result,
      const std::u16string& find_text) {
@@ -462,7 +471,7 @@
    bool have_valid_range =
        result.number_of_matches() != -1 && result.active_match_ordinal() != -1;
  
-@@ -438,7 +504,8 @@
+@@ -438,7 +513,8 @@
  
  bool FindBarView::ContainsFocus() const {
    return find_text_->HasFocus() || find_previous_button_->HasFocus() ||
@@ -472,7 +481,34 @@
  }
  
  ///////////////////////////////////////////////////////////////////////////////
-@@ -503,6 +570,12 @@
+@@ -476,6 +552,26 @@
+   return size;
+ }
+ 
++bool FindBarView::GetDropFormats(
++    int* formats,
++    std::set<ui::ClipboardFormatType>* format_types) {
++  *formats = kImageDropFormats;
++  return true;
++}
++
++bool FindBarView::CanDrop(const ui::OSExchangeData& data) {
++  return GetWebContents() && data.HasAnyFormat(kImageDropFormats, {});
++}
++
++int FindBarView::OnDragUpdated(const ui::DropTargetEvent& event) {
++  return ui::DragDropTypes::DRAG_COPY;
++}
++
++views::View::DropCallback FindBarView::GetDropCallback(
++    const ui::DropTargetEvent& event) {
++  return base::BindOnce(&FindBarView::DropImage, weak_factory_.GetWeakPtr());
++}
++
+ ////////////////////////////////////////////////////////////////////////////////
+ // FindBarView, DropdownBarHostDelegate implementation:
+ 
+@@ -503,6 +599,12 @@
      return true;  // Handled, we are done!
    }
  
@@ -485,7 +521,7 @@
    if (key_event.key_code() == ui::VKEY_RETURN &&
        key_event.type() == ui::EventType::kKeyPressed) {
      // Pressing Return/Enter starts the search (unless text box is empty).
-@@ -541,6 +614,9 @@
+@@ -541,6 +643,9 @@
  void FindBarView::OnAfterUserAction(views::Textfield* sender) {
    // The composition text wouldn't be what the user is really looking for.
    // We delay the search until the user commits the composition text.
@@ -495,7 +531,7 @@
    if (!sender->IsIMEComposing() && sender->GetText() != last_searched_text_) {
      Find(sender->GetText());
    }
-@@ -566,9 +642,39 @@
+@@ -566,9 +671,39 @@
  void FindBarView::OnBeforePaste(
      views::Textfield* sender,
      base::OnceCallback<void(std::optional<std::u16string>)> callback) {
@@ -538,7 +574,7 @@
  }
  
  std::unique_ptr<ui::ScopedClipboardWriter>
-@@ -621,6 +727,10 @@
+@@ -621,6 +756,10 @@
    if (!find_bar_host_) {
      return;
    }
@@ -549,7 +585,7 @@
    if (!find_text_->GetText().empty()) {
      find_in_page::FindTabHelper* find_tab_helper =
          find_in_page::FindTabHelper::FromWebContents(
-@@ -641,10 +751,237 @@
+@@ -641,10 +780,282 @@
  }
  
  void FindBarView::UpdateMatchCountAppearance(bool no_match) {
@@ -634,10 +670,55 @@
 +}
 +
 +void FindBarView::FileSelected(const ui::SelectedFileInfo& file, int index) {
++  SearchForImageFile(file.path());
++}
++
++void FindBarView::AppendDropFormats(
++    int* formats,
++    std::set<ui::ClipboardFormatType>* format_types) {
++  *formats |= kImageDropFormats;
++}
++
++views::View::DropCallback FindBarView::CreateDropCallback(
++    const ui::DropTargetEvent& event) {
++  // Dropped text still goes into the text field.
++  if (!event.data().HasAnyFormat(kImageDropFormats, {})) {
++    return base::NullCallback();
++  }
++  return GetDropCallback(event);
++}
++
++void FindBarView::DropImage(
++    const ui::DropTargetEvent& event,
++    ui::mojom::DragOperation& output_drag_op,
++    std::unique_ptr<ui::LayerTreeOwner> drag_image_layer_owner) {
++  output_drag_op = ui::mojom::DragOperation::kNone;
++  if (!GetWebContents()) {
++    return;
++  }
++  // Files first: images dragged from a page only promise a file, and their
++  // data is the image itself.
++  if (std::optional<std::vector<ui::FileInfo>> files =
++          event.data().GetFilenames();
++      files && !files->empty()) {
++    output_drag_op = ui::mojom::DragOperation::kCopy;
++    SearchForImageFile(files->front().path);
++    return;
++  }
++  if (std::optional<ui::OSExchangeData::FileContentsInfo> contents =
++          event.data().GetFileContents();
++      contents && !contents->file_contents.empty()) {
++    output_drag_op = ui::mojom::DragOperation::kCopy;
++    StartImageSearch();
++    SearchForEncodedImage(std::move(contents->file_contents));
++  }
++}
++
++void FindBarView::SearchForImageFile(const base::FilePath& path) {
 +  StartImageSearch();
 +  base::ThreadPool::PostTaskAndReplyWithResult(
 +      FROM_HERE, {base::MayBlock(), base::TaskPriority::USER_VISIBLE},
-+      base::BindOnce(&ReadImageFile, file.path()),
++      base::BindOnce(&ReadImageFile, path),
 +      base::BindOnce(&FindBarView::SearchForEncodedImage,
 +                     weak_factory_.GetWeakPtr()));
 +}
@@ -790,17 +871,19 @@
  END_METADATA
 --- a/chrome/browser/ui/views/find_bar_view.h
 +++ b/chrome/browser/ui/views/find_bar_view.h
-@@ -5,14 +5,21 @@
+@@ -5,14 +5,23 @@
  #ifndef CHROME_BROWSER_UI_VIEWS_FIND_BAR_VIEW_H_
  #define CHROME_BROWSER_UI_VIEWS_FIND_BAR_VIEW_H_
  
 +#include <cstdint>
  #include <memory>
 +#include <optional>
++#include <set>
  #include <string>
  #include <string_view>
 +#include <vector>
  
++#include "base/files/file_path.h"
  #include "base/gtest_prod_util.h"
  #include "base/memory/raw_ptr.h"
 +#include "base/memory/scoped_refptr.h"
@@ -812,7 +895,7 @@
  #include "ui/views/controls/button/button.h"
  #include "ui/views/controls/button/image_button.h"
  #include "ui/views/controls/textfield/textfield.h"
-@@ -22,6 +29,11 @@
+@@ -22,6 +31,11 @@
  
  class FindBarHost;
  class FindBarMatchCountLabel;
@@ -824,7 +907,7 @@
  
  namespace find_in_page {
  class FindNotificationDetails;
-@@ -32,6 +44,8 @@
+@@ -32,6 +46,8 @@
  }
  
  namespace views {
@@ -833,7 +916,7 @@
  class Painter;
  class Separator;
  class Textfield;
-@@ -45,7 +59,9 @@
+@@ -45,7 +61,9 @@
  //
  ////////////////////////////////////////////////////////////////////////////////
  class FindBarView : public views::BoxLayoutView,
@@ -844,10 +927,29 @@
    METADATA_HEADER(FindBarView, views::BoxLayoutView)
  
   public:
-@@ -113,7 +129,35 @@
+@@ -98,6 +116,12 @@
+   bool OnMousePressed(const ui::MouseEvent& event) override;
+   gfx::Size CalculatePreferredSize(
+       const views::SizeBounds& available_size) const override;
++  bool GetDropFormats(int* formats,
++                      std::set<ui::ClipboardFormatType>* format_types) override;
++  bool CanDrop(const ui::OSExchangeData& data) override;
++  int OnDragUpdated(const ui::DropTargetEvent& event) override;
++  views::View::DropCallback GetDropCallback(
++      const ui::DropTargetEvent& event) override;
+ 
+   // views::TextfieldController:
+   bool HandleKeyEvent(views::Textfield* sender,
+@@ -112,8 +136,45 @@
+                      base::OnceCallback<void(std::optional<std::u16string>)>
                           callback) override;
    std::unique_ptr<ui::ScopedClipboardWriter> CreateClipboardWriter() override;
- 
++  void AppendDropFormats(
++      int* formats,
++      std::set<ui::ClipboardFormatType>* format_types) override;
++  views::View::DropCallback CreateDropCallback(
++      const ui::DropTargetEvent& event) override;
++
 +  // ui::SimpleMenuModel::Delegate:
 +  void ExecuteCommand(int command_id, int event_flags) override;
 +  bool IsCommandIdEnabled(int command_id) const override;
@@ -857,12 +959,13 @@
 +
 +  // Helium Neo: leaves image search, removing its outlines from the page.
 +  void ExitImageMode();
-+
+ 
   private:
 +  // Helium Neo: finding a picture on the page instead of text.
 +  content::WebContents* GetWebContents() const;
 +  void ShowImageMenu();
 +  void StartImageSearch();
++  void SearchForImageFile(const base::FilePath& path);
 +  void SearchForEncodedImage(std::vector<uint8_t> data);
 +  void SearchForImage(const SkBitmap& image);
 +  void OnImageSearchDone(int generation, int count, bool usable);
@@ -876,11 +979,14 @@
 +      base::OnceCallback<void(std::optional<std::u16string>)> callback,
 +      const std::vector<uint8_t>& png);
 +  void OnMenuPastePng(const std::vector<uint8_t>& png);
++  void DropImage(const ui::DropTargetEvent& event,
++                 ui::mojom::DragOperation& output_drag_op,
++                 std::unique_ptr<ui::LayerTreeOwner> drag_image_layer_owner);
 +
    FRIEND_TEST_ALL_PREFIXES(LegacyFindInPageTest, AccessibleName);
    const views::ViewAccessibility&
    GetFindBarMatchCountLabelViewAccessibilityForTesting();
-@@ -149,6 +193,19 @@
+@@ -149,6 +210,19 @@
    raw_ptr<views::ImageButton> find_previous_button_;
    raw_ptr<views::ImageButton> find_next_button_;
    raw_ptr<views::ImageButton> close_button_;
@@ -1560,9 +1666,9 @@
 +namespace {
 +
 +constexpr size_t kMaxShownMatches = 20;
-+// Lazy images this far below the current position are loaded first. Pages
-+// are never scrolled, so infinite scroll pages do not grow.
-+constexpr int kLoadScreens = 20;
++// Lazy images nearest the viewport are loaded first, at most this many per
++// page. Pages are never scrolled, so infinite scroll pages do not grow.
++constexpr int kMaxLoadedImages = 300;
 +constexpr base::TimeDelta kLoadWait = base::Seconds(3);
 +constexpr base::TimeDelta kLoadPollInterval = base::Milliseconds(200);
 +// Frozen background tabs may never answer.
@@ -1712,7 +1818,7 @@
 +      results_[i].polling = true;
 +      pages[i]->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
 +          base::UTF8ToUTF16(std::string(kImageMatchLoadScript) + "(" +
-+                            base::NumberToString(kLoadScreens) + ")"),
++                            base::NumberToString(kMaxLoadedImages) + ")"),
 +          base::BindOnce(&Scan::OnLoadState, weak_factory_.GetWeakPtr(), i),
 +          ISOLATED_WORLD_ID_CHROME_INTERNAL);
 +    }
@@ -2073,7 +2179,7 @@
 +#endif  // CHROME_BROWSER_UI_TABS_IMAGE_MATCH_FINDER_H_
 --- /dev/null
 +++ b/chrome/browser/ui/tabs/image_match_script.h
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,215 @@
 +// Copyright 2026 The Helium Authors
 +// You can use, redistribute, and/or modify this source code under
 +// the terms of the GPL-3.0 license that can be found in the LICENSE file.
@@ -2209,49 +2315,82 @@
 +})
 +)JS";
 +
-+// Starts loading lazy images up to |screens| viewport heights below the
-+// current position, called as load(screens). It never scrolls, so infinite
-+// scroll pages do not fetch more content. Returns how many are loading.
++// Starts loading up to |count| lazy images, nearest to the viewport first,
++// called as load(count). It never scrolls, so infinite scroll pages do not
++// fetch more content. Returns how many are loading.
 +inline constexpr char kImageMatchLoadScript[] = R"JS(
-+(screens => {
-+  const limit = scrollY + innerHeight * screens;
++(count => {
 +  const lazy = ['data-src', 'data-lazy-src', 'data-original', 'data-lazy', 'data-url'];
 +  const lazySet = ['data-srcset', 'data-lazy-srcset'];
 +  const real = value => value && !value.startsWith('data:');
++  // Script-driven lazy loading, such as lazysizes, shows an inline or tiny
++  // placeholder (often a 1x1 or 16x9 gif) until the image scrolls into view.
++  // Images under 24 pixels are too small to compare anyway.
 +  const placeholder = img => !img.currentSrc || img.currentSrc.startsWith('data:') ||
-+      (img.complete && img.naturalWidth <= 1);
-+  const pending = [];
++      (img.complete && (img.naturalWidth < 24 || img.naturalHeight < 24));
++  // With srcset descriptors in widths, 'auto' sizes come from the layout.
++  const sizes = (node, img) => {
++    const value = node.getAttribute('data-sizes');
++    if (!value || node.getAttribute('sizes')) return;
++    node.sizes = value === 'auto' ? Math.max(img.offsetWidth, 64) + 'px' : value;
++  };
++  const pending = new Set();
++  // A replaced placeholder still reports complete until the new request
++  // starts, so wait for the load events instead.
++  const wait = image => {
++    if (pending.has(image)) return;
++    pending.add(image);
++    const done = () => pending.delete(image);
++    image.addEventListener('load', done, {once: true});
++    image.addEventListener('error', done, {once: true});
++  };
++  const waiting = [];
 +  for (const img of document.getElementsByTagName('img')) {
-+    if (img.complete && img.naturalWidth > 1) continue;
++    const standIn = placeholder(img);
++    if (img.complete && !standIn) continue;
 +    // Collapsed placeholders still sit roughly where the image will be.
-+    if (img.getBoundingClientRect().top + scrollY > limit) continue;
++    const rect = img.getBoundingClientRect();
++    const distance = Math.max(0, rect.top - innerHeight, -rect.bottom);
++    waiting.push({img, standIn, distance});
++  }
++  waiting.sort((a, b) => a.distance - b.distance);
++  for (const {img, standIn} of waiting.slice(0, count)) {
 +    if (img.loading === 'lazy') img.loading = 'eager';
 +    // Script-driven lazy loading keeps the real address in a data attribute.
-+    if (placeholder(img)) {
++    if (standIn) {
++      let changed = false;
 +      const picture = img.parentElement?.tagName === 'PICTURE' ? img.parentElement : null;
 +      for (const source of picture ? picture.querySelectorAll('source') : []) {
 +        const set = lazySet.map(name => source.getAttribute(name)).find(real);
-+        if (set) source.srcset = set;
++        if (set && source.getAttribute('srcset') !== set) {
++          sizes(source, img);
++          source.srcset = set;
++          changed = true;
++        }
 +      }
 +      const set = lazySet.map(name => img.getAttribute(name)).find(real);
-+      if (set) img.srcset = set;
++      if (set && img.getAttribute('srcset') !== set) {
++        sizes(img, img);
++        img.srcset = set;
++        changed = true;
++      }
 +      const src = lazy.map(name => img.getAttribute(name)).find(real);
-+      if (src && img.getAttribute('src') !== src) img.src = src;
++      if (src && img.getAttribute('src') !== src) {
++        img.src = src;
++        changed = true;
++      }
++      if (changed) wait(img);
 +    }
-+    if (!img.complete) pending.push(img);
++    if (!img.complete) wait(img);
 +  }
 +  globalThis.heliumNeoImageLoad = pending;
-+  return pending.length;
++  return pending.size;
 +})
 +)JS";
 +
 +// Returns how many images started by kImageMatchLoadScript still load.
 +inline constexpr char kImageMatchLoadPollScript[] = R"JS(
-+(() => {
-+  const pending = (globalThis.heliumNeoImageLoad || []).filter(img => !img.complete);
-+  globalThis.heliumNeoImageLoad = pending;
-+  return pending.length;
-+})()
++(() => globalThis.heliumNeoImageLoad?.size ?? 0)()
 +)JS";
 +}  // namespace tabs
 +
